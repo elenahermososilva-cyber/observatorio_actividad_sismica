@@ -1,1 +1,1 @@
-# observatorio_actividad_s-smica
+# observatorio_actividad_sismica
