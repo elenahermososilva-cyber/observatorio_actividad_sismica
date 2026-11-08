@@ -1,3 +1,4 @@
+
 # Proyecto: Observatorio de actividad sísmica
 
 **Sistemas de Big Data · Consolidación de las sesiones 1–8 · RA1**  
