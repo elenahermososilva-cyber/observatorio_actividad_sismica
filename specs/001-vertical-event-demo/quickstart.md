@@ -9,11 +9,24 @@ Validar que un evento sintético entra en el sistema, se persiste con idempotenc
 - Docker y Docker Compose disponibles en el equipo.
 - Repositorio clonado y preparado.
 - Frontend entregado ya presente en `observatorio-sismico/frontend`.
-- La infraestructura backend aún no implementada, pero el objetivo es que la composición mínima de la entrega pueda levantarse con un único comando.
+- No se requieren credenciales reales para la demostración local.
+
+## Preparar la configuración local
+
+Desde la raíz del repositorio, crea los archivos ignorados de configuración local a partir de sus plantillas:
+
+```powershell
+Copy-Item observatorio-sismico\backend\producer\.env.example observatorio-sismico\backend\producer\.env
+Copy-Item observatorio-sismico\backend\consumer\.env.example observatorio-sismico\backend\consumer\.env
+Copy-Item observatorio-sismico\backend\api\.env.example observatorio-sismico\backend\api\.env
+Copy-Item observatorio-sismico\backend\db\.env.example observatorio-sismico\backend\db\.env
+```
+
+La contraseña local de PostgreSQL debe coincidir en los archivos de consumidor, API y base de datos. Los `.env` no se versionan; las plantillas solo contienen valores de demostración.
 
 ## Validación de servicios
 
-1. Ejecuta la composición mínima del proyecto desde la raíz del repositorio:
+1. Ejecuta la composición mínima desde la carpeta `observatorio-sismico/`:
    ```bash
    cd observatorio-sismico
    docker compose up --build -d
@@ -29,9 +42,9 @@ Validar que un evento sintético entra en el sistema, se persiste con idempotenc
 
 ## Publicación y consumo del evento de prueba
 
-1. Publica un evento de prueba sintético claramente identificado, por ejemplo con `event_id = demo-evt-001` y metadata de `synthetic_flag = true`.
+1. El servicio productor publica el evento `demo-evt-001` con `source = synthetic-demo`, `mode = demo` y `synthetic_flag = true`.
 2. Verifica que el consumidor lo procesa y lo persiste.
-3. Reintenta la misma publicación o el reconsumo del mismo evento sin cambiar la versión.
+3. La prueba de integración publica de nuevo exactamente el mismo mensaje y comprueba la idempotencia.
 
 **Resultado esperado**: la base almacena una sola versión activa para ese evento y no duplica el resultado visible.
 
@@ -43,16 +56,30 @@ Validar que un evento sintético entra en el sistema, se persiste con idempotenc
    ```
 2. Comprueba que la respuesta es un JSON válido con `type: "FeatureCollection"`.
 3. Revisa que el evento de prueba aparece exactamente una vez.
+4. Comprueba en las propiedades `source = synthetic-demo` y `synthetic_flag = true`; país se mantiene `null` en esta fase, que no implementa enriquecimiento geográfico.
 
 **Resultado esperado**: el evento de prueba aparece una sola vez en `features` y la respuesta sigue el esquema del contrato.
 
+## Prueba automatizada del recorrido vertical
+
+Desde la raíz del repositorio, instala las dependencias de prueba y activa la prueba que requiere la pila Docker:
+
+```powershell
+python -m pip install -r observatorio-sismico\tests\requirements.txt
+Set-Location observatorio-sismico
+$env:RUN_DOCKER_INTEGRATION = "1"
+python -m pytest tests\contract\test_api_eventos.py tests\integration\test_vertical_demo.py
+```
+
 ## Validación de errores explícitos
 
-1. Fuerza o simula un fallo de persistencia del consumidor y comprueba que el consumidor lo registra en cuarentena y no confirma el offset.
-2. Intenta consultar la API.
-3. Comprueba que la respuesta no se presenta como un `FeatureCollection` válido vacío para un error del backend; la API solo comunica los errores que observa directamente y no asume un fallo del consumidor si el contrato no define ese estado.
+1. Provoca temporalmente un fallo de escritura a PostgreSQL mientras el consumidor procesa un mensaje válido. Comprueba en el registro del consumidor que la escritura falló y que no se confirmó el offset.
+2. Restablece PostgreSQL o reinicia el consumidor para permitir el reintento. Comprueba que el mismo mensaje se vuelve a procesar y queda persistido una sola vez.
+3. Envía un mensaje inválido o no soportado. Comprueba que se almacena duraderamente en cuarentena con el motivo y una referencia al payload original antes de confirmar su offset.
+4. Comprueba por separado la consulta API: una consulta correcta sin resultados devuelve `200` y `features: []`; una consulta fallida devuelve un error HTTP explícito, no un `FeatureCollection` vacío.
+5. Comprueba que `/api/salud` solo informa del estado observable de la API y sus dependencias, sin afirmar que conoce el fallo del consumidor.
 
-**Resultado esperado**: el consumidor conserva el fallo sin confirmar el offset, y la respuesta de la API comunica un error de forma explícita o un estado de ausencia real y no se confunde con éxito.
+**Resultado esperado**: los errores transitorios de escritura se registran y se reintentan sin confirmar el offset; los rechazos se conservan en cuarentena antes de confirmar; la API distingue una consulta exitosa vacía de un fallo de consulta y no atribuye al consumidor un estado que no recibe.
 
 ## Criterios de aceptación de la fase
 

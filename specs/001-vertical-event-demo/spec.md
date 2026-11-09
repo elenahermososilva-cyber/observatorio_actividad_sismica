@@ -39,18 +39,19 @@ Un responsable del proyecto o un evaluador desea comprobar que la arquitectura o
 
 ---
 
-### Historia de usuario 2 - Validación de fallo con persistencia y consulta (Prioridad: P1)
+### Historia de usuario 2 - Manejo explícito de fallos y registros rechazados (Prioridad: P1)
 
-Un evaluador quiere comprobar que los errores no se muestran como respuestas válidas vacías, y que los fallos de persistencia o de consulta quedan explícitamente registrados y no se interpretan como “sin eventos”.
+Un evaluador quiere comprobar por separado que un fallo transitorio de persistencia no hace perder el mensaje, que los registros inválidos se conservan en cuarentena y que un fallo de consulta de la API no se interpreta como “sin eventos”.
 
 **Por qué esta prioridad**: El sistema debe distinguir entre “sin resultados” y “fallo del servicio”; esto es crítico para la fiabilidad técnica y para cumplir la necesidad de trazabilidad del proyecto.
 
-**Prueba independiente**: Se puede probar forzando un error de persistencia o consultando un estado no disponible y verificando que la respuesta expone un error explícito y no un `FeatureCollection` vacío válido.
+**Prueba independiente**: Se puede probar por separado un fallo transitorio de escritura del consumidor, el rechazo durable de un registro inválido y un fallo de consulta de la API. El consumidor registra el fallo de escritura y no confirma el offset; la API devuelve un error explícito únicamente cuando falla su propia consulta.
 
 **Escenarios de aceptación**:
 
-1. **Dado** que una operación de persistencia falla, **cuando** el consumidor intenta guardar el evento sintético, **entonces** la operación queda marcada como fallida, se registra en cuarentena y no se confirma el offset de Kafka; la API no responde como si no hubiese eventos ni asume un fallo del consumidor si no existe un estado definido en el contrato.
-2. **Dado** que la consulta de la API no puede devolver datos válidos, **cuando** el cliente solicita `/api/eventos`, **entonces** la respuesta comunica el error de forma explícita y no devuelve un resultado vacío que se presente como válido.
+1. **Dado** que falla temporalmente una escritura del consumidor en PostgreSQL, **cuando** el consumidor intenta persistir un mensaje válido, **entonces** registra el error, no confirma el offset y deja que Kafka permita reintentar el mensaje; no intenta presentar ese fallo como una respuesta de la API.
+2. **Dado** que el consumidor rechaza un mensaje por inválido o no soportado, **cuando** registra el rechazo, **entonces** conserva duraderamente el motivo y una referencia al payload original antes de confirmar el offset; si falla la escritura de cuarentena, no confirma el offset.
+3. **Dado** que la consulta propia de la API no puede devolver datos válidos, **cuando** el cliente solicita `/api/eventos`, **entonces** la respuesta comunica el error explícitamente y no devuelve un resultado vacío que se presente como válido.
 
 ---
 
@@ -87,12 +88,13 @@ Un desarrollador o evaluador debe poder levantar la arquitectura mínima para co
 - **FR-004**: La API MUST exponerse en el endpoint definido por el contrato como un GeoJSON `FeatureCollection` válido para los eventos consultados.
 - **FR-005**: La API MUST devolver exactamente una instancia visible del evento consultado, no dos o más entradas para el mismo evento activo.
 - **FR-006**: El consumidor MUST soportar la relectura del mismo evento sintético sin duplicar el resultado final ni crear registros activos adicionales.
-- **FR-007**: El sistema MUST distinguir claramente entre “sin eventos” y “fallo del sistema” en la respuesta de la API y en el estado de persistencia.
-- **FR-008**: El consumidor MUST registrar los fallos de persistencia, no confirmar offsets hasta que la escritura en PostgreSQL quede duradera y conservar el evento rechazado en cuarentena; la API MUST responder con un error explícito solo cuando la consulta de la API o el estado que observa directamente fallan, sin presentar una respuesta vacía como resultado correcto.
+- **FR-007**: La API MUST devolver `features: []` solo cuando la consulta se complete correctamente y no existan resultados; MUST responder con un error explícito cuando falle su propia consulta y MUST NOT afirmar que conoce un fallo del consumidor sin un mecanismo de estado definido.
+- **FR-008**: Ante un fallo transitorio al persistir un mensaje válido, el consumidor MUST registrar el error y no confirmar el offset de Kafka para permitir el reintento. Para un mensaje rechazado por inválido o no soportado, MUST persistir duraderamente en cuarentena el motivo y una referencia al payload original antes de confirmar su offset; si esa escritura falla, MUST dejar el offset sin confirmar.
 - **FR-009**: El sistema MUST mantener el evento sintético como prueba en un flujo de prueba controlado y no asumir todavía la ingesta live automática de USGS ni la carga histórica completa.
 - **FR-010**: La primera entrega MUST estar limitada a la demostración vertical de un evento sintético y no introducir como requisitos la ingestión en directo, la comparación histórica, el replay completo, la publicación en Netlify ni la memoria final.
 - **FR-011**: El proyecto MUST respetar la constitución del repositorio y no incorporar requisitos de Spark, Flink, Kubernetes ni aprendizaje automático para esta primera entrega.
 - **FR-012**: La primera entrega MUST documentar de forma mínima la forma del evento de prueba y el camino de verificación en la arquitectura, sin extenderse a la entrega completa del observatorio.
+- **FR-013**: El mensaje y el estado del evento MUST distinguir la hora de ocurrencia, la actualización de la fuente, la ingesta y la reproducción. Las marcas temporales MUST usar UTC y documentar sus unidades; en esta entrega se usan milisegundos desde la época Unix para los tiempos representados así en la fuente. `replayed_at` MUST ser nulo cuando el evento no provenga de una reproducción; no se implementa una función de replay en esta entrega.
 
 ### Entidades clave *(incluir si la funcionalidad implica datos)*
 
@@ -109,7 +111,7 @@ Un desarrollador o evaluador debe poder levantar la arquitectura mínima para co
 - **SC-001**: Un evaluador puede ejecutar la pila mínima desde la raíz `observatorio-sismico/`, confirmar que los cinco servicios obligatorios están disponibles y verificar que el evento sintético consultado aparece exactamente una vez en la API.
 - **SC-002**: Un evento sintético puede seguir el flujo completo desde publicación hasta consulta por API y ser visible como exactamente una única entidad estándar del sistema.
 - **SC-003**: El mismo evento sintético puede procesarse de nuevo sin duplicar el resultado activo en la base ni en la respuesta API.
-- **SC-004**: Cuando falla la persistencia del consumidor, el sistema registra el error, no confirma el offset y conserva el evento en cuarentena; cuando falla la consulta de la API, la respuesta comunica explícitamente el problema y no se presenta como un `FeatureCollection` vacío válido.
+- **SC-004**: Ante un fallo transitorio de escritura, el consumidor registra el error y no confirma el offset; ante un mensaje rechazado, persiste en cuarentena el motivo y una referencia al original antes de confirmarlo; ante un fallo de consulta de la API, esta comunica el error sin devolver un `FeatureCollection` vacío válido.
 - **SC-005**: La entrega demuestra de forma verificable que el sistema cumple el primer hito vertical requerido por la arquitectura del proyecto, sin extenderse a requisitos de ingestión live o análisis completos.
 
 ## Suposiciones
@@ -118,6 +120,6 @@ Un desarrollador o evaluador debe poder levantar la arquitectura mínima para co
 - La validación del primer hito se realiza con un solo evento de prueba y no requiere completar la carga histórica ni la comparación con periodos previos.
 - La infraestructura mínima se entiende como la composición de cinco servicios que corresponden a la arquitectura obligatoria del proyecto.
 - La API de consulta se comporta según el contrato definido en `CONTRATO-API.md` y no se exige aún la implementación completa de filtros avanzados ni estadísticas de negocio.
-- Se asume que el sistema puede devolver resultados correctos o errores explícitos, pero no una respuesta vacía válida en caso de fallo de persistencia o consulta.
+- Se asume que una consulta API exitosa sin resultados puede devolver `features: []`; los fallos de consulta API se devuelven como error. Los fallos de persistencia del consumidor se registran y dejan el offset sin confirmar, pero no se comunican mediante la API en esta entrega.
 - Esta primera entrega no incluye análisis geográfico, replay completo, publicación en Netlify ni memoria final; esos elementos quedan para una especificación posterior.
 - Si algo importante no está especificado, se utilizarán suposiciones razonables y se limitarán los puntos de aclaración a un máximo de tres, priorizando la frontera de alcance de la entrega.

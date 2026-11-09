@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Test and build output
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Node.js and Angular
+node_modules/
+.angular/
+observatorio-sismico/frontend/dist/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp

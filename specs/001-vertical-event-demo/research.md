@@ -22,13 +22,14 @@
 
 ## Decisión 3: separación de errores de persistencia y consulta
 
-**Decisión**: La API no debe convertir un error de persistencia del consumidor en una respuesta vacía válida. La respuesta de la API debe diferenciar entre “sin eventos” y “fallo del servicio” y debe definir el mecanismo de error explícito del backend.
+**Decisión**: Un fallo transitorio de escritura del consumidor se registra y deja el offset de Kafka sin confirmar para permitir el reintento; no se comunica a través de la API porque esta entrega no define un canal de estado consumidor→API. Un mensaje inválido o no soportado se conserva en cuarentena durable con su motivo y referencia al original antes de confirmar el offset. La API solo devuelve error explícito cuando falla su propia consulta o una dependencia que observa directamente; una respuesta vacía solo es válida tras una consulta exitosa sin resultados.
 
-**Rationale**: El contrato de la API y la especificación exigen que una respuesta vacía no se presente como éxito cuando hay un fallo de consulta o persistencia. Debe existir una forma explícita de comunicar la falla.
+**Rationale**: La API no puede comunicar estados que no recibe. Mantener el offset sin confirmar evita perder mensajes ante errores transitorios; poner en cuarentena un mensaje rechazado evita descartarlo silenciosamente. La semántica HTTP queda limitada a estados que la API puede observar.
 
 **Alternativas consideradas**:
-- Devolver `features: []` siempre cuando el consumidor falla: se descarta porque se confunde “sin datos” con “error”.
-- Devolver un 500 sin payload útil: se descarta como mecanismo insuficiente si el contrato requiere una respuesta definida.
+- Devolver `features: []` cuando falla la escritura o la consulta: se descarta porque confunde “sin datos” con un error.
+- Hacer que la API afirme un fallo del consumidor sin un canal definido: se descarta porque atribuye a la API conocimiento que no tiene.
+- Confirmar el offset ante un fallo transitorio de escritura: se descarta porque puede perder el mensaje.
 
 ## Decisión 4: enfoque de servicio requerido
 
@@ -42,18 +43,26 @@
 
 ## Decisión 5: definición del criterio SC-001
 
-**Decisión**: El criterio SC-001 queda identificado como un punto de decisión de alcance para el usuario, no como una métrica inventada. La validación del hito debe definirse en una sesión de demostración con paso a paso, pero sin fijar un valor numérico arbitrario.
+**Decisión**: SC-001 es binario: desde la raíz `observatorio-sismico/`, los cinco servicios están disponibles y el evento sintético aparece exactamente una vez mediante la API. No se fija un límite de tiempo no especificado.
 
-**Rationale**: La especificación no define un tiempo objetivo ni un número de pasos medibles. En esta fase de diseño, ese criterio debe mantenerse como una condición de prueba de aceptación, no como un hecho cuantificado sin acuerdo.
+**Rationale**: La especificación no define un tiempo objetivo; el criterio verifica directamente el arranque requerido y el resultado observable sin inventar una métrica.
 
 **Alternativas consideradas**:
 - Fijar “menos de 5 minutos” de forma arbitraria: se descarta porque es un valor inventado.
-- Ignorar el criterio: se descarta porque la especificación lo incluye y debe quedar visible para revisarse.
+- Mantener “ciclo de demostración razonable”: se descarta porque no es medible.
+
+## Decisión 6: semántica temporal y unidades
+
+**Decisión**: El mensaje y el estado conservan por separado hora de ocurrencia, actualización de fuente, ingesta y reproducción, con tiempos en UTC y unidades documentadas. La forma API usa milisegundos desde la época Unix para `generated`, `last_ingestion`, `time` y `updated`; `replayed_at` es nulo en la demo, que no implementa replay.
+
+**Rationale**: Esta separación evita confundir la antigüedad del evento con cuándo se actualizó o recibió, y mantiene el requisito constitucional sin incluir una función futura de reproducción.
 
 ## Hallazgos clave de la investigación
 
 - La primera entrega no debe incluir ingesta live ni histórico.
 - El consumidor debe ser idempotente y guardar la última versión válida.
 - El contrato de API debe devolver `FeatureCollection` válido para eventos, y `features: []` solo es válido para consultas correctas con ausencia real de datos.
+- El consumidor no confirma offsets antes de la escritura durable; los registros rechazados se conservan en cuarentena antes de confirmar y los fallos transitorios quedan disponibles para reintento.
+- La API solo comunica errores de consulta o dependencias que puede observar directamente; esta entrega no define un canal de estado del consumidor a la API.
 - El origen de la prueba se debe distinguir de la ingestión real y la reproducción del sistema.
 - La verificación del hito debe hacerse con un conjunto de pasos manuales de validación, no con números inventados.

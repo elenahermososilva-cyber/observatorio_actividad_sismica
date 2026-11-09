@@ -6,7 +6,7 @@
 
 ## Resumen
 
-La primera entrega vertical debe demostrar, sin abarcar aún la ingesta live ni el sistema completo, que un evento sintético claramente identificado recorre productor, Kafka, consumidor, PostgreSQL y API FastAPI y puede consultarse como un `FeatureCollection` GeoJSON según el contrato. El objetivo del plan es validar la arquitectura obligatoria del proyecto, la idempotencia del consumidor, la persistencia y la separación clara entre errores de persistencia del consumidor y errores de consulta de la API. El consumidor registra el fallo y retiene el offset; la API solo informa de fallos que observa directamente o de un estado explícito del servicio, sin presentarse como una respuesta vacía válida.
+La primera entrega vertical debe demostrar, sin abarcar aún la ingesta live ni el sistema completo, que un evento sintético claramente identificado recorre productor, Kafka, consumidor, PostgreSQL y API FastAPI y puede consultarse como un `FeatureCollection` GeoJSON según el contrato. El objetivo del plan es validar la arquitectura obligatoria del proyecto, la idempotencia del consumidor, la persistencia y la separación clara entre errores de persistencia del consumidor y errores de consulta de la API. Ante un fallo transitorio de escritura, el consumidor registra el error y no confirma el offset; confirma offsets solo después de persistir duraderamente el estado. Los registros rechazados se ponen en cuarentena duradera antes de confirmar su offset. La API solo informa de fallos que observa directamente y no presenta una consulta fallida como una respuesta vacía válida.
 
 ## Contexto técnico
 
@@ -15,6 +15,8 @@ La primera entrega vertical debe demostrar, sin abarcar aún la ingesta live ni 
 **Dependencias principales**: Kafka (cliente Python, ej. `aiokafka`), FastAPI, Pydantic, PostgreSQL driver, Docker Compose, y el frontend Angular ya entregado en `observatorio-sismico/frontend`.
 
 **Almacenamiento**: PostgreSQL persistente mediante volúmenes de Docker; Kafka como transporte de mensajes y retención de mensajes para reinicios y relecturas; el almacenamiento de origen de la prueba es un evento sintético controlado.
+
+**Semántica temporal y unidades**: conservar por separado ocurrencia del evento, actualización de la fuente, ingesta y reproducción. Los tiempos se expresan en UTC con unidades documentadas; los valores temporales de la fuente y el contrato GeoJSON usan milisegundos desde la época Unix cuando corresponda. `replayed_at` es nulo en esta entrega, que no implementa replay. Coordenadas se expresan en grados decimales y profundidad en kilómetros.
 
 **Pruebas**: Validación de humo con Docker Compose y comprobación de mensajes publicados/consumidos, persistencia y respuesta API; pruebas de contrato de API y de idempotencia del consumidor.
 
@@ -35,7 +37,8 @@ La primera entrega vertical debe demostrar, sin abarcar aún la ingesta live ni 
 - Pasada: arquitectura obligatoria de cinco servicios separados en Docker Compose.
 - Pasada: no se introducen requisitos de Spark, Flink, Kubernetes ni aprendizaje automático.
 - Pasada: se mantiene la obligación de idempotencia del consumidor, confirmación de offsets y cuarentena de registros rechazados.
-- Pasada: la API debe distinguir entre resultado válido, error de consulta y ausencia real de eventos; no se acepta una respuesta vacía como éxito.
+- Pasada: los fallos transitorios de escritura del consumidor no confirman offsets; los registros rechazados se ponen en cuarentena duradera antes de confirmar. La API distingue una consulta correcta sin resultados de un fallo de su propia consulta y no afirma conocer fallos del consumidor.
+- Pasada: los tiempos de ocurrencia, actualización, ingesta y reproducción permanecen diferenciados, con UTC y unidades explícitas.
 - Pasada: se conserva la separación entre origen de verdad, integración y presentación del frontend.
 - Pasada: no se almacenan secretos en frontend ni en Git.
 - Pasada: el criterio SC-001 se define como verificable sin inventar un tiempo: los cinco servicios deben estar disponibles y el evento sintético debe consultarse exactamente una vez mediante la API.
