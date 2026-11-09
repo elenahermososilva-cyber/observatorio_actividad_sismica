@@ -82,3 +82,21 @@ Recopilación cronológica de los temas tratados y los resultados comunicados en
 - Se pidió cubrir los cinco servicios Docker, el evento sintético, la persistencia idempotente y la API GeoJSON, además de distinguir una respuesta vacía válida de un error.
 - Se señaló que la API no debe afirmar que conoce un fallo de persistencia del consumidor si no existe un mecanismo definido para recibir ese estado; esa dependencia debía resolverse en las tareas conforme al contrato acordado.
 - **Estado al cerrar esta recopilación:** la sesión había comunicado que estaba preparando y validando `tasks.md`; no se dispone aquí de un resultado final de esa generación.
+
+## Ampliación: avances de las dos conversaciones principales
+
+### Conversación «proyecto con Github spec kit»
+
+- Se revisó el enunciado y el material de partida para orientar el trabajo con Spec Kit. Se recomendó avanzar por fases: fijar la constitución, especificar una entrega vertical, aclararla, planificarla, generar y revisar tareas y, solo entonces, implementar.
+- Se explicó que `/speckit-constitution` puede generar una primera versión sin entrevistar al usuario; para obtener reglas concretas se pueden proporcionar instrucciones explícitas, basadas en el enunciado y la FAQ, y revisar después el diff antes de aceptar los cambios.
+- Tras completar la constitución, la orientación fue continuar con la especificación y respetar el orden del flujo. Después de `/speckit-clarify`, el siguiente paso era `/speckit-plan`; una vez disponibles el plan y sus artefactos, correspondía revisar inconsistencias y generar tareas antes de implementar.
+- Se indicó que Docker era necesario para validar la integración de los cinco servicios del backend mediante Docker Compose. La primera comprobación mostró que el cliente estaba instalado, pero el motor no estaba iniciado; se recomendó abrir Docker Desktop y volver a comprobar `docker info`.
+- La persona usuaria ejecutó `docker run --rm hello-world` y recibió el mensaje de bienvenida. Se confirmó así que Docker podía descargar y ejecutar contenedores, y se indicó resolver primero las inconsistencias de las tareas antes de comenzar la implementación.
+
+### Conversación «Speckit constitution details»
+
+- Se revisaron las tareas y los documentos antes de implementar. Se pidió separar claramente los errores transitorios de escritura del consumidor, los registros rechazados y los errores de consulta observables por la API.
+- El análisis de Spec Kit detectó inconsistencias entre los artefactos de diseño y la constitución. Se aplicaron sus sugerencias y se alinearon siete documentos de la funcionalidad: los fallos transitorios de persistencia no confirman el offset de Kafka para permitir reintentos; los registros rechazados se guardan en una cuarentena duradera con motivo y referencia al original antes de confirmar; y la API solo comunica errores que puede observar directamente. Una respuesta `features: []` es válida únicamente cuando la consulta se completó correctamente y no encontró resultados.
+- También se aclaró el uso de las marcas temporales (ocurrencia, actualización, ingesta y reproducción), las unidades y la asignación geográfica, manteniendo la coherencia con la constitución y el contrato.
+- Se solicitó implementar exclusivamente Setup, Fundacionales y US1, sin comenzar US2, US3 ni el pulido hasta que se revisara el MVP. Se comunicó que las tareas T001–T015 quedaron completadas y T016 pendiente, y que la checklist de requisitos seguía en 16/16 PASS.
+- El resumen de implementación indicó que el MVP incluye los cinco servicios en `observatorio-sismico/compose.yaml`, el evento sintético, el esquema, la persistencia idempotente y la consulta mediante la API. No se inició el trabajo de las historias US2 y US3.
