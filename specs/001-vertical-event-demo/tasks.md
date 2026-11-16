@@ -20,8 +20,8 @@
 
 **⚠️ CRÍTICO**: ninguna historia puede empezar hasta completar esta fase.
 
-- [ ] T004 Definir el esquema de persistencia en `backend/db/schema.sql` o `backend/db/migrations/` con `event_message`, `event_current` y `quarantine_record`, manteniendo una sola fila activa por `event_id` y una referencia duradera al payload original en cuarentena.
-- [ ] T005 [P] Definir el contrato del mensaje publicado por el productor en `backend/producer/producer.py` y/o `backend/producer/schema.py`, incluyendo `event_id`, `source`, `mode`, `ingested_at`, `updated`, `payload`, `synthetic_flag`, y la distinción clara entre `demo` y flujo real.
+- [x] T004 Definir el esquema de persistencia en `backend/db/schema.sql` o `backend/db/migrations/` con `event_message`, `event_current` y `quarantine_record`, manteniendo una sola fila activa por `event_id` y una referencia duradera al payload original en cuarentena.
+- [x] T005 [P] Definir el contrato del mensaje publicado por el productor en `backend/producer/producer.py` y/o `backend/producer/schema.py`, incluyendo `event_id`, `source`, `mode`, `ingested_at`, `updated`, `payload`, `synthetic_flag`, y la distinción clara entre `demo` y flujo real.
 - [ ] T006 [P] Definir la lógica de idempotencia del consumidor en `backend/consumer/consumer.py` con comparación por `event_id` y `updated`/versión de origen, ignorando versiones anteriores y reemplazando solo si la nueva versión es más reciente.
 - [ ] T007 [P] Definir la semántica explícita de la API en `backend/api/app.py` para devolver `FeatureCollection` válido, metadata obligatoria (`generated`, `last_ingestion`, `mode`, `count`, `truncated`) y un error explícito cuando la persistencia o la consulta fallen, sin presentar como válido un `FeatureCollection` vacío para un error del sistema.
 - [ ] T008 Definir el contrato de error de servicio y la política de estado del backend en `specs/001-vertical-event-demo/contracts/api-eventos.md` y `backend/api/errors.py` para distinguir “sin resultados” de “fallo del servicio”; la API no debe afirmar que conoce un fallo del consumidor si el diseño del contrato no define ese estado.
@@ -112,4 +112,3 @@
 - El MVP mínimo para esta entrega es la User Story 1: evento sintético publicado, persistido idempotentemente y consultado exactamente una vez a través de la API.
 - User Story 2 debe cerrarse antes de considerar la entrega totalmente validada para errores y reconsumo.
 - User Story 3 sirve como validación operativa del arranque mínimo y del criterio de aceptación de la pila de cinco servicios.
-
