@@ -15,6 +15,7 @@ import asyncio
 import logging
 import os
 import signal
+from pathlib import Path
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import TypeVar
@@ -26,6 +27,8 @@ from backend.common.backoff import backoff_delays, retry_async
 from backend.common.config import database_url, get_list, get_str
 from backend.common.health import heartbeat_loop
 from backend.common.logging_setup import configure_logging
+from backend.consumer.geo import CountryIndex
+from backend.consumer.geo_backfill import backfill_all
 from backend.consumer.processing import Rejection, RejectionReason, parse_message
 from backend.consumer.versioning import VersionDecision
 from backend.db.connection import Database
@@ -51,7 +54,7 @@ async def use_mode_schema(conn: psycopg.AsyncConnection, mode: str) -> None:
 
 
 async def handle_record(
-    conn: psycopg.AsyncConnection, raw: bytes, ref: KafkaRef, mode: str = "demo"
+    conn: psycopg.AsyncConnection, raw: bytes, ref: KafkaRef, mode: str = "demo", geo: CountryIndex | None = None
 ) -> HandleResult:
     """Procesa un mensaje completo. Al volver, el resultado ya está confirmado (COMMIT) en PostgreSQL.
 
@@ -72,7 +75,7 @@ async def handle_record(
         return HandleResult(rejection=parsed)
 
     try:
-        stored = await store_message(conn, parsed)
+        stored = await store_message(conn, parsed, geo)
     except DB_ERRORS_TO_QUARANTINE as error:
         rejection = Rejection(
             RejectionReason.PERSISTENCE_CONSTRAINT, f"{type(error).__name__}: {error}", parsed.event_id, parsed.source
@@ -120,13 +123,13 @@ def topic_modes(env: Mapping[str, str]) -> dict[str, str]:
     return mapping
 
 
-async def consume(consumer, db: Database, modes: Mapping[str, str]) -> None:
+async def consume(consumer, db: Database, modes: Mapping[str, str], geo: CountryIndex) -> None:
     from aiokafka import TopicPartition
 
     async for record in consumer:
         ref = KafkaRef(record.topic, record.partition, record.offset)
         mode = modes[record.topic]
-        await db.run(lambda conn: handle_record(conn, record.value, ref, mode))
+        await db.run(lambda conn: handle_record(conn, record.value, ref, mode, geo))
         # Solo aquí, tras el COMMIT en PostgreSQL:
         await consumer.commit({TopicPartition(record.topic, record.partition): record.offset + 1})
 
@@ -142,11 +145,16 @@ async def main(env: Mapping[str, str] | None = None) -> int:
     if unknown:
         raise ValueError(f"CONSUMER_TOPICS contains topics without a mode: {unknown}")
     db = Database(database_url(env), hint="offset NOT committed")
+    # Sin catálogo no hay atribución de país: es un fallo de arranque, no algo que se omita en silencio.
+    geo = CountryIndex.from_file(Path(get_str("COUNTRIES_GEOJSON", "/app/data/paises.geojson", env)))
+    log.info("country index ready: %d countries (repaired geometries: %s)", len(geo), geo.repaired or "none")
+    # Evalúa lo que quedó sin país/calidad (filas anteriores a esta versión o escritas sin índice).
+    await db.run(lambda conn: backfill_all(conn, geo))
 
     heartbeat = asyncio.create_task(heartbeat_loop())
     consumer = await _start_consumer(bootstrap, group_id, topics)
     log.info("consuming %s as group %s", topics, group_id)
-    task = asyncio.create_task(consume(consumer, db, modes))
+    task = asyncio.create_task(consume(consumer, db, modes, geo))
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
         try:

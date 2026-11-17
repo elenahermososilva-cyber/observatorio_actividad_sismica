@@ -68,13 +68,23 @@ Histórico, enriquecimiento geográfico, estadísticas. Se añadieron mediante m
 
 **Columnas de `event_current`** (unidades: ms Unix UTC, km, grados WGS84): `time_ms` (ocurrencia), `mag` (`NULL` = ND, nunca 0), `mag_type`, `depth_km` (`NULL` si falta; los valores negativos se conservan), `lon`, `lat`, `place` (descriptivo; no se usa para el país), `event_type`, `ingested_at`, `country_id`, `country_status`. La versión de la fuente sigue siendo `current_version_ms`. El payload original permanece intacto en `event_message`.
 
-**País.** `country_status` ∈ `pending` (sin atribuir aún), `unassigned` («Sin país asignado»: fuera de todo polígono, no es un error) y `assigned`. Una restricción garantiza `assigned ⇔ country_id no nulo` y una clave foránea apunta a `ref.dim_country(country_id)`. Una revisión que reemplaza la versión actual devuelve el país a `pending` porque el epicentro pudo moverse; la Fase 8 lo recalcula.
+**País.** `country_status` ∈ `pending` (sin atribuir aún), `unassigned` («Sin país asignado»: fuera de todo polígono, no es un error) y `assigned`. Una restricción garantiza `assigned ⇔ country_id no nulo` y una clave foránea apunta a `ref.dim_country(country_id)`. Desde la Fase 8 el consumidor calcula el país al escribir cada versión (`backend/consumer/geo.py`); una revisión que mueve el epicentro recalcula el país y nunca conserva uno obsoleto. `pending` solo queda para filas escritas sin índice geográfico, que `geo_backfill` evalúa.
 
 **Dimensión país.** `ref.dim_country` (ADM0_A3, NAME_ES, ADMIN, CONTINENT, SUBREGION, SHA-256 de origen) se carga al migrar, tras comprobar que `ADM0_A3` es único (177 entidades). La geometría no se guarda: el punto-en-polígono usa el GeoJSON en memoria. No se crea `dim_date`: las ventanas de una hora UTC se obtienen con `time_ms` y `date_trunc`, sin tabla adicional.
 
 **Índices** (justificación en `005_event_current_indexes.sql`): `(time_ms DESC)` para ventanas y orden; `(country_id, time_ms DESC)` para filtro y recuentos por país; `(mag)` parcial sin nulos para `min_mag` (la magnitud nula nunca lo cumple); `(country_status)`.
 
 **Estado de ingesta (D1).** `ingest.published_version (mode, event_id, updated_ms)` marca versiones publicadas tras el ack de Kafka; `ingest.extraction_log` registra cada consulta a USGS (URL, latencia, estado HTTP, nº de registros, hash del contenido, archivo original y error). Solo las consultas `ok` mueven `last_ingestion`. Las escribe el productor live (Fase 7). `response_sha256` es el hash de las `features` (no de los bytes: `metadata.generated` cambia cada minuto) y sirve para no guardar originales idénticos.
+
+## Fase 8: calidad, país y modo `historical`
+
+**`quality_flags TEXT[]`** (migración 008, `event_current`): códigos de aviso y de transformación de la versión actual (`gap_*`, `anomaly_*`, `fixed_*`, `country_boundary_ambiguous`). `NULL` = aún no evaluado; `{}` = evaluado sin incidencias. Permite contar cuántos registros afecta cada regla con `unnest`. Reglas y umbrales en `backend/consumer/quality.py`; resultados medidos en `docs/fase8-calidad-y-geografia.md`.
+
+**Modo `historical`** (migración 008): instantánea del catálogo USGS cargada por `history_loader` en el esquema `historico`, con `source="usgs-catalog"`. No llega por Kafka ni se consulta con `?mode=`.
+
+**Aislamiento reforzado en la base** (migración 009): cada esquema solo admite su modo (`demo`↔`demo`, `live`↔`live`, `replay`↔`replay`, `historico`↔`historical`) mediante `CHECK`, de modo que ni un `INSERT` directo puede mezclarlos. El rechazo `mode_mismatch` del consumidor sigue siendo la primera línea de defensa.
+
+**Referencia al original en la carga por lotes.** Sin Kafka, la cuarentena guarda `file:<archivo>` y la posición dentro del archivo en `kafka_topic`/`kafka_offset`; es estable y hace idempotente la recarga.
 
 ## Fase 7: tiempo de reproducción y modos
 

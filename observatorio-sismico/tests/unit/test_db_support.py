@@ -41,10 +41,12 @@ class ModesTests(unittest.TestCase):
         self.assertEqual(set(MODE_SCHEMAS), {"demo", "live", "replay", "historico"})
         self.assertTrue(set(EVENT_MODES) <= set(MODE_SCHEMAS))
         self.assertNotIn("historico", EVENT_MODES)  # el histórico no llega por Kafka ni se consulta como modo
+        self.assertNotIn("historical", EVENT_MODES)
+        self.assertEqual(schema_for_mode("historical"), "historico")  # el modo `historical` escribe en `historico`
 
     def test_schema_for_mode_rejects_anything_outside_the_closed_list(self) -> None:
         self.assertEqual(schema_for_mode("live"), "live")
-        for bad in ("public", "ingest", "", 'demo"; DROP', "DEMO"):
+        for bad in ("public", "ingest", "historico", "", 'demo"; DROP', "DEMO"):
             with self.assertRaises(ValueError, msg=bad):
                 schema_for_mode(bad)
 
@@ -111,13 +113,14 @@ class MigrationFilesTests(unittest.TestCase):
         by_version = {m.version: m for m in discover_migrations()}
         self.assertFalse(by_version[1].per_schema)  # schema.sql: public, inmutable
         self.assertFalse(by_version[2].per_schema)  # esquemas, movimiento de tablas, ref
-        for version in (3, 4, 5, 7):
+        for version in (3, 4, 5, 7, 8):
             self.assertTrue(by_version[version].per_schema, version)
             self.assertTrue(by_version[version].sql.startswith(PER_SCHEMA_MARKER))
         self.assertFalse(by_version[6].per_schema)  # ingest: estado del productor, un solo esquema
+        self.assertFalse(by_version[9].per_schema)  # restricciones distintas por esquema (modo ↔ esquema)
 
     def test_migrations_are_consecutive_and_cover_the_phase(self) -> None:
-        self.assertEqual([m.version for m in discover_migrations()], [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual([m.version for m in discover_migrations()], [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 
 if __name__ == "__main__":

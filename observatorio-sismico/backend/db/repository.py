@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from psycopg import AsyncConnection
 from psycopg.types.json import Jsonb
 
+from backend.consumer.geo import CountryIndex
+from backend.consumer.quality import assess
 from backend.consumer.versioning import EventVersion, VersionDecision, classify_version
 from backend.db.columns import extract_columns
 from backend.producer.schema import EventMessage
@@ -36,14 +38,14 @@ ON CONFLICT (event_id, updated_ms) DO NOTHING
 RETURNING message_id
 """
 
-# country_id/country_status: una versión nueva puede mover el epicentro, así que la atribución previa se
-# invalida ('pending') y la recalcula la fase de geografía. Nunca se conserva un país obsoleto.
+# La atribución de país y los avisos de calidad se calculan al escribir (consumidor) con la geometría de ESTA versión.
+# Si no hay índice geográfico (tests, herramientas), el país queda 'pending' y se calcula después (geo_backfill).
 _UPSERT_CURRENT = """
 INSERT INTO event_current
     (event_id, message_id, current_version_ms, last_seen_at,
      time_ms, mag, mag_type, depth_km, lon, lat, place, event_type, ingested_at,
-     country_id, country_status)
-VALUES (%s, %s, %s, now(), %s, %s, %s, %s, %s, %s, %s, %s, %s, NULL, 'pending')
+     country_id, country_status, quality_flags)
+VALUES (%s, %s, %s, now(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (event_id) DO UPDATE SET
     message_id = EXCLUDED.message_id,
     current_version_ms = EXCLUDED.current_version_ms,
@@ -57,13 +59,16 @@ ON CONFLICT (event_id) DO UPDATE SET
     place = EXCLUDED.place,
     event_type = EXCLUDED.event_type,
     ingested_at = EXCLUDED.ingested_at,
-    country_id = NULL,
-    country_status = 'pending'
+    country_id = EXCLUDED.country_id,
+    country_status = EXCLUDED.country_status,
+    quality_flags = EXCLUDED.quality_flags
 WHERE event_current.current_version_ms < EXCLUDED.current_version_ms
 """
 
 
-async def store_message(conn: AsyncConnection, message: EventMessage) -> StoreResult:
+async def store_message(
+    conn: AsyncConnection, message: EventMessage, geo: CountryIndex | None = None
+) -> StoreResult:
     async with conn.transaction():
         cursor = await conn.execute(
             "SELECT current_version_ms FROM event_current WHERE event_id = %s FOR UPDATE",
@@ -99,12 +104,21 @@ async def store_message(conn: AsyncConnection, message: EventMessage) -> StoreRe
                     (message.event_id, message.updated_ms),
                 )
                 message_id = (await cursor.fetchone())[0]
-            c = extract_columns(message.payload, message.ingested_at)
+            assessment = assess(extract_columns(message.payload, message.ingested_at), message.updated_ms)
+            c = assessment.columns
+            flags = list(assessment.flags)
+            if geo is None:
+                country_id, country_status = None, "pending"
+            else:
+                attribution = geo.locate(c.lon, c.lat)
+                country_id, country_status = attribution.country_id, attribution.status
+                flags.extend(attribution.flags)
             cursor = await conn.execute(
                 _UPSERT_CURRENT,
                 (
                     message.event_id, message_id, message.updated_ms,
                     c.time_ms, c.mag, c.mag_type, c.depth_km, c.lon, c.lat, c.place, c.event_type, c.ingested_at,
+                    country_id, country_status, flags,
                 ),
             )
             current_updated = cursor.rowcount == 1

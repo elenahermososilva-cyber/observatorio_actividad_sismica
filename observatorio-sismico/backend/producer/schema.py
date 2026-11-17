@@ -18,6 +18,8 @@ class IngestionMode(StrEnum):
     DEMO = "demo"
     LIVE = "live"
     REPLAY = "replay"
+    # Instantánea del catálogo USGS cargada por lotes (history_loader); no llega por Kafka.
+    HISTORICAL = "historical"
 
 
 def _iso_utc(value: datetime) -> str:
@@ -62,8 +64,8 @@ class EventMessage:
             raise TypeError("synthetic_flag must be a boolean")
         if self.mode is IngestionMode.DEMO and not self.synthetic_flag:
             raise ValueError("demo messages must be marked synthetic")
-        if self.mode is IngestionMode.LIVE and self.synthetic_flag:
-            raise ValueError("live messages cannot be marked synthetic")
+        if self.mode in (IngestionMode.LIVE, IngestionMode.HISTORICAL) and self.synthetic_flag:
+            raise ValueError(f"{self.mode.value} messages cannot be marked synthetic")
         self._validate_replay_at()
         self._validate_payload()
 
@@ -180,7 +182,7 @@ class EventMessage:
         try:
             mode = IngestionMode(value["mode"])
         except (TypeError, ValueError) as error:
-            raise ValueError("mode must be demo, live or replay") from error
+            raise ValueError("mode must be demo, live, replay or historical") from error
 
         timestamp = value["ingested_at"]
         if not isinstance(timestamp, str):

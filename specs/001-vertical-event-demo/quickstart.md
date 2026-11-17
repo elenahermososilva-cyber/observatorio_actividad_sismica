@@ -112,6 +112,16 @@ Publica los 10 eventos más antiguos con M ≥ 5 desde `REPLAY_START`, en orden 
 
 Los tests de la Fase 7 (`test_phase7_pure`, `test_usgs_client`, `test_live_replay_db`) no salen a internet: simulan USGS y Kafka.
 
+**Cargar el histórico en `historico`** (Fase 8; reutiliza el procesamiento del consumidor: validación, calidad y país):
+
+```bash
+docker compose run --rm --no-deps consumer python -m backend.consumer.history_loader   # ~80 s la primera vez; después todo DUPLICATE
+docker compose exec postgres psql -U observatorio -d observatorio -c \
+  "select country_status, count(*) from historico.event_current group by 1"
+```
+
+Los eventos de cualquier modo se evalúan al escribirse; los anteriores a la atribución de país se completan solos al arrancar el consumidor (`geo_backfill`). Reglas, decisiones y resultados medidos: `docs/fase8-calidad-y-geografia.md`.
+
 ## 6. Limpieza
 
 `docker compose down` conserva los datos; `docker compose down -v` borra los volúmenes (Kafka, PostgreSQL y originales).

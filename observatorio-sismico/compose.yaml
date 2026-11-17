@@ -85,6 +85,9 @@ services:
     <<: *python-service
     # El migrador es idempotente y usa pg_advisory_lock: es seguro que api y consumer lo ejecuten a la vez.
     command: ["sh", "-c", "python -m backend.db.migrate && exec python -m backend.consumer.consumer"]
+    volumes:
+      # Solo lectura: lo usa `python -m backend.consumer.history_loader` (carga del histórico).
+      - ./data/raw:/app/data/raw:ro
     healthcheck:
       test: ["CMD", "python", "-m", "backend.common.health"]
       interval: 15s
