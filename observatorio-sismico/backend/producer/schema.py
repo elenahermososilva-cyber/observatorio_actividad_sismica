@@ -6,10 +6,22 @@ from enum import StrEnum
 from typing import Self
 
 
+class InvalidJsonError(ValueError):
+    """El texto del mensaje no es JSON válido (o contiene NaN/Infinity)."""
+
+
+class InvalidGeometryError(ValueError):
+    """Geometría no Point o coordenadas no finitas / fuera de rango."""
+
+
 class IngestionMode(StrEnum):
     DEMO = "demo"
     LIVE = "live"
     REPLAY = "replay"
+
+
+def _iso_utc(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 @dataclass(frozen=True)
@@ -21,6 +33,10 @@ class EventMessage:
     updated_ms: int
     payload: dict[str, object]
     synthetic_flag: bool
+    # Instante (UTC) en que se reprodujo el evento. Distinto de la ocurrencia (`properties.time`),
+    # de la actualización de la fuente (`updated`) y de la ingestión (`ingested_at`).
+    # Obligatorio en modo replay y prohibido en los demás.
+    replay_at: datetime | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.event_id, str) or not self.event_id.strip():
@@ -48,7 +64,19 @@ class EventMessage:
             raise ValueError("demo messages must be marked synthetic")
         if self.mode is IngestionMode.LIVE and self.synthetic_flag:
             raise ValueError("live messages cannot be marked synthetic")
+        self._validate_replay_at()
         self._validate_payload()
+
+    def _validate_replay_at(self) -> None:
+        if self.mode is IngestionMode.REPLAY:
+            if self.replay_at is None:
+                raise ValueError("replay messages must include replay_at")
+            if not isinstance(self.replay_at, datetime):
+                raise TypeError("replay_at must be a datetime")
+            if self.replay_at.tzinfo is None or self.replay_at.utcoffset() != timedelta(0):
+                raise ValueError("replay_at must be timezone-aware UTC")
+        elif self.replay_at is not None:
+            raise ValueError("replay_at is only allowed in replay mode")
 
     def _validate_payload(self) -> None:
         if not isinstance(self.payload, dict):
@@ -73,22 +101,22 @@ class EventMessage:
 
         geometry = self.payload.get("geometry")
         if not isinstance(geometry, dict) or geometry.get("type") != "Point":
-            raise ValueError("payload.geometry must be a GeoJSON Point")
+            raise InvalidGeometryError("payload.geometry must be a GeoJSON Point")
         coordinates = geometry.get("coordinates")
         if not isinstance(coordinates, list) or len(coordinates) not in (2, 3):
-            raise ValueError("Point coordinates must include longitude and latitude")
+            raise InvalidGeometryError("Point coordinates must include longitude and latitude")
         for coordinate in coordinates[:2]:
             if (
                 isinstance(coordinate, bool)
                 or not isinstance(coordinate, (int, float))
                 or not math.isfinite(coordinate)
             ):
-                raise ValueError("longitude and latitude must be finite numbers")
+                raise InvalidGeometryError("longitude and latitude must be finite numbers")
         longitude, latitude = coordinates[:2]
         if not -180 <= longitude <= 180:
-            raise ValueError("longitude must be between -180 and 180")
+            raise InvalidGeometryError("longitude must be between -180 and 180")
         if not -90 <= latitude <= 90:
-            raise ValueError("latitude must be between -90 and 90")
+            raise InvalidGeometryError("latitude must be between -90 and 90")
         if len(coordinates) == 3:
             depth = coordinates[2]
             if depth is not None and (
@@ -96,7 +124,7 @@ class EventMessage:
                 or not isinstance(depth, (int, float))
                 or not math.isfinite(depth)
             ):
-                raise ValueError("depth must be a finite number or null")
+                raise InvalidGeometryError("depth must be a finite number or null")
 
         magnitude = properties.get("mag")
         if magnitude is not None and (
@@ -115,17 +143,18 @@ class EventMessage:
             raise ValueError("payload.properties.time must be milliseconds")
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        value: dict[str, object] = {
             "event_id": self.event_id,
             "source": self.source,
             "mode": self.mode.value,
-            "ingested_at": self.ingested_at.astimezone(timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z"),
+            "ingested_at": _iso_utc(self.ingested_at),
             "updated": self.updated_ms,
             "payload": self.payload,
             "synthetic_flag": self.synthetic_flag,
         }
+        if self.replay_at is not None:
+            value["replay_at"] = _iso_utc(self.replay_at)
+        return value
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), allow_nan=False, separators=(",", ":"))
@@ -169,6 +198,16 @@ class EventMessage:
         if not isinstance(payload, dict):
             raise ValueError("payload must be a JSON object")
 
+        replay_at = None
+        if value.get("replay_at") is not None:
+            raw_replay = value["replay_at"]
+            if not isinstance(raw_replay, str):
+                raise ValueError("replay_at must be an ISO 8601 string")
+            try:
+                replay_at = datetime.fromisoformat(raw_replay.replace("Z", "+00:00"))
+            except ValueError as error:
+                raise ValueError("replay_at must be an ISO 8601 string") from error
+
         return cls(
             event_id=value["event_id"],
             source=value["source"],
@@ -177,6 +216,7 @@ class EventMessage:
             updated_ms=updated_ms,
             payload=payload,
             synthetic_flag=value["synthetic_flag"],
+            replay_at=replay_at,
         )
 
     @classmethod
@@ -187,5 +227,5 @@ class EventMessage:
         try:
             value = json.loads(raw, parse_constant=reject_non_finite)
         except (json.JSONDecodeError, ValueError) as error:
-            raise ValueError("message must contain valid JSON") from error
+            raise InvalidJsonError("message must contain valid JSON") from error
         return cls.from_dict(value)

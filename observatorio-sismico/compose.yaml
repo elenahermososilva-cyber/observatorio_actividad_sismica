@@ -1,0 +1,118 @@
+# Observatorio sísmico: exactamente cinco servicios.
+# Uso: cp .env.example .env && docker compose up --build -d
+name: observatorio
+
+x-python-service: &python-service
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  image: observatorio-backend:local
+  env_file: .env
+  restart: unless-stopped
+
+services:
+  kafka:
+    image: apache/kafka:3.9.0
+    restart: unless-stopped
+    # Sin "ports": el broker solo es accesible por la red de Compose (kafka:9092).
+    # Para acceso desde el host habría que añadir un segundo listener (EXTERNAL) anunciado como localhost.
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # Una partición: orden total por clave sin complicar la demo.
+      KAFKA_NUM_PARTITIONS: "1"
+      # Retención limitada: 7 días o 1 GiB por partición, lo que ocurra antes.
+      KAFKA_LOG_RETENTION_HOURS: "168"
+      KAFKA_LOG_RETENTION_BYTES: "1073741824"
+      KAFKA_LOG_SEGMENT_BYTES: "134217728"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  postgres:
+    image: postgres:17.2
+    restart: unless-stopped
+    # Sin "ports": la base de datos no se publica.
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-observatorio}
+      POSTGRES_USER: ${POSTGRES_USER:-observatorio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD en .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  producer:
+    <<: *python-service
+    # live y replay usan ingest.* y los esquemas por modo: migra antes de arrancar (idempotente, con advisory lock).
+    command: ["sh", "-c", "python -m backend.db.migrate && exec python -m backend.producer.producer"]
+    volumes:
+      # Originales descargados (feed live, histórico): visibles en ./data/raw y fuera de Git.
+      - ./data/raw:/app/data/raw
+    healthcheck:
+      test: ["CMD", "python", "-m", "backend.common.health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  consumer:
+    <<: *python-service
+    # El migrador es idempotente y usa pg_advisory_lock: es seguro que api y consumer lo ejecuten a la vez.
+    command: ["sh", "-c", "python -m backend.db.migrate && exec python -m backend.consumer.consumer"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "backend.common.health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *python-service
+    command: ["sh", "-c", "python -m backend.db.migrate && exec uvicorn backend.api.app:app --host 0.0.0.0 --port 8000"]
+    # Solo la API se publica, y solo en loopback del host (para `ngrok http 8000`).
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/salud', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  kafka_data:
+  postgres_data:

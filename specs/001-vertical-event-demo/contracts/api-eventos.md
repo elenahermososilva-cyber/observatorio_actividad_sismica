@@ -66,6 +66,31 @@
 - La respuesta debe comunicar explícitamente el error o un estado de servicio no disponible.
 - La ausencia de datos solo debe representarse como `features: []` cuando la operación fue exitosa y la base realmente no tiene resultados.
 
+## Filtros y ventana temporal (implementado en la Fase 4)
+
+- `start` (ISO8601, **inclusivo**) y `end` (ISO8601, **exclusivo**) filtran por el tiempo de **ocurrencia** (`properties.time`). Sin zona horaria se interpreta UTC.
+- Sin parámetros, la ventana es `[ahora - 24 h, ∞)`. El evento sintético `demo-evt-001` ocurre el 2026-10-27T14:00:00Z, así que la verificación de la demo debe pasar una ventana explícita, por ejemplo `GET /api/eventos?start=2026-10-27T00:00:00Z`. No se alteran las fechas del evento para que aparezca.
+- `mode` (`demo` | `live` | `replay`) elige los datos, aislados por modo en esquemas distintos de PostgreSQL. Si se omite, se usa `API_DEFAULT_MODE` (`live` si no está definida; `.env.example` la fija en `demo` mientras no exista ingesta live). `metadata.mode` devuelve el modo consultado. Cualquier otro valor (incluido `historico`) devuelve HTTP 400. Los datos de un modo nunca aparecen en las consultas de otro.
+- `start >= end` o una fecha no parseable devuelven HTTP 400.
+- `metadata` añade `total` (eventos que cumplen el filtro, aunque se trunque), `start` y `end` (ms Unix; `end` puede ser `null`).
+- `metadata.last_ingestion` (ms Unix UTC; `null` si no hay ninguna): en modo `live` es el inicio de la **última consulta correcta a USGS** (`ingest.extraction_log`, `ok = true`), que avanza aunque no haya eventos nuevos y se detiene si el productor falla o USGS no responde; una consulta fallida no la mueve. En `demo` y `replay`, que no consultan a USGS, es la última ingesta de mensajes aceptada en ese modo.
+- `country_id` y `country_name` son `null` hasta la asignación punto-en-polígono (Fase 8). `country_name` sale de `ref.dim_country`.
+
+## Contrato de errores (T008)
+
+Cuerpo común: `{"error": {"code": "<código>", "message": "<texto>"}}`. Nunca contiene `features`.
+
+| HTTP | `code` | Cuándo |
+|---|---|---|
+| 200 | — | Consulta correcta. `features: []` solo aquí: la base respondió y no hay eventos. |
+| 400 | `invalid_parameter` | Fecha no ISO8601, `start >= end`. |
+| 503 | `database_unavailable` | La consulta a PostgreSQL falla o no hay conexión. |
+| 500 | `internal_error` | Error inesperado; sin detalles internos en la respuesta. |
+
+`GET /api/salud` devuelve 200 con `{"status":"ok","api":"ok","database":"ok","generated":...,"last_ingestion":...}`. Si la base falla devuelve 503 con `status:"error"`, `database:"unavailable"` y el bloque `error`. No contiene credenciales ni URLs.
+
+La API solo informa de lo que observa en su propia consulta. **No existe un estado del consumidor en el contrato**, así que la API no afirma nada sobre él: un fallo del consumidor se aprecia en sus logs, en el retraso del grupo de Kafka y en que `last_ingestion` deja de avanzar. Si PostgreSQL cae mientras el consumidor procesa, este no confirma el offset y reintenta; no escribe en cuarentena porque no hay base donde hacerlo (la cuarentena es para datos inválidos).
+
 ## Alcance de la primera entrega
 
 El contrato de esta fase se limita a la demostración vertical del evento sintético y no incluye filtros avanzados, estadísticas históricas ni publicación en Netlify.

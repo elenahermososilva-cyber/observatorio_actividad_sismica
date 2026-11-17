@@ -82,3 +82,19 @@ observatorio-sismico/
 ## Seguimiento de complejidad
 
 No hay violaciones de la constitución que requieran justificación adicional. El criterio SC-001 se define de forma binaria y verificable: los cinco servicios deben estar disponibles y el evento sintético debe consultarse exactamente una vez mediante la API, sin necesidad de inventar un valor temporal.
+
+## Revisión de alcance (T026) y de constitución (T028)
+
+Revisado al cerrar la entrega vertical, contra el código real.
+
+**Alcance.** No se introdujo ingesta live de USGS (`PRODUCER_MODE` distinto de `demo` termina con error), histórico, asignación de país (`country_id` siempre `null`), estadísticas, `min_mag`/`country_id`, CORS, replay, ngrok ni Netlify. Dos adiciones justificadas que van algo más allá del texto literal de la spec: (1) los filtros `start`/`end` en `/api/eventos`, imprescindibles porque el evento sintético tiene una fecha fija anterior a la ventana por defecto de 24 h; (2) un latido de vida (`backend/common/health.py`) para que productor y consumidor, que no tienen puerto HTTP, tengan healthcheck, como exige el enunciado.
+
+**Constitución.**
+
+| Principio | Estado |
+|---|---|
+| I. Cinco servicios, sin Spark/Flink/K8s/ML, `docker compose up --build -d` | Cumple. `compose.yaml` define exactamente los cinco; el migrador corre dentro de `api` y `consumer`, sin sexto servicio. |
+| II. Procedencia, tiempos y unidades | Cumple parcialmente por alcance: ocurrencia, actualización e ingestión se conservan por separado y en UTC/ms; el tiempo de reproducción no existe hasta el replay. |
+| III. Idempotencia, versiones, cuarentena, offsets tras COMMIT | Cumple y está verificado con Kafka real (duplicado, relectura completa, reinicio y caída de PostgreSQL). Los rechazos se conservan con motivo y referencia Kafka. |
+| IV. País por punto en polígono | No aplica aún; el estado «sin país» es `null` explícito y nunca se deduce de `place`. Pendiente de la fase de geografía. |
+| V. API correcta y sin secretos | Cumple: errores explícitos (503/400/500), sin rutas de documentación, `.env` fuera de Git, sin secretos en el frontend. CORS pendiente (el frontend aún no consume la API). |
