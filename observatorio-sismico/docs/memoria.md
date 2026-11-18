@@ -2,7 +2,7 @@
 
 Proyecto de aula de Big Data. Canalización de cinco servicios (productor → Kafka → consumidor → PostgreSQL → API) y panel Angular/Leaflet publicado en Netlify a través de un túnel ngrok.
 
-**Cómo leer este documento.** Cada apartado responde a un criterio de la rúbrica (ENUNCIADO §13). Todas las cifras proceden de scripts reproducibles (§12); ninguna se escribió a mano. Las cifras del feed en vivo son una **instantánea del 2026-11-18 18:41 UTC** y se regeneran con `scripts/memoria_datos.py`.
+**Cómo leer este documento.** Cada apartado responde a un criterio de la rúbrica (ENUNCIADO §13). Todas las cifras proceden de scripts reproducibles (§10); ninguna se escribió a mano. Las cifras del feed en vivo son una **instantánea del 2026-11-18 20:53 UTC** y se regeneran con `scripts/memoria_datos.py`.
 
 | Criterio de la rúbrica | Apartado | Evidencia principal |
 |---|---|---|
@@ -62,17 +62,17 @@ Tipos y unidades de los campos de USGS (identificador, `time` y `updated` en **m
 
 ### 2.3 Resultados medidos
 
-**Feed en vivo** (57 consultas correctas, 0 fallidas, entre 2026-11-17 22:15 y 2026-11-18 18:40 UTC):
+**Feed en vivo** (189 consultas correctas, 0 fallidas, entre 2026-11-17 22:15 y 2026-11-18 20:52 UTC):
 
 | Medida | Valor |
 |---|---|
-| Latencia de la consulta | media 124,6 ms · p95 164,8 ms · máx 216 ms |
-| Apariciones de features en las respuestas | 10.938 |
-| Versiones publicadas a Kafka (incluidas las rechazadas) | 419 |
-| **Publicaciones evitadas** por la marca de «ya publicado» | **96,2 %** |
-| Respuestas sin copia por ser idénticas | 23 de 57 (34 archivos distintos) |
+| Latencia de la consulta | media 123,7 ms · p95 154,6 ms · máx 564 ms |
+| Apariciones de features en las respuestas | 35.621 |
+| Versiones publicadas a Kafka (incluidas las rechazadas) | 471 |
+| **Publicaciones evitadas** por la marca de «ya publicado» | **98,7 %** |
+| Respuestas sin copia por ser idénticas | 99 de 189 (90 archivos distintos) |
 
-Sin la deduplicación del productor, cada versión se republicaría unas 26 veces de media (10.938 apariciones para 419 versiones: una por minuto mientras el evento permanece en la ventana de 24 h).
+Sin la deduplicación del productor, cada versión se republicaría unas 76 veces de media (35.621 apariciones para 471 versiones: una por minuto mientras el evento permanece en la ventana de 24 h).
 
 **Histórico 2025:** 12 consultas, 18.302 eventos recibidos y reportados (coinciden), ninguna se acerca al límite de 20.000 (la mayor, julio, trae 2.684), 0 duplicados entre intervalos. Tabla completa con URL, fecha de extracción, tamaño y SHA-256 en `docs/consultas-y-procedencia.md`.
 
@@ -105,19 +105,19 @@ El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `qual
 | Dimensión | Comprobación | Antes (original) | Después (base de datos) | Decisión |
 |---|---|---|---|---|
 | **Completitud** | Magnitud nula / magType ausente / profundidad nula / `place` vacío (histórico, 18.302) | 0 / 0 / 0 / 0 | 0 / 0 / 0 (y **0 magnitudes convertidas en 0**) | NULL se conserva; no se imputa |
-| | Magnitud nula en el feed live (385 eventos) | — | 0 | Los NULL se contarían aparte (`null_mag_excluded`) si aparecieran |
+| | Magnitud nula en el feed live (402 eventos) | — | 0 | Los NULL se contarían aparte (`null_mag_excluded`) si aparecieran |
 | **Unicidad** | Duplicados entre intervalos del histórico | 0 de 18.302 leídos | 18.302 `event_id` únicos | Deduplicar por `event_id` al unir intervalos |
-| | Repetición del feed (10.938 apariciones) | 10.938 | **419** versiones publicadas (−96,2 %) | Marca «ya publicado» tras el ack |
+| | Repetición del feed (35.621 apariciones) | 35.621 | **471** versiones publicadas (−98,7 %) | Marca «ya publicado» tras el ack |
 | | Reenvío de versiones y reproceso de offsets | — | `UNIQUE (event_id, updated_ms)`: 0 duplicados en las pruebas P2, P4 y P8 | Upsert idempotente |
 | **Validez** | Tipo distinto de `earthquake` (feed live) | 5 (3 `explosion`, 2 `quarry blast`) | **5 en cuarentena**, 0 en `event_current` | Cuarentena con motivo |
 | | Coordenadas no finitas o fuera de rango, no Point (histórico) | 0 | 0 | `CHECK` en base de datos además de la validación |
 | | Fechas y estructura | 0 `updated` anterior a `time` | 0 avisos `anomaly_updated_before_time` | — |
 | **Consistencia** | Países inexistentes en el catálogo | — | 0 (clave foránea a `ref.dim_country`) | Clave foránea + `CHECK assigned ⇔ country_id` |
 | | `event_current` sin mensaje de origen | — | 0 (clave foránea compuesta) | Integridad referencial |
-| | Secuencia de revisiones (versión vigente = la mayor) | — | 0 eventos con la vigente distinta de la última (29 revisiones en live) | Guardia `WHERE current_version_ms < EXCLUDED…` |
+| | Secuencia de revisiones (versión vigente = la mayor) | — | 0 eventos con la vigente distinta de la última (64 revisiones en live) | Guardia `WHERE current_version_ms < EXCLUDED…` |
 | | `ADM0_A3` único | — | 177 de 177 | Se comprueba antes de cargar |
-| **Actualidad** | Retraso de nuestra ingesta tras la actualización de USGS (fuera de arranque, n=34) | — | mediana 66 s · p95 92 s · máx 97 s | Coherente con el sondeo de 60 s |
-| | Retraso de publicación de USGS (ocurrencia → primera versión; fuera de arranque, n=11) | — | mediana 2,4 min · p95 712 min · máx 786 min | **Cola larga**: algunos eventos se publican horas después (ver §3.5) |
+| **Actualidad** | Retraso de nuestra ingesta tras la actualización de USGS (fuera de arranque, n=86) | — | mediana 56 s · p95 90 s · máx 120 s | Coherente con el sondeo de 60 s |
+| | Retraso de publicación de USGS (ocurrencia → primera versión; fuera de arranque, n=28) | — | mediana 3,1 min · p95 536 min · máx 786 min | **Cola larga**: algunos eventos se publican horas después (ver §3.5) |
 | **Exactitud** | Qué se puede contrastar | Atribución de país vs `place` (§3.6) | Epicentros marítimos y fronteras explicados | Se documenta lo que **no** se puede verificar (§3.7) |
 
 Avisos de calidad del histórico: **18.299 de 18.302 sin aviso**; solo `fixed_place_trimmed` en 3 (0,02 %). Un catálogo oficial ya curado deja poco que limpiar: es un resultado, no una ausencia de análisis. En el feed live aparecieron 5 magnitudes negativas válidas (con `anomaly_mag_negative`) y 5 no-terremotos, que la regla aísla.
@@ -156,9 +156,9 @@ SELECT left(reason, strpos(reason, ':') - 1) AS motivo, count(*) FROM live.quara
 
 ### 3.5 Revisiones y actualidad (feed live, instantánea)
 
-De 385 eventos, **16 tuvieron revisiones** (29 versiones posteriores a la primera). Entre versiones consecutivas: la magnitud cambia en 8, la ubicación en 7 y el tiempo de ocurrencia en 7; el mayor cambio de magnitud fue de 2,6; la mediana entre versiones es de 10,8 min. Una revisión puede por tanto mover un evento de país, de magnitud o de ventana horaria.
+De 402 eventos, **31 tuvieron revisiones** (64 versiones posteriores a la primera). Entre versiones consecutivas: la magnitud cambia en 17, la ubicación en 15 y el tiempo de ocurrencia en 15; el mayor cambio de magnitud fue de 2,6; la mediana entre versiones es de 17,9 min. Una revisión puede por tanto mover un evento de país, de magnitud o de ventana horaria.
 
-Retraso de publicación de USGS (minutos entre la ocurrencia y la primera versión vista, **solo ciclos de funcionamiento normal**; se excluye el ciclo de arranque, que publica de golpe las 24 h anteriores y falsearía el dato): n = 11, mediana 2,4 min, p95 712 min. Con **muestra tan pequeña (n = 11; solo 2 de M ≥ 4)** no se estima un retraso medio fiable; sí se observa que **la distribución tiene cola larga**: algunos eventos aparecen horas después de ocurrir. Por eso la comparación de «últimas 24 horas» puede infravalorar el recuento reciente, como exige advertir el enunciado.
+Retraso de publicación de USGS (minutos entre la ocurrencia y la primera versión vista, **solo ciclos de funcionamiento normal**; se excluye el ciclo de arranque, que publica de golpe las 24 h anteriores y falsearía el dato): n = 28, mediana 3,1 min, p95 536 min; con M ≥ 4, n = 5 y mediana 25,5 min (frente a 1,6 min por debajo de M 4). Con **muestra todavía pequeña (n = 28; solo 5 de M ≥ 4)** no se estima un retraso medio fiable; sí se observa que **la distribución tiene cola larga**: algunos eventos aparecen horas después de ocurrir. Por eso la comparación de «últimas 24 horas» puede infravalorar el recuento reciente, como exige advertir el enunciado.
 
 ### 3.6 Atribución de país: regla y verificación
 
@@ -347,18 +347,18 @@ Ambos métodos dan el mismo país en 2.000 puntos aleatorios (0 discrepancias). 
 
 ### 6.4 Latencia real de la API (datos reales, mismo equipo, sin túnel)
 
-30 repeticiones por petición (`scripts/medir_api.py`; histórico de 18.302 eventos y 385 eventos live):
+30 repeticiones por petición (`scripts/medir_api.py`; histórico de 18.302 eventos y 402 eventos live):
 
 | Petición | Mediana | p95 | Tamaño |
 |---|---:|---:|---:|
-| `/api/salud` | 3,7 ms | 14,3 ms | 207 B |
-| `/api/eventos` (24 h, live) | 6,4 ms | 9,9 ms | 54 KB |
-| `/api/eventos` (M ≥ 4) | 5,0 ms | 6,7 ms | 11,7 KB |
-| `/api/eventos` (país USA, desde 1-nov) | 8,5 ms | 21,9 ms | 88 KB |
-| `/api/estadisticas` (24 h) | 27,1 ms | 44,6 ms | 8,6 KB |
-| `/api/estadisticas` (M ≥ 4) | 23,8 ms | 26,0 ms | 7,7 KB |
+| `/api/salud` | 4,3 ms | 5,5 ms | 207 B |
+| `/api/eventos` (24 h, live) | 7,3 ms | 10,8 ms | 51 KB |
+| `/api/eventos` (M ≥ 4) | 5,1 ms | 6,3 ms | 12,2 KB |
+| `/api/eventos` (país USA, desde 1-nov) | 14,0 ms | 35,4 ms | 90 KB |
+| `/api/estadisticas` (24 h) | 23,2 ms | 30,1 ms | 8,3 KB |
+| `/api/estadisticas` (M ≥ 4) | 24,1 ms | 32,3 ms | 7,8 KB |
 
-Con el panel, un refresco (≈63 KB) cada 60 s son unos 90 MB/día por pestaña abierta.
+Con el panel, un refresco (≈60 KB) cada 60 s son unos 90 MB/día por pestaña abierta.
 
 ### 6.5 Qué ocurriría con 100 millones de registros
 
@@ -388,8 +388,8 @@ Todos los importes son **supuestos ilustrativos** (marcados), no facturas. Una c
 |---|---|---|
 | **Hardware** | Portátil existente; amortización ilustrativa de 450 € a 4 años si se dedicase 24/7 | ≈ 112 €/año (≈ 2 €/semana de proyecto) |
 | **Electricidad** | **25 W** medios (supuesto: sin medir) × 24 h × 365 d; **0,20 €/kWh** (supuesto) | 219 kWh/año ≈ **44 €/año**; los ≈ 3 días de la demostración consumirían ≈ 1,8 kWh ≈ 0,36 € |
-| **Almacenamiento** | Hoy: base de datos 37 MiB (20 MiB histórico), originales 13 MiB (histórico) y 0,7 MiB (live tras 57 consultas, ≈ 1 h de funcionamiento efectivo). Extrapolando con cuidado a partir de esa muestra corta (34 archivos de ≈ 21 KB en 57 consultas, es decir, ≈ 60 % de las respuestas traen contenido nuevo): ≈ 600–860 originales/día | Originales en vivo ≈ 12–20 MB/día, topados por la retención de 14 días (≈ 170–280 MB); base de datos live ≈ 0,5 MB/día |
-| **Transferencia** | ≈ 63 KB por refresco y pestaña ≈ 90 MB/día por panel abierto; USGS: ≈ 20–25 KB comprimidos por consulta | Despreciable para un panel; las cuotas de ngrok y Netlify gratuitos son **condiciones externas que no se verificaron aquí y deben comprobarse antes de la defensa** |
+| **Almacenamiento** | Hoy: base de datos 37 MB (27 MB histórico con índices, ≈ 1 MB live), originales 12,4 MiB (histórico) y 1,8 MiB (live tras 189 consultas, ≈ 3 h de funcionamiento efectivo). Extrapolando con cuidado a partir de esa muestra corta (90 archivos de ≈ 20 KB en 189 consultas, es decir, ≈ 48 % de las respuestas traen contenido nuevo): ≈ 690 originales/día | Originales en vivo ≈ 14 MB/día, topados por la retención de 14 días (≈ 195 MB); base de datos live ≈ 1 MB/día |
+| **Transferencia** | ≈ 60 KB por refresco y pestaña ≈ 90 MB/día por panel abierto; USGS: ≈ 20–25 KB comprimidos por consulta | Despreciable para un panel; las cuotas de ngrok y Netlify gratuitos son **condiciones externas que no se verificaron aquí y deben comprobarse antes de la defensa** |
 | **Mantenimiento** | Reiniciar el túnel, vigilar la pila, rotar originales (automático), actualizar dependencias fijadas | ≈ 1–2 h/mes en operación real |
 | **Tiempo de desarrollo** | Estimación por fases (**a sustituir por las horas reales de la persona autora**): infraestructura y productor ≈ 14 h; consumidor, versionado y calidad ≈ 20 h; API y panel ≈ 25 h; pruebas y despliegue ≈ 12 h; memoria ≈ 10 h | ≈ 80 h; a 12 €/h (supuesto) ≈ 960 € |
 | **Servicios externos** | ngrok, Netlify y OpenStreetMap en plan gratuito | 0 € directos, con límites y sin garantías de disponibilidad |

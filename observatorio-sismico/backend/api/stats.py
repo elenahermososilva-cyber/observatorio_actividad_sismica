@@ -231,11 +231,13 @@ def build_statistics(
                    "missing": {"magnitude": data.missing_mag, "depth": data.missing_depth}},
         "hourly": {
             **scope, "unit": "terremotos por hora UTC fija (según el tiempo de ocurrencia)", "bucket_ms": HOUR_MS,
-            "zero_filled": zero_filled, "series": series, "missing": {},
+            "zero_filled": zero_filled, "series": series,
+            "missing": {"time": 0},  # todo evento sin tiempo de ocurrencia válido va a cuarentena: aquí nunca falta
         },
         "groups": {
             **scope, "unit": "terremotos", "by": group_by, "no_country_label": NO_COUNTRY_LABEL,
-            "hourly": groups_hourly, "totals": groups_total, "missing": {},
+            "hourly": groups_hourly, "totals": groups_total,
+            "missing": {"time": 0},
         },
         "distributions": {
             "magnitude": {

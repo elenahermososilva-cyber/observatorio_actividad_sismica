@@ -256,6 +256,15 @@ class StatisticsContractTests(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertNotIn("hunter2", response.text)
 
+    def test_unexpected_error_keeps_cors_header_for_allowed_origin_only(self) -> None:
+        with TestClient(create_app(BrokenQueries(), clock=lambda: NOW, default_mode="demo", cors_origins=[LOCAL]),
+                        raise_server_exceptions=False) as client:
+            allowed = client.get("/api/estadisticas", headers={"Origin": LOCAL})
+            other = client.get("/api/estadisticas", headers={"Origin": "https://otro.example"})
+        self.assertEqual(allowed.status_code, 500)
+        self.assertEqual(allowed.headers.get("access-control-allow-origin"), LOCAL)
+        self.assertNotIn("access-control-allow-origin", other.headers)
+
 
 @unittest.skipIf(TestClient is None, "fastapi no disponible")
 class CorsTests(unittest.TestCase):

@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-18T18:41:47+00:00",
+  "generado_en": "2026-11-18T20:53:24+00:00",
   "analisis_historico_2025": {
     "eventos": 18302,
     "rango_tiempo": [
@@ -321,13 +321,13 @@
     }
   },
   "live": {
-    "eventos_actuales": 385,
-    "mensajes_aceptados": 414,
-    "eventos_con_revision": 16,
-    "revisiones": 29,
+    "eventos_actuales": 402,
+    "mensajes_aceptados": 466,
+    "eventos_con_revision": 31,
+    "revisiones": 64,
     "rango_tiempo_eventos": [
       "2026-11-16T22:54:13.038000+00:00",
-      "2026-11-18T18:28:05.200000+00:00"
+      "2026-11-18T20:48:09.191000+00:00"
     ],
     "cuarentena": [
       {
@@ -341,23 +341,23 @@
     ],
     "mag_nula": 0,
     "mag_negativa": 5,
-    "sin_pais": 62,
+    "sin_pais": 64,
     "tipos_magnitud": [
       {
         "tipo": "ml",
-        "n": 227
+        "n": 240
       },
       {
         "tipo": "md",
-        "n": 117
+        "n": 118
       },
       {
         "tipo": "mb",
-        "n": 33
+        "n": 35
       },
       {
         "tipo": "mww",
-        "n": 7
+        "n": 8
       },
       {
         "tipo": "mw",
@@ -366,65 +366,65 @@
     ],
     "consultas": {
       "ok": {
-        "n": 57,
-        "features_suma": 10938,
-        "latencia_media_ms": 124.6,
-        "latencia_p95_ms": 164.8,
-        "latencia_max_ms": 216,
+        "n": 189,
+        "features_suma": 35621,
+        "latencia_media_ms": 123.7,
+        "latencia_p95_ms": 154.6,
+        "latencia_max_ms": 564,
         "primera": "2026-11-17T22:15:14.468589+00:00",
-        "ultima": "2026-11-18T18:40:50.967210+00:00"
+        "ultima": "2026-11-18T20:52:56.613443+00:00"
       }
     },
     "deduplicacion_del_feed": {
-      "apariciones_de_features_en_respuestas": 10938,
-      "versiones_publicadas": 419,
-      "porcentaje_suprimido": 96.17
+      "apariciones_de_features_en_respuestas": 35621,
+      "versiones_publicadas": 471,
+      "porcentaje_suprimido": 98.68
     },
     "originales_guardados": {
-      "archivos_distintos": 34,
-      "respuestas_sin_copia_por_ser_identicas": 23
+      "archivos_distintos": 90,
+      "respuestas_sin_copia_por_ser_identicas": 99
     },
     "actualidad": {
       "nota": "minutos entre la ocurrencia y la primera versión publicada (updated de la primera versión vista)",
       "publicacion_usgs_min_todos_incluye_arranque": {
-        "n": 385,
-        "mediana": 37.4,
-        "p95": 863.7,
+        "n": 402,
+        "mediana": 34.6,
+        "p95": 848.7,
         "max": 1163.4
       },
       "publicacion_usgs_min_fuera_de_arranque_todos": {
-        "n": 11,
-        "mediana": 2.4,
-        "p95": 711.7,
+        "n": 28,
+        "mediana": 3.1,
+        "p95": 535.9,
         "max": 785.7
       },
       "publicacion_usgs_min_fuera_de_arranque_M4": {
-        "n": 2,
-        "mediana": 185.6,
-        "p95": 330.7,
+        "n": 5,
+        "mediana": 25.5,
+        "p95": 285.9,
         "max": 346.8
       },
       "publicacion_usgs_min_fuera_de_arranque_menor_M4": {
-        "n": 9,
+        "n": 23,
         "mediana": 1.6,
-        "p95": 726.5,
+        "p95": 594.7,
         "max": 785.7
       },
       "ingesta_tras_actualizacion_usgs_s": {
-        "n": 34,
-        "mediana": 66.4,
-        "p95": 92.2,
-        "max": 97.3,
+        "n": 86,
+        "mediana": 56.1,
+        "p95": 90.4,
+        "max": 119.6,
         "ciclos_de_arranque_excluidos": 2
       }
     },
     "revisiones_detalle": {
-      "versiones_con_anterior": 29,
-      "cambia_magnitud": 8,
-      "cambia_ubicacion": 7,
-      "cambia_tiempo": 7,
+      "versiones_con_anterior": 64,
+      "cambia_magnitud": 17,
+      "cambia_ubicacion": 15,
+      "cambia_tiempo": 15,
       "max_cambio_magnitud": 2.6,
-      "mediana_minutos_entre_versiones": 10.8
+      "mediana_minutos_entre_versiones": 17.9
     },
     "secuencia_revisiones_no_monotona": 0
   },

@@ -1,6 +1,6 @@
 # Registro de consultas y procedencia
 
-Generado por `scripts/procedencia.py` a partir de `data/raw/historico/manifest.json` y `docs/evidencias/memoria-datos.json` (instantánea 2026-11-18T18:41:47+00:00). Complementa al diccionario de datos (`docs/diccionario-de-datos.md`).
+Generado por `scripts/procedencia.py` a partir de `data/raw/historico/manifest.json` y `docs/evidencias/memoria-datos.json` (instantánea 2026-11-18T20:53:24+00:00). Complementa al diccionario de datos (`docs/diccionario-de-datos.md`).
 
 ## 1. Fuentes
 
@@ -41,13 +41,13 @@ Extracción del 2026-11-17. Parámetros comunes: `format=geojson`, `minmagnitude
 
 | Concepto | Valor |
 |---|---|
-| Consultas correctas | 57 (primera 2026-11-17 22:15:14 UTC, última 2026-11-18 18:40:50 UTC) |
+| Consultas correctas | 189 (primera 2026-11-17 22:15:14 UTC, última 2026-11-18 20:52:56 UTC) |
 | Consultas fallidas | 0 |
-| Latencia (ms) | media 124.6, p95 164.8, máx 216 |
-| Apariciones de features en las respuestas | 10,938 (cada respuesta repite toda la ventana de 24 h) |
-| Versiones publicadas a Kafka (incluye rechazadas) | 419 |
-| Publicaciones evitadas por la marca de «ya publicado» | **96.17 %** |
-| Originales guardados | 34 archivos distintos; 23 respuestas idénticas no se guardaron de nuevo |
+| Latencia (ms) | media 123.7, p95 154.6, máx 564 |
+| Apariciones de features en las respuestas | 35,621 (cada respuesta repite toda la ventana de 24 h) |
+| Versiones publicadas a Kafka (incluye rechazadas) | 471 |
+| Publicaciones evitadas por la marca de «ya publicado» | **98.68 %** |
+| Originales guardados | 90 archivos distintos; 99 respuestas idénticas no se guardaron de nuevo |
 
 Huecos de ingesta live (más de 5 min entre consultas correctas):
 

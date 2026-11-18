@@ -42,6 +42,11 @@ def register_error_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def _unexpected(_: Request, error: Exception) -> JSONResponse:
+    async def _unexpected(request: Request, error: Exception) -> JSONResponse:
         log.exception("unhandled error: %s", error)
-        return JSONResponse(error_body("internal_error", "Internal server error"), status_code=500)
+        headers = {}
+        # ServerErrorMiddleware queda por fuera de CORSMiddleware: sin esto el navegador vería un fallo de CORS y no el 500.
+        origin = request.headers.get("origin")
+        if origin and origin in getattr(request.app.state, "cors_origins", []):
+            headers = {"Access-Control-Allow-Origin": origin, "Vary": "Origin"}
+        return JSONResponse(error_body("internal_error", "Internal server error"), status_code=500, headers=headers)
