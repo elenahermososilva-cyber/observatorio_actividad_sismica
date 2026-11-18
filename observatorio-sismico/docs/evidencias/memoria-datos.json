@@ -1,0 +1,464 @@
+{
+  "generado_en": "2026-11-18T18:41:47+00:00",
+  "analisis_historico_2025": {
+    "eventos": 18302,
+    "rango_tiempo": [
+      "2025-01-01T00:13:22.650000+00:00",
+      "2025-12-31T23:52:11.327000+00:00"
+    ],
+    "magnitud_con_valor": 18302,
+    "recuento_mayor_o_igual": {
+      "4.0": 18302,
+      "4.5": 8559,
+      "5.0": 2129,
+      "5.5": 514,
+      "6.0": 145,
+      "6.5": 45,
+      "7.0": 16,
+      "7.5": 7,
+      "8.0": 1
+    },
+    "b_value_aki_utsu": [
+      {
+        "mc": 4.0,
+        "n": 18302,
+        "b": 0.773,
+        "error_estandar": 0.006
+      },
+      {
+        "mc": 4.5,
+        "n": 8559,
+        "b": 1.206,
+        "error_estandar": 0.013
+      },
+      {
+        "mc": 5.0,
+        "n": 2129,
+        "b": 1.2,
+        "error_estandar": 0.026
+      }
+    ],
+    "magnitud_max": 8.8,
+    "magnitud_tipos": [
+      {
+        "tipo": "mb",
+        "n": 16332
+      },
+      {
+        "tipo": "mww",
+        "n": 1476
+      },
+      {
+        "tipo": "mwr",
+        "n": 354
+      },
+      {
+        "tipo": "ml",
+        "n": 76
+      },
+      {
+        "tipo": "mw",
+        "n": 29
+      },
+      {
+        "tipo": "md",
+        "n": 29
+      },
+      {
+        "tipo": "mwb",
+        "n": 6
+      }
+    ],
+    "diario": {
+      "dias": 365,
+      "media": 50.14,
+      "mediana": 43,
+      "minimo": 20,
+      "maximo": 645,
+      "q1": 36,
+      "q3": 53,
+      "valla_tukey": 78.5,
+      "dias_atipicos": 27,
+      "eventos_en_dias_atipicos": 3782,
+      "media_sin_dias_atipicos": 42.96,
+      "dia_maximo": "2025-07-30"
+    },
+    "por_mes": [
+      {
+        "mes": "2025-01",
+        "n": 1413
+      },
+      {
+        "mes": "2025-02",
+        "n": 1394
+      },
+      {
+        "mes": "2025-03",
+        "n": 1178
+      },
+      {
+        "mes": "2025-04",
+        "n": 1316
+      },
+      {
+        "mes": "2025-05",
+        "n": 1228
+      },
+      {
+        "mes": "2025-06",
+        "n": 1156
+      },
+      {
+        "mes": "2025-07",
+        "n": 2684
+      },
+      {
+        "mes": "2025-08",
+        "n": 2222
+      },
+      {
+        "mes": "2025-09",
+        "n": 1604
+      },
+      {
+        "mes": "2025-10",
+        "n": 1509
+      },
+      {
+        "mes": "2025-11",
+        "n": 1321
+      },
+      {
+        "mes": "2025-12",
+        "n": 1277
+      }
+    ],
+    "horas_utc": {
+      "por_hora": [
+        747,
+        788,
+        778,
+        832,
+        814,
+        764,
+        726,
+        759,
+        775,
+        810,
+        747,
+        776,
+        783,
+        751,
+        757,
+        681,
+        738,
+        724,
+        717,
+        742,
+        741,
+        732,
+        789,
+        831
+      ],
+      "esperado_uniforme": 762.6,
+      "chi2": 41.1,
+      "critico_5pct_gl23": 35.172,
+      "rechaza_uniformidad": true,
+      "cociente_max_min": 1.22
+    },
+    "profundidad": {
+      "con_valor": 18302,
+      "menos_70": 13689,
+      "70_a_300": 3511,
+      "300_o_mas": 1102,
+      "maxima_km": 669.556,
+      "negativas": 0
+    },
+    "pais": {
+      "asignado": 3952,
+      "sin_pais": 14350,
+      "pendiente": 0
+    },
+    "top_paises": [
+      {
+        "pais": "China",
+        "n": 354
+      },
+      {
+        "pais": "Chile",
+        "n": 348
+      },
+      {
+        "pais": "Indonesia",
+        "n": 306
+      },
+      {
+        "pais": "Etiopía",
+        "n": 265
+      },
+      {
+        "pais": "Argentina",
+        "n": 236
+      },
+      {
+        "pais": "Papúa Nueva Guinea",
+        "n": 192
+      },
+      {
+        "pais": "Afganistán",
+        "n": 191
+      },
+      {
+        "pais": "Perú",
+        "n": 158
+      },
+      {
+        "pais": "Irán",
+        "n": 155
+      },
+      {
+        "pais": "Rusia",
+        "n": 150
+      }
+    ],
+    "top_subregiones": [
+      {
+        "subregion": "South America",
+        "n": 973
+      },
+      {
+        "subregion": "South-Eastern Asia",
+        "n": 580
+      },
+      {
+        "subregion": "Eastern Asia",
+        "n": 548
+      },
+      {
+        "subregion": "Southern Asia",
+        "n": 443
+      },
+      {
+        "subregion": "Eastern Africa",
+        "n": 290
+      },
+      {
+        "subregion": "Melanesia",
+        "n": 216
+      },
+      {
+        "subregion": "Eastern Europe",
+        "n": 168
+      },
+      {
+        "subregion": "Northern America",
+        "n": 154
+      }
+    ],
+    "profundas_300_por_pais": [
+      {
+        "pais": "Sin país asignado",
+        "n": 1077
+      },
+      {
+        "pais": "Argentina",
+        "n": 7
+      },
+      {
+        "pais": "Japón",
+        "n": 4
+      },
+      {
+        "pais": "Rusia",
+        "n": 3
+      },
+      {
+        "pais": "Filipinas",
+        "n": 2
+      }
+    ]
+  },
+  "calidad": {
+    "antes_historico_original": {
+      "consultas": 12,
+      "features_recibidas_suma": 18302,
+      "features_leidas": 18302,
+      "ids_unicos": 18302,
+      "duplicados_entre_intervalos": 0,
+      "mag_nula": 0,
+      "magtype_nulo": 0,
+      "place_nulo_o_vacio": 0,
+      "place_con_espacios": 3,
+      "depth_nula": 0,
+      "depth_negativa": 0,
+      "mag_negativa": 0,
+      "tipo_distinto": 0,
+      "coord_invalida": 0,
+      "no_point": 0,
+      "updated_antes_de_time": 0,
+      "magtype_mayusculas": 0
+    },
+    "despues_historico_en_base": {
+      "filas_event_current": 18302,
+      "filas_event_message": 18302,
+      "cuarentena": 0,
+      "mag_nula": 0,
+      "mag_cero": 0,
+      "depth_nula": 0,
+      "sin_aviso": 18299,
+      "no_evaluados": 0,
+      "avisos": {
+        "fixed_place_trimmed": 3
+      },
+      "claves_unicas_event_id": 18302
+    },
+    "consistencia": {
+      "event_current_sin_mensaje_origen": 0,
+      "paises_inexistentes_en_catalogo": 0,
+      "catalogo_paises": 177,
+      "catalogo_ADM0_A3_distintos": 177,
+      "historico_tiempo_en_2025": 18302
+    }
+  },
+  "live": {
+    "eventos_actuales": 385,
+    "mensajes_aceptados": 414,
+    "eventos_con_revision": 16,
+    "revisiones": 29,
+    "rango_tiempo_eventos": [
+      "2026-11-16T22:54:13.038000+00:00",
+      "2026-11-18T18:28:05.200000+00:00"
+    ],
+    "cuarentena": [
+      {
+        "motivo": "non_earthquake_type (explosion)",
+        "n": 3
+      },
+      {
+        "motivo": "non_earthquake_type (quarry blast)",
+        "n": 2
+      }
+    ],
+    "mag_nula": 0,
+    "mag_negativa": 5,
+    "sin_pais": 62,
+    "tipos_magnitud": [
+      {
+        "tipo": "ml",
+        "n": 227
+      },
+      {
+        "tipo": "md",
+        "n": 117
+      },
+      {
+        "tipo": "mb",
+        "n": 33
+      },
+      {
+        "tipo": "mww",
+        "n": 7
+      },
+      {
+        "tipo": "mw",
+        "n": 1
+      }
+    ],
+    "consultas": {
+      "ok": {
+        "n": 57,
+        "features_suma": 10938,
+        "latencia_media_ms": 124.6,
+        "latencia_p95_ms": 164.8,
+        "latencia_max_ms": 216,
+        "primera": "2026-11-17T22:15:14.468589+00:00",
+        "ultima": "2026-11-18T18:40:50.967210+00:00"
+      }
+    },
+    "deduplicacion_del_feed": {
+      "apariciones_de_features_en_respuestas": 10938,
+      "versiones_publicadas": 419,
+      "porcentaje_suprimido": 96.17
+    },
+    "originales_guardados": {
+      "archivos_distintos": 34,
+      "respuestas_sin_copia_por_ser_identicas": 23
+    },
+    "actualidad": {
+      "nota": "minutos entre la ocurrencia y la primera versión publicada (updated de la primera versión vista)",
+      "publicacion_usgs_min_todos_incluye_arranque": {
+        "n": 385,
+        "mediana": 37.4,
+        "p95": 863.7,
+        "max": 1163.4
+      },
+      "publicacion_usgs_min_fuera_de_arranque_todos": {
+        "n": 11,
+        "mediana": 2.4,
+        "p95": 711.7,
+        "max": 785.7
+      },
+      "publicacion_usgs_min_fuera_de_arranque_M4": {
+        "n": 2,
+        "mediana": 185.6,
+        "p95": 330.7,
+        "max": 346.8
+      },
+      "publicacion_usgs_min_fuera_de_arranque_menor_M4": {
+        "n": 9,
+        "mediana": 1.6,
+        "p95": 726.5,
+        "max": 785.7
+      },
+      "ingesta_tras_actualizacion_usgs_s": {
+        "n": 34,
+        "mediana": 66.4,
+        "p95": 92.2,
+        "max": 97.3,
+        "ciclos_de_arranque_excluidos": 2
+      }
+    },
+    "revisiones_detalle": {
+      "versiones_con_anterior": 29,
+      "cambia_magnitud": 8,
+      "cambia_ubicacion": 7,
+      "cambia_tiempo": 7,
+      "max_cambio_magnitud": 2.6,
+      "mediana_minutos_entre_versiones": 10.8
+    },
+    "secuencia_revisiones_no_monotona": 0
+  },
+  "live_muestra_equivalente": {
+    "filtro": "mag >= 4, tiempo de ocurrencia en días UTC completos desde el primer ciclo live",
+    "dias": [
+      {
+        "dia": "2026-11-17",
+        "eventos_M4": 23,
+        "sin_pais": 14,
+        "menos_70_km": 13,
+        "mas_300_km": 2,
+        "mag_max": 5.2
+      }
+    ],
+    "dias_n": 1,
+    "eventos_M4_total": 23,
+    "media_por_dia_live": 23.0,
+    "porcentaje_sin_pais_live": 60.87,
+    "porcentaje_menos_70_km_live": 56.52,
+    "porcentaje_mas_300_km_live": 8.7,
+    "historico_2025": {
+      "eventos": 18302,
+      "porcentaje_sin_pais": 78.41,
+      "porcentaje_menos_70_km": 74.8,
+      "porcentaje_mas_300_km": 6.02
+    }
+  },
+  "huecos_de_ingesta_live": [
+    {
+      "desde": "2026-11-17T22:19:34+00:00",
+      "hasta": "2026-11-18T17:49:50+00:00",
+      "horas": 19.5,
+      "recuperable_con_el_feed_24h": true
+    }
+  ]
+}

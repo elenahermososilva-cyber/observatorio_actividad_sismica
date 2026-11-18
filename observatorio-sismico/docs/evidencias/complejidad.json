@@ -1,0 +1,176 @@
+{
+  "generado_en": "2026-11-18T18:38:29+00:00",
+  "equipo": {
+    "nota": "Mediciones dentro de un contenedor Docker (Docker Desktop sobre WSL2); el equipo anfitrión se documenta en la memoria.",
+    "cpu_visible_en_contenedor": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+    "nucleos_visibles": 4,
+    "ram_visible_mib": 7769,
+    "python": "3.12.16",
+    "shapely": "2.2.0",
+    "postgresql": "17.2 (Debian 17.2-1.pgdg120+1)",
+    "repeticiones_por_medida": 5,
+    "estadistico": "mediana"
+  },
+  "datos": "SINTÉTICOS",
+  "A_busqueda_de_versiones": [
+    {
+      "n": 1000,
+      "lista_secuencial_s_por_busqueda": 2.6855204996536486e-05,
+      "diccionario_s_por_busqueda": 6.055000085325445e-08,
+      "postgres_sin_indice_s": 5.8e-05,
+      "plan_sin_indice": "Seq Scan",
+      "postgres_con_indice_s": 8e-06,
+      "plan_con_indice": "Index Only Scan",
+      "memoria_lista_mib": 0.14,
+      "memoria_diccionario_mib": 0.1,
+      "tabla_mib": 0.05,
+      "indice_unico_mib": 0.05
+    },
+    {
+      "n": 10000,
+      "lista_secuencial_s_por_busqueda": 0.0002923603799990815,
+      "diccionario_s_por_busqueda": 6.051000127627048e-08,
+      "postgres_sin_indice_s": 0.0005785,
+      "plan_sin_indice": "Seq Scan",
+      "postgres_con_indice_s": 1.1e-05,
+      "plan_con_indice": "Index Only Scan",
+      "memoria_lista_mib": 1.37,
+      "memoria_diccionario_mib": 1.01,
+      "tabla_mib": 0.57,
+      "indice_unico_mib": 0.4
+    },
+    {
+      "n": 100000,
+      "lista_secuencial_s_por_busqueda": 0.0027373743499993,
+      "diccionario_s_por_busqueda": 5.446499926620163e-08,
+      "postgres_sin_indice_s": 0.0059345,
+      "plan_sin_indice": "Seq Scan",
+      "postgres_con_indice_s": 1.15e-05,
+      "plan_con_indice": "Index Only Scan",
+      "memoria_lista_mib": 14.19,
+      "memoria_diccionario_mib": 12.66,
+      "tabla_mib": 5.74,
+      "indice_unico_mib": 3.89
+    },
+    {
+      "n": 1000000,
+      "lista_secuencial_s_por_busqueda": 0.03131464355499702,
+      "diccionario_s_por_busqueda": 5.738499567087274e-08,
+      "postgres_sin_indice_s": 0.058582999999999996,
+      "plan_sin_indice": "Gather",
+      "postgres_con_indice_s": 2.7e-05,
+      "plan_con_indice": "Index Only Scan",
+      "memoria_lista_mib": 144.22,
+      "memoria_diccionario_mib": 112.2,
+      "tabla_mib": 57.44,
+      "indice_unico_mib": 38.7
+    }
+  ],
+  "B_integracion_geografica": {
+    "filas": [
+      {
+        "n_puntos": 1000,
+        "strtree_s": 0.013505034999980126,
+        "strtree_puntos_por_s": 74046,
+        "recorrido_de_177_poligonos_s": 0.05884227599926817,
+        "recorrido_puntos_por_s": 16995,
+        "aceleracion": 4.4
+      },
+      {
+        "n_puntos": 5000,
+        "strtree_s": 0.06827531999988423,
+        "strtree_puntos_por_s": 73233,
+        "recorrido_de_177_poligonos_s": 0.36126692200014077,
+        "recorrido_puntos_por_s": 13840,
+        "aceleracion": 5.3
+      },
+      {
+        "n_puntos": 20000,
+        "strtree_s": 0.2781358590000309,
+        "strtree_puntos_por_s": 71907,
+        "recorrido_de_177_poligonos_s": 1.2189342510009737,
+        "recorrido_puntos_por_s": 16408,
+        "aceleracion": 4.4
+      },
+      {
+        "n_puntos": 100000,
+        "strtree_s": 1.7429249959986919,
+        "strtree_puntos_por_s": 57375
+      },
+      {
+        "n_puntos": 500000,
+        "strtree_s": 7.836719697001172,
+        "strtree_puntos_por_s": 63802
+      }
+    ],
+    "discrepancias_en_muestra_de_2000": 0,
+    "poligonos": 177,
+    "memoria": {
+      "lista_de_177_poligonos_mib": 1.0,
+      "indice_strtree_con_sus_geometrias_mib": 0.9,
+      "catalogo_geojson_mib": 0.8
+    }
+  },
+  "C_agregacion_por_ventanas": [
+    {
+      "n": 10000,
+      "ventana_24h_sin_indice_s": 0.00067,
+      "plan_sin_indice": [
+        "Seq Scan"
+      ],
+      "ventana_24h_con_indice_s": 3.8e-05,
+      "plan_con_indice": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "todo_el_año_sin_indice_s": 0.002978,
+      "todo_el_año_con_indice_s": 0.0029950000000000003,
+      "agregar_en_postgres_s": 0.007272376999026164,
+      "agregar_en_python_s": 0.006823083000199404,
+      "python_pico_mib": 1.34,
+      "postgres_pico_python_mib": 0.418,
+      "tabla_mib": 0.6,
+      "indice_mib": 0.2
+    },
+    {
+      "n": 100000,
+      "ventana_24h_sin_indice_s": 0.009016999999999999,
+      "plan_sin_indice": [
+        "Seq Scan"
+      ],
+      "ventana_24h_con_indice_s": 0.000236,
+      "plan_con_indice": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "todo_el_año_sin_indice_s": 0.031595,
+      "todo_el_año_con_indice_s": 0.023280000000000002,
+      "agregar_en_postgres_s": 0.022309758000119473,
+      "agregar_en_python_s": 0.06037796499913384,
+      "python_pico_mib": 8.89,
+      "postgres_pico_python_mib": 0.663,
+      "tabla_mib": 5.7,
+      "indice_mib": 2.2
+    },
+    {
+      "n": 1000000,
+      "ventana_24h_sin_indice_s": 0.036494,
+      "plan_sin_indice": [
+        "Seq Scan"
+      ],
+      "ventana_24h_con_indice_s": 0.00233,
+      "plan_con_indice": [
+        "Bitmap Heap Scan",
+        "Bitmap Index Scan"
+      ],
+      "todo_el_año_sin_indice_s": 0.214367,
+      "todo_el_año_con_indice_s": 0.21435300000000002,
+      "agregar_en_postgres_s": 0.2279972540000017,
+      "agregar_en_python_s": 0.839711194001211,
+      "python_pico_mib": 84.42,
+      "postgres_pico_python_mib": 0.663,
+      "tabla_mib": 57.4,
+      "indice_mib": 21.4
+    }
+  ]
+}

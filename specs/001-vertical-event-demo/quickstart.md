@@ -175,7 +175,11 @@ node tests/e2e/panel_published.mjs check https://<sitio>.netlify.app "<ruta de o
 
 Para autorizar el origen de Netlify: `CORS_ORIGINS` en `.env` y `docker compose up -d --force-recreate api`.
 
-## 10. Limpieza
+## 10. Memoria y cifras (Fase 13)
+
+La memoria está en `docs/memoria.md`. Sus cifras se regeneran con `scripts/memoria_datos.py`, `scripts/medir_complejidad.py` y `scripts/medir_api.py`; los comandos exactos están en `docs/memoria.md` §10. Las cifras del feed live son una instantánea: volver a ejecutar `memoria_datos.py` antes de entregar o grabar y actualizar §3.2, §3.5 y §5.
+
+## 11. Limpieza
 
 `docker compose down` conserva los datos; `docker compose down -v` borra los volúmenes (Kafka, PostgreSQL y originales).
 

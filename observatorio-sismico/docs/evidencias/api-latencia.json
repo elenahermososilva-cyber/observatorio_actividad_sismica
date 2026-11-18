@@ -1,0 +1,70 @@
+{
+  "generado_en": "2026-11-18T18:40:40+00:00",
+  "base": "http://127.0.0.1:8000",
+  "nota": "extremo a extremo en el mismo equipo, sin pasar por el túnel",
+  "resultados": {
+    "salud": {
+      "ruta": "/api/salud?mode=live",
+      "estado_http": 200,
+      "bytes": 207,
+      "mediana_ms": 3.7,
+      "p95_ms": 14.3,
+      "max_ms": 16.7,
+      "repeticiones": 30
+    },
+    "eventos_live_24h": {
+      "ruta": "/api/eventos?mode=live",
+      "estado_http": 200,
+      "bytes": 54354,
+      "mediana_ms": 6.4,
+      "p95_ms": 9.9,
+      "max_ms": 31.9,
+      "repeticiones": 30
+    },
+    "eventos_live_todo_min_mag_4": {
+      "ruta": "/api/eventos?mode=live&start=2026-11-01T00:00:00Z&min_mag=4",
+      "estado_http": 200,
+      "bytes": 11696,
+      "mediana_ms": 5.0,
+      "p95_ms": 6.7,
+      "max_ms": 21.2,
+      "repeticiones": 30
+    },
+    "eventos_live_pais_USA": {
+      "ruta": "/api/eventos?mode=live&start=2026-11-01T00:00:00Z&country_id=USA",
+      "estado_http": 200,
+      "bytes": 88337,
+      "mediana_ms": 8.5,
+      "p95_ms": 21.9,
+      "max_ms": 36.8,
+      "repeticiones": 30
+    },
+    "estadisticas_live_24h": {
+      "ruta": "/api/estadisticas?mode=live",
+      "estado_http": 200,
+      "bytes": 8592,
+      "mediana_ms": 27.1,
+      "p95_ms": 44.6,
+      "max_ms": 88.1,
+      "repeticiones": 30
+    },
+    "estadisticas_live_min_mag_4": {
+      "ruta": "/api/estadisticas?mode=live&min_mag=4&start=2026-11-17T00:00:00Z",
+      "estado_http": 200,
+      "bytes": 7706,
+      "mediana_ms": 23.8,
+      "p95_ms": 26.0,
+      "max_ms": 30.0,
+      "repeticiones": 30
+    },
+    "estadisticas_replay_2025": {
+      "ruta": "/api/estadisticas?mode=replay&start=2025-01-01T00:00:00Z&end=2025-02-01T00:00:00Z",
+      "estado_http": 200,
+      "bytes": 28288,
+      "mediana_ms": 24.9,
+      "p95_ms": 33.9,
+      "max_ms": 46.1,
+      "repeticiones": 30
+    }
+  }
+}
