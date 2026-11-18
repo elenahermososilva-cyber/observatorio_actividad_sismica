@@ -10,6 +10,7 @@ import type { Config, CountryOption, DataMode, EventCollection, Filters, Health,
 
 const DEFAULT_FILTERS: Filters = { range: '24h', startDate: '', endDate: '', minMag: '', country: '' };
 const fmt = (value: number, digits = 1) => value.toLocaleString('es-ES', { maximumFractionDigits: digits });
+const signed = (value: number, digits = 1) => (value > 0 ? '+' : '') + fmt(value, digits);
 
 @Component({
   selector: 'app-root', standalone: true, imports: [EventMapComponent, EventTableComponent, BarChartComponent],
@@ -110,6 +111,9 @@ export class AppComponent implements OnDestroy {
         min: base.min_per_day ?? 'ND', max: base.max_per_day ?? 'ND',
       },
       ratio: c.ratio_vs_daily_mean === null ? null : fmt(c.ratio_vs_daily_mean, 2),
+      // Diferencia y variación porcentual respecto a la media diaria (FAQ 23). Con media 0 la variación no está definida: ND.
+      diff: base ? signed(c.last_24h.count - base.mean_per_day, 1) : 'ND',
+      pct: base && base.mean_per_day > 0 ? signed(((c.last_24h.count - base.mean_per_day) / base.mean_per_day) * 100, 0) + ' %' : 'ND',
       note: c.same_filters_note, caveats: c.caveats,
       filters: c.filters,
     };

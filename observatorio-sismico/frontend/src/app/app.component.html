@@ -190,7 +190,8 @@
               <div><span class="kpi">{{ c.count }}</span><span>terremotos en las últimas 24 h</span></div>
               <div><span class="kpi">{{ b.mean }}</span><span>media diaria {{ b.year }} ({{ b.events }} eventos / {{ b.days }} días, incluidos {{ b.zeroDays }} sin eventos)</span></div>
               <div><span class="kpi">{{ b.median }}</span><span>mediana diaria {{ b.year }} (mín. {{ b.min }}, máx. {{ b.max }})</span></div>
-              <div><span class="kpi">{{ c.ratio ?? 'ND' }}</span><span>veces la media diaria</span></div>
+              <div><span class="kpi">{{ c.diff }}</span><span>diferencia respecto a la media diaria (eventos)</span></div>
+              <div><span class="kpi">{{ c.pct }}</span><span>variación respecto a la media diaria; ND si la media es 0 ({{ c.ratio ?? 'ND' }} veces)</span></div>
             </div>
             <p class="help">La media puede quedar elevada por jornadas extraordinarias (por ejemplo, secuencias de réplicas); la mediana y el rango ayudan a situar el valor reciente.</p>
           } @else {
