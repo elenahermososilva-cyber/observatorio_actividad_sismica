@@ -84,24 +84,33 @@ class CollectionMeta:
     generated: int
     last_ingestion: int | None
     mode: str
-    truncated: bool
+    truncated: bool  # quedan eventos que cumplen los filtros más allá de esta página
     start: int | None
     end: int | None
-    total: int
+    total: int  # eventos que cumplen los filtros (todas las páginas)
+    limit: int | None = None
+    offset: int = 0
+    null_mag_count: int = 0  # con magnitud nula DENTRO del conjunto filtrado (se muestran como ND)
+    null_mag_excluded: int = 0  # con min_mag: eventos de magnitud nula que quedan fuera por no poder cumplirlo
+    filters: dict | None = None
 
 
 def build_collection(features: list[dict], meta: CollectionMeta) -> dict:
-    return {
-        "type": "FeatureCollection",
-        "metadata": {
-            "generated": meta.generated,
-            "last_ingestion": meta.last_ingestion,
-            "mode": meta.mode,
-            "count": len(features),
-            "truncated": meta.truncated,
-            "total": meta.total,
-            "start": meta.start,
-            "end": meta.end,
-        },
-        "features": features,
+    next_offset = meta.offset + len(features) if meta.truncated else None
+    metadata = {
+        "generated": meta.generated,
+        "last_ingestion": meta.last_ingestion,
+        "mode": meta.mode,
+        "count": len(features),
+        "truncated": meta.truncated,
+        "total": meta.total,
+        "start": meta.start,
+        "end": meta.end,
+        "limit": meta.limit,
+        "offset": meta.offset,
+        "next_offset": next_offset,
+        "null_mag_count": meta.null_mag_count,
+        "null_mag_excluded": meta.null_mag_excluded,
+        "filters": meta.filters if meta.filters is not None else {"min_mag": None, "country_id": None},
     }
+    return {"type": "FeatureCollection", "metadata": metadata, "features": features}

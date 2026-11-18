@@ -1,6 +1,7 @@
 {
-  "mode": "demo",
-  "apiUrl": "https://TU-DOMINIO-NGROK",
+  "mode": "api",
+  "apiUrl": "https://onset-deepen-situation.ngrok-free.dev",
+  "dataMode": "live",
   "refreshMs": 60000,
   "skipNgrokWarning": true
 }

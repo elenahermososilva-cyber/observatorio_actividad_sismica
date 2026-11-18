@@ -1,0 +1,43 @@
+{
+  "fecha": "2026-11-18T18:18:32.070Z",
+  "url": "https://observatorio-sismico-elena.netlify.app",
+  "resultados": [
+    {
+      "name": "punto de partida: el panel muestra eventos",
+      "ok": true,
+      "detail": "185 eventos dibujados de 185 que cumplen los filtros · 0 omitidos por coordenadas inválidas"
+    },
+    {
+      "name": "el panel detectó el túnel cerrado y mostró el aviso",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "conservó los eventos de la última lectura durante el fallo (antes = durante, y sin cambios hasta el final del fallo)",
+      "ok": true,
+      "detail": "antes 185 · al detectar 185 · justo antes de recuperar 185"
+    },
+    {
+      "name": "identificó la última lectura correcta",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "se recuperó solo al reabrir el túnel",
+      "ok": true,
+      "detail": "tras 183 s del primer aviso"
+    }
+  ],
+  "registro": [
+    "2026-11-18T18:14:24.590Z OK    punto de partida: el panel muestra eventos 185 eventos dibujados de 185 que cumplen los filtros · 0 omitidos por coordenadas inválidas",
+    "2026-11-18T18:14:24.594Z >>> CIERRA ngrok ahora (Ctrl+C). Vigilando hasta 2026-11-18T18:26:22.907Z",
+    "2026-11-18T18:15:27.064Z FALLO detectado por el panel: «No se pudo actualizar. No hay conexión con la API (¿túnel cerrado, backend apagado o CORS?). Se conserva la última lectura correcta, tomada 2026-11-18 18:14:24 »",
+    "2026-11-18T18:15:27.065Z eventos en el mapa: 185 (último recuento antes del fallo: 185) · estado: Sin respuesta",
+    "2026-11-18T18:15:27.065Z >>> VUELVE A ABRIR ngrok ahora: ngrok http --url=<dominio-fijo> 8000",
+    "2026-11-18T18:18:30.045Z RECUPERADO sin recargar la página: estado Accesible · eventos 187",
+    "2026-11-18T18:18:32.068Z OK    el panel detectó el túnel cerrado y mostró el aviso ",
+    "2026-11-18T18:18:32.069Z OK    conservó los eventos de la última lectura durante el fallo (antes = durante, y sin cambios hasta el final del fallo) antes 185 · al detectar 185 · justo antes de recuperar 185",
+    "2026-11-18T18:18:32.070Z OK    identificó la última lectura correcta ",
+    "2026-11-18T18:18:32.070Z OK    se recuperó solo al reabrir el túnel tras 183 s del primer aviso"
+  ]
+}

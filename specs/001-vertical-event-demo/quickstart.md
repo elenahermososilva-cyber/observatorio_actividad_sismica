@@ -122,7 +122,60 @@ docker compose exec postgres psql -U observatorio -d observatorio -c \
 
 Los eventos de cualquier modo se evalúan al escribirse; los anteriores a la atribución de país se completan solos al arrancar el consumidor (`geo_backfill`). Reglas, decisiones y resultados medidos: `docs/fase8-calidad-y-geografia.md`.
 
-## 6. Limpieza
+## 6. API completa: filtros, paginación, estadísticas, salud y CORS (Fase 9)
+
+```bash
+# Filtros combinables (los mismos en el mapa y en las estadísticas)
+curl "localhost:8000/api/eventos?mode=live&min_mag=4"                     # una magnitud nula nunca cumple; metadata.null_mag_excluded las cuenta
+curl "localhost:8000/api/eventos?mode=live&country_id=none"               # «Sin país asignado»
+curl "localhost:8000/api/eventos?mode=live&country_id=USA&limit=50&offset=50"   # paginación: metadata.next_offset
+# Estadísticas: recuentos por hora UTC y país, distribuciones, comparación con 2025
+curl "localhost:8000/api/estadisticas?mode=live&min_mag=4&group=subregion"
+# Salud: ok | stale (datos live sin actualizar) | error (503)
+curl "localhost:8000/api/salud?mode=live"
+# CORS: preflight desde el servidor de desarrollo de Angular
+curl -i -X OPTIONS localhost:8000/api/eventos -H "Origin: http://localhost:4200" \
+     -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: ngrok-skip-browser-warning"
+```
+
+`/api/estadisticas?...&mode=live` necesita datos live; el histórico de 2025 debe estar cargado (sección 5) para la comparación. Referencia completa de parámetros y campos: `contracts/api-eventos.md`.
+
+**Autorizar el dominio de Netlify** cuando se conozca: añádelo a `CORS_ORIGINS` en `.env` (lista separada por comas) y ejecuta `docker compose up -d --force-recreate api`.
+
+## 7. Pruebas de aceptación y evidencias (Fase 10)
+
+Una prueba por fila de la tabla de ENUNCIADO §11 (evento nuevo, duplicado, versión posterior, versión antigua, magnitud nula, coordenadas inválidas, evento marítimo, reinicio del consumidor, reproducción histórica) y pruebas de aislamiento replay↔live. Se ejecutan contra una base PostgreSQL temporal con el consumidor y la API reales:
+
+```powershell
+docker compose run --rm --no-deps -v "${PWD}/tests:/app/tests" -v "${PWD}/docs/evidencias:/app/docs/evidencias" `
+    -e EVIDENCE_DIR=/app/docs/evidencias api python -m unittest discover -s tests/acceptance -t . -v
+```
+
+Regenera `docs/evidencias/aceptacion-s11.md` y `.json`. Las evidencias de la pila real (reinicio del consumidor, caída de PostgreSQL y reproducción por Kafka) están en `docs/evidencias/pila-real.md`. Las filas «Cerrar/Volver a abrir el túnel» quedan pendientes hasta tener el panel y ngrok.
+
+## 8. Panel Angular (Fase 11)
+
+```bash
+cd frontend && npm ci && npm start     # http://localhost:4200 (la API debe estar en http://localhost:8000)
+```
+
+`public/config.json`: `mode` (`api` o `demo`), `apiUrl` (sin `/api` final), `dataMode` (`live`, `demo` o `replay`; también `?mode=replay` en la URL), `refreshMs` (mínimo efectivo 30 s) y `skipNgrokWarning`. Es público: nunca debe contener secretos. Los filtros iniciales se pueden fijar por URL, p. ej. `/?mode=replay&range=custom&from=2025-01-01&to=2025-01-03&min_mag=5&country=JPN`.
+
+Prueba en navegador real (para y arranca la API; requiere `"refreshMs": 30000` temporalmente): `node tests/e2e/panel_e2e.mjs http://localhost:4200/ "<ruta de observatorio-sismico>"`. Evidencias en `docs/evidencias/panel.md`.
+
+## 9. Despliegue público (Fase 12)
+
+Panel en Netlify + API por ngrok con dominio fijo. Procedimiento completo, checklist previo a la defensa y tabla de fallos en `docs/despliegue.md`. Resumen:
+
+```powershell
+docker compose up -d
+ngrok http --url=<dominio-fijo> 8000        # el authtoken se registró una vez con `ngrok config add-authtoken` (fuera de Git)
+node tests/e2e/panel_published.mjs check https://<sitio>.netlify.app "<ruta de observatorio-sismico>"
+```
+
+Para autorizar el origen de Netlify: `CORS_ORIGINS` en `.env` y `docker compose up -d --force-recreate api`.
+
+## 10. Limpieza
 
 `docker compose down` conserva los datos; `docker compose down -v` borra los volúmenes (Kafka, PostgreSQL y originales).
 
@@ -136,4 +189,4 @@ Los eventos de cualquier modo se evalúan al escribirse; los anteriores a la atr
 
 ## Limitaciones de esta guía
 
-Las secciones 1 a 4 validan la entrega vertical. La sección 5 cubre la ingesta live, el histórico y el replay. Siguen fuera: asignación de país, estadísticas, filtros `min_mag`/`country_id`, CORS y despliegue en Netlify/ngrok.
+Las secciones 1 a 4 validan la entrega vertical. La sección 5 cubre la ingesta live, el histórico y el replay, y la 6 la API completa. Sigue fuera el despliegue en Netlify/ngrok.

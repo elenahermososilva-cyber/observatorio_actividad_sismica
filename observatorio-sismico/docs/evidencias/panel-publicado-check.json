@@ -1,0 +1,50 @@
+{
+  "fecha": "2026-11-18T18:05:31.822Z",
+  "url": "https://observatorio-sismico-elena.netlify.app",
+  "resultados": [
+    {
+      "name": "el panel publicado carga y dibuja eventos reales",
+      "ok": true,
+      "detail": "185 eventos dibujados de 185 que cumplen los filtros · 0 omitidos por coordenadas inválidas"
+    },
+    {
+      "name": "el panel dice que consulta datos en vivo",
+      "ok": true,
+      "detail": "EN VIVO · datos reales de USGS vía backend"
+    },
+    {
+      "name": "no hay aviso de fallo ni de datos desactualizados",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "estado de la API accesible",
+      "ok": true,
+      "detail": "Accesible"
+    },
+    {
+      "name": "hay estadísticas",
+      "ok": true,
+      "detail": "Calculado en la base de datos sobre 185 eventos que cumplen los filtros (2026-11-17 18:05:31 UTC → ahora)."
+    },
+    {
+      "name": "hay gráficos y tabla",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "la última ingesta de USGS es reciente (< 5 min)",
+      "ok": true,
+      "detail": "ÚLTIMA INGESTA CORRECTA DE USGS 2026-11-18 18:04:50 UTC (hace 40 s)"
+    }
+  ],
+  "registro": [
+    "2026-11-18T18:05:31.775Z OK    el panel publicado carga y dibuja eventos reales 185 eventos dibujados de 185 que cumplen los filtros · 0 omitidos por coordenadas inválidas",
+    "2026-11-18T18:05:31.785Z OK    el panel dice que consulta datos en vivo EN VIVO · datos reales de USGS vía backend",
+    "2026-11-18T18:05:31.789Z OK    no hay aviso de fallo ni de datos desactualizados ",
+    "2026-11-18T18:05:31.792Z OK    estado de la API accesible Accesible",
+    "2026-11-18T18:05:31.803Z OK    hay estadísticas Calculado en la base de datos sobre 185 eventos que cumplen los filtros (2026-11-17 18:05:31 UTC → ahora).",
+    "2026-11-18T18:05:31.809Z OK    hay gráficos y tabla ",
+    "2026-11-18T18:05:31.822Z OK    la última ingesta de USGS es reciente (< 5 min) ÚLTIMA INGESTA CORRECTA DE USGS 2026-11-18 18:04:50 UTC (hace 40 s)"
+  ]
+}

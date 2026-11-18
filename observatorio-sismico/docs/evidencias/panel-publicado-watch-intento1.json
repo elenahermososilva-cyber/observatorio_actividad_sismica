@@ -1,0 +1,43 @@
+{
+  "fecha": "2026-11-18T18:13:52.913Z",
+  "url": "https://observatorio-sismico-elena.netlify.app",
+  "resultados": [
+    {
+      "name": "punto de partida: el panel muestra eventos",
+      "ok": true,
+      "detail": "185 eventos dibujados de 185 que cumplen los filtros · 0 omitidos por coordenadas inválidas"
+    },
+    {
+      "name": "el panel detectó el túnel cerrado y mostró el aviso",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "conservó los eventos de la última lectura durante el fallo",
+      "ok": false,
+      "detail": "186 vs 185"
+    },
+    {
+      "name": "identificó la última lectura correcta",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "se recuperó solo al reabrir el túnel",
+      "ok": true,
+      "detail": "tras 183 s del primer aviso"
+    }
+  ],
+  "registro": [
+    "2026-11-18T18:05:42.318Z OK    punto de partida: el panel muestra eventos 185 eventos dibujados de 185 que cumplen los filtros · 0 omitidos por coordenadas inválidas",
+    "2026-11-18T18:05:42.321Z >>> CIERRA ngrok ahora (Ctrl+C). Vigilando hasta 2026-11-18T18:17:40.757Z",
+    "2026-11-18T18:10:48.065Z FALLO detectado por el panel: «No se pudo actualizar. No hay conexión con la API (¿túnel cerrado, backend apagado o CORS?). Se conserva la última lectura correcta, tomada 2026-11-18 18:09:45 »",
+    "2026-11-18T18:10:48.066Z eventos conservados en el mapa: 186 (antes: 185) · estado: Sin respuesta",
+    "2026-11-18T18:10:48.066Z >>> VUELVE A ABRIR ngrok ahora: ngrok http --url=<dominio-fijo> 8000",
+    "2026-11-18T18:13:50.896Z RECUPERADO sin recargar la página: estado Accesible · eventos 185",
+    "2026-11-18T18:13:52.911Z OK    el panel detectó el túnel cerrado y mostró el aviso ",
+    "2026-11-18T18:13:52.911Z FALLA conservó los eventos de la última lectura durante el fallo 186 vs 185",
+    "2026-11-18T18:13:52.913Z OK    identificó la última lectura correcta ",
+    "2026-11-18T18:13:52.913Z OK    se recuperó solo al reabrir el túnel tras 183 s del primer aviso"
+  ]
+}

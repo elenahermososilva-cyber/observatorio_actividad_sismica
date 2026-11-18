@@ -1,0 +1,389 @@
+[
+  {
+    "id": "P1",
+    "prueba": "Recibir un evento nuevo",
+    "esperado": "Una fila actual, visible en API, mapa y análisis",
+    "estado": "PASA",
+    "pasos": [
+      "Se entrega un evento live nuevo (`e1`, M4,7) al consumidor.",
+      "Decisión del consumidor: NEW.",
+      "`live.event_current` tiene 1 fila.",
+      "`GET /api/eventos` devuelve 1 evento (el mapa lee este endpoint).",
+      "`GET /api/estadisticas` cuenta 1 evento en totales, serie horaria y distribución de magnitud."
+    ],
+    "datos": {
+      "api_eventos": [
+        {
+          "id": "e1",
+          "mag": 4.7,
+          "country_id": "ESP",
+          "updated": 1794913201000
+        }
+      ],
+      "totals": {
+        "period": {
+          "start": 1794787200000,
+          "end": null
+        },
+        "filters": {
+          "min_mag": null,
+          "country_id": null,
+          "mode": "live"
+        },
+        "unit": "terremotos",
+        "events": 1,
+        "missing": {
+          "magnitude": 0,
+          "depth": 0
+        }
+      }
+    }
+  },
+  {
+    "id": "P2",
+    "prueba": "Reenviar la misma versión",
+    "esperado": "No aumenta el número de terremotos",
+    "estado": "PASA",
+    "pasos": [
+      "Se entrega `e1` y después la misma versión 3 veces más.",
+      "Las 3 decisiones son DUPLICATE.",
+      "Total en la API y en estadísticas antes/después: (1, 1) / (1, 1).",
+      "`event_message` conserva 1 sola fila."
+    ],
+    "datos": {
+      "antes": [
+        1,
+        1
+      ],
+      "despues": [
+        1,
+        1
+      ]
+    }
+  },
+  {
+    "id": "P3",
+    "prueba": "Recibir una versión posterior",
+    "esperado": "Cambian los datos actuales y las agregaciones afectadas",
+    "estado": "PASA",
+    "pasos": [
+      "Se entrega `e1` M4,1 (updated t) y después la revisión M6,3 (updated t+89 s).",
+      "Decisión: REVISION.",
+      "La API pasa de M4,1 a M6,3 sin duplicar el evento (total 1).",
+      "El histograma de magnitud pasa del intervalo [4,0-4,5) al [6,0-6,5).",
+      "`event_message` guarda las 2 versiones; `event_current` solo la última."
+    ],
+    "datos": {
+      "antes": [
+        {
+          "id": "e1",
+          "mag": 4.1,
+          "country_id": "ESP",
+          "updated": 1794913201000
+        }
+      ],
+      "despues": [
+        {
+          "id": "e1",
+          "mag": 6.3,
+          "country_id": "ESP",
+          "updated": 1794913290000
+        }
+      ],
+      "histograma_antes": {
+        "4.0": 1
+      },
+      "histograma_despues": {
+        "6.0": 1
+      }
+    }
+  },
+  {
+    "id": "P4",
+    "prueba": "Recibir después una versión antigua",
+    "esperado": "No sustituye a la más reciente",
+    "estado": "PASA",
+    "pasos": [
+      "Se entrega `e1` M6,3 (updated t+89 s) y después una versión anterior M4,1 (updated t+1 s).",
+      "Decisión: STALE.",
+      "La API sigue mostrando M6,3 con `updated` = t+89 s."
+    ],
+    "datos": {
+      "api": [
+        {
+          "id": "e1",
+          "mag": 6.3,
+          "country_id": "ESP",
+          "updated": 1794913290000
+        }
+      ]
+    }
+  },
+  {
+    "id": "P5",
+    "prueba": "Magnitud nula",
+    "esperado": "Se conserva con tratamiento documentado y se visualiza como ND",
+    "estado": "PASA",
+    "pasos": [
+      "Se entrega `nul` con `mag: null`.",
+      "Se guarda NULL (no 0) y se acepta: no va a cuarentena.",
+      "La API devuelve `mag: null` (sin NaN) y `metadata.null_mag_count = 1`; el panel lo pinta como ND.",
+      "Con `min_mag=0` queda fuera y se cuenta en `null_mag_excluded = 1`.",
+      "Las estadísticas lo cuentan como evento y lo declaran en `missing.magnitude`, sin entrar en el histograma."
+    ],
+    "datos": {
+      "api": [
+        {
+          "id": "nul",
+          "mag": null,
+          "country_id": "ESP",
+          "updated": 1794913201000
+        }
+      ],
+      "con_min_mag_0": {
+        "generated": 1794916800000,
+        "last_ingestion": null,
+        "mode": "live",
+        "count": 0,
+        "truncated": false,
+        "total": 0,
+        "start": 1794787200000,
+        "end": null,
+        "limit": 5000,
+        "offset": 0,
+        "next_offset": null,
+        "null_mag_count": 0,
+        "null_mag_excluded": 1,
+        "filters": {
+          "min_mag": 0.0,
+          "country_id": null
+        }
+      },
+      "totals": {
+        "period": {
+          "start": 1794787200000,
+          "end": null
+        },
+        "filters": {
+          "min_mag": null,
+          "country_id": null,
+          "mode": "live"
+        },
+        "unit": "terremotos",
+        "events": 1,
+        "missing": {
+          "magnitude": 1,
+          "depth": 0
+        }
+      }
+    }
+  },
+  {
+    "id": "P6",
+    "prueba": "Coordenadas inválidas",
+    "esperado": "Cuarentena y motivo; no aparecen puntos inventados",
+    "estado": "PASA",
+    "pasos": [
+      "Se entregan `bad1` (latitud 95) y `bad2` (longitud 200).",
+      "Ambos rechazados con motivo `invalid_coordinates`.",
+      "`quarantine_record` guarda 2 filas con motivo, payload original y referencia Kafka.",
+      "`event_current` queda vacía y la API devuelve 0 eventos: no se corrige ni se coloca ningún punto."
+    ],
+    "datos": {
+      "cuarentena": [
+        {
+          "event_id": "bad1",
+          "motivo": "invalid_coordinates: latitude must be between -90 and 90",
+          "topic": "sismos.live",
+          "offset": 1
+        },
+        {
+          "event_id": "bad2",
+          "motivo": "invalid_coordinates: longitude must be between -180 and 180",
+          "topic": "sismos.live",
+          "offset": 2
+        }
+      ]
+    }
+  },
+  {
+    "id": "P7",
+    "prueba": "Evento marítimo",
+    "esperado": "Sin país asignado; permanece en el análisis",
+    "estado": "PASA",
+    "pasos": [
+      "Se entregan `mar` (Atlántico, 30°W 0°N) y `tierra` (Madrid).",
+      "`mar` queda con `country_id: null` y estado `unassigned`; `tierra` es ESP.",
+      "Las estadísticas cuentan los 2 eventos y muestran «Sin país asignado» como grupo propio.",
+      "`country_id=none` devuelve solo `mar`."
+    ],
+    "datos": {
+      "api": [
+        {
+          "id": "mar",
+          "mag": 4.6,
+          "country_id": null,
+          "updated": 1794913201000
+        },
+        {
+          "id": "tierra",
+          "mag": 4.2,
+          "country_id": "ESP",
+          "updated": 1794913201000
+        }
+      ],
+      "grupos": [
+        {
+          "key": "ESP",
+          "name": "España",
+          "count": 1
+        },
+        {
+          "key": null,
+          "name": "Sin país asignado",
+          "count": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "P8",
+    "prueba": "Reiniciar consumidor",
+    "esperado": "Reanuda sin duplicar los efectos ya persistidos",
+    "estado": "PASA",
+    "pasos": [
+      "Se procesan 4 mensajes (3 eventos, uno con revisión) y se guarda el estado.",
+      "Se simula el reinicio con relectura completa desde el offset 0 (el consumidor no había confirmado).",
+      "Decisiones en la relectura: ['stale', 'duplicate', 'duplicate', 'duplicate']: ningún efecto nuevo.",
+      "Filas de `event_current`, `event_message`, cuarentena y versiones vigentes: idénticas antes y después.",
+      "En la pila Docker real lo cubren `tests/integration/test_reconsume_event.py` (reset de offsets a earliest y `docker compose restart consumer`) y `test_failure_scenarios.py` (caída de PostgreSQL sin confirmar offsets)."
+    ],
+    "datos": {
+      "estado": {
+        "event_current": 3,
+        "event_message": 4,
+        "quarantine": 0,
+        "versiones": [
+          [
+            "a",
+            1794916805000,
+            4.4
+          ],
+          [
+            "b",
+            1794913201000,
+            5.0
+          ],
+          [
+            "c",
+            1794913201000,
+            null
+          ]
+        ]
+      },
+      "decisiones_relectura": [
+        "stale",
+        "duplicate",
+        "duplicate",
+        "duplicate"
+      ]
+    }
+  },
+  {
+    "id": "P9",
+    "prueba": "Cerrar el túnel",
+    "esperado": "El panel muestra el fallo y conserva/identifica la última lectura",
+    "estado": "PASA (panel publicado + túnel ngrok real)",
+    "pasos": [
+      "Precondición verificada aquí en la API: cada respuesta lleva `metadata.generated` y `last_ingestion`, que el panel usa para identificar la última lectura buena.",
+      "Comprobado en el panel real (Edge, `tests/e2e/panel_e2e.mjs`, ver `panel-e2e.json`): con el servicio `api` parado el panel muestra el aviso «No se pudo actualizar», conserva los eventos de la última lectura, indica cuándo fue y marca la API como «Sin respuesta».",
+      "Comprobado también con el túnel ngrok real y el panel publicado en Netlify (`panel-publicado-watch.json`, 18-nov-2026): al cerrar ngrok el panel mostró el aviso en ~60 s, con estado «Sin respuesta», y conservó 185 eventos idénticos hasta el final del fallo."
+    ],
+    "datos": {
+      "metadata": {
+        "generated": 1794916800000,
+        "last_ingestion": null,
+        "mode": "live",
+        "count": 1,
+        "truncated": false,
+        "total": 1,
+        "start": 1794787200000,
+        "end": null,
+        "limit": 5000,
+        "offset": 0,
+        "next_offset": null,
+        "null_mag_count": 0,
+        "null_mag_excluded": 0,
+        "filters": {
+          "min_mag": null,
+          "country_id": null
+        }
+      }
+    }
+  },
+  {
+    "id": "P10",
+    "prueba": "Volver a abrir el túnel",
+    "esperado": "Se recuperan las consultas automáticamente",
+    "estado": "PASA (panel publicado + túnel ngrok real)",
+    "pasos": [
+      "Comprobado en el panel real (`panel-e2e.json`): al arrancar de nuevo el servicio `api`, el aviso desaparece solo en el siguiente refresco, sin recargar la página, y el estado vuelve a «Accesible» o «Datos desactualizados» según `/api/salud`.",
+      "Las lecturas de la API no tienen estado de sesión, de modo que la siguiente consulta recupera el estado completo.",
+      "Comprobado con el túnel ngrok real (`panel-publicado-watch.json`): al reabrir `ngrok http --url=<dominio-fijo> 8000` el panel publicado se recuperó solo, sin recargar la página, 183 s después del primer aviso (el tiempo depende de cuánto estuvo cerrado el túnel y del refresco de 60 s). Con el dominio fijo no hizo falta cambiar `config.json` ni volver a publicar."
+    ],
+    "datos": null
+  },
+  {
+    "id": "P11",
+    "prueba": "Reproducción histórica",
+    "esperado": "Procesa por Kafka sin mezclarla con datos live",
+    "estado": "PASA",
+    "pasos": [
+      "Un evento live (`live1`) está en `live`.",
+      "Se reproducen 3 eventos históricos (topic `sismos.replay`) más los casos controlados duplicado, revisión y antigua.",
+      "Decisiones del consumidor: ['NEW', 'NEW', 'NEW', 'DUPLICATE', 'REVISION', 'STALE'].",
+      "`/api/eventos?mode=replay` devuelve solo h0, h1, h2; `/api/eventos?mode=live` solo `live1`.",
+      "El tiempo de ocurrencia original se conserva y `replay_at` se guarda aparte.",
+      "Un mensaje de replay entregado al consumidor live se rechaza con `mode_mismatch` y va a cuarentena: nunca se mezcla.",
+      "El panel mostrará el banner «REPRODUCCIÓN» (Fase 11): la API ya devuelve `metadata.mode = replay`."
+    ],
+    "datos": {
+      "decisiones": [
+        "NEW",
+        "NEW",
+        "NEW",
+        "DUPLICATE",
+        "REVISION",
+        "STALE"
+      ],
+      "replay": [
+        {
+          "id": "h2",
+          "mag": 5.2,
+          "country_id": "ESP",
+          "updated": 1736000000002
+        },
+        {
+          "id": "h1",
+          "mag": 5.3,
+          "country_id": "ESP",
+          "updated": 1736000060001
+        },
+        {
+          "id": "h0",
+          "mag": 5.0,
+          "country_id": "ESP",
+          "updated": 1736000000000
+        }
+      ],
+      "live": [
+        {
+          "id": "live1",
+          "mag": 4.9,
+          "country_id": "ESP",
+          "updated": 1794913201000
+        }
+      ]
+    }
+  }
+]

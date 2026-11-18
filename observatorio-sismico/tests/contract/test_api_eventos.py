@@ -71,7 +71,7 @@ class EventosContractTests(unittest.TestCase):
         queries = FakeQueries()
         with self.client(queries, now=EVENT_TIME + 25 * HOUR) as client:
             body = client.get("/api/eventos").json()
-        self.assertEqual(queries.calls[0][0], EVENT_TIME + 25 * HOUR - 24 * HOUR)
+        self.assertEqual(queries.calls[0][0].start_ms, EVENT_TIME + 25 * HOUR - 24 * HOUR)
         self.assertEqual(body["features"], [])  # evento de hace 25 h: fuera de la ventana por defecto
         self.assertEqual(body["metadata"]["count"], 0)
 
@@ -92,7 +92,7 @@ class EventosContractTests(unittest.TestCase):
         queries = FakeQueries()
         with self.client(queries) as client:
             client.get("/api/eventos", params={"start": "2026-10-27T14:00:00"})
-        self.assertEqual(queries.calls[0][0], EVENT_TIME)
+        self.assertEqual(queries.calls[0][0].start_ms, EVENT_TIME)
 
     def test_empty_result_is_200_with_empty_features(self) -> None:
         with self.client(FakeQueries(features=[])) as client:

@@ -1,6 +1,228 @@
 <main>
-  <header><p class="eyebrow">BIG DATA · PROYECTO DE AULA</p><h1>Observatorio de actividad sísmica</h1><p>Mapa base, fronteras y eventos en capas independientes.</p></header>
-  <section class="info" aria-live="polite"><strong>{{ mode() }}</strong><p>{{ status() }}</p><p>{{ countriesStatus() }} · {{ count() }} eventos dibujados · {{ omitted() }} omitidos por coordenadas inválidas</p><small>Última lectura UTC: {{ lastRead() }}<br>Generación de la respuesta UTC: {{ generated() }}</small></section>
-  <div class="map" leaflet [leafletOptions]="options" (leafletMapReady)="onMapReady($event)" aria-label="Mapa interactivo de terremotos"></div>
-  <footer><strong>Profundidad</strong><span>🟡 Menos de 70 km</span><span>🟠 70–299,99 km</span><span>🟣 300 km o más</span><span>⚪ No disponible</span><p>Tamaño: escala visual creciente con la magnitud; no representa energía ni área afectada. Sin magnitud: radio mínimo. El mapa base puede desactivarse en el selector de capas.</p><p>Base proporcionada: añade filtros, gráficos, tabla accesible y conclusiones para completar el proyecto.</p></footer>
+  <header>
+    <p class="eyebrow">BIG DATA · PROYECTO DE AULA</p>
+    <h1>Observatorio de actividad sísmica</h1>
+    <p>Mapa, análisis y tabla sobre los mismos filtros. Los datos proceden de la API del proyecto, nunca directamente de USGS.</p>
+  </header>
+
+  @if (configError(); as problem) {
+    <div class="banner error" role="alert">{{ problem }}</div>
+  } @else {
+
+  <!-- ===== avisos ===== -->
+  @if (replay()) {
+    <div class="banner replay" role="status"><strong>REPRODUCCIÓN</strong> · Datos históricos reproducidos de forma acelerada a través de Kafka. No son actividad en curso. El tiempo de cada evento es el original (por eso, para verlos, elige «Fechas concretas» en el periodo histórico reproducido); el de reproducción se guarda aparte.</div>
+  }
+  @if (synthetic() && !replay()) {
+    <div class="banner demo" role="status"><strong>DEMOSTRACIÓN</strong> · Datos ficticios o sintéticos: no representan actividad sísmica real.</div>
+  }
+  @if (backendDown()) {
+    <div class="banner error" role="alert">
+      <strong>No se pudo actualizar.</strong> {{ eventsError() }}.
+      @if (lastOkAt() !== null) {
+        Se conserva la última lectura correcta, tomada {{ date(lastOkAt()) }} (hace {{ age(lastOkAt()) }}); los datos mostrados pueden no ser actuales.
+      } @else {
+        Todavía no hay ninguna lectura correcta.
+      }
+      Se reintentará automáticamente.
+    </div>
+  }
+  @if (!backendDown() && stale()) {
+    <div class="banner warn" role="status"><strong>Datos desactualizados.</strong> La API responde, pero la ingesta live no se está actualizando. {{ staleText() }}</div>
+  }
+  @if (truncated()) {
+    <div class="banner warn" role="status">
+      <strong>Resultado truncado.</strong> El mapa y la tabla muestran {{ events()?.metadata?.count }} de {{ events()?.metadata?.total }} eventos
+      (límite de la API). Los gráficos y recuentos sí se calculan sobre <em>todos</em> los eventos filtrados. Acota las fechas o sube la magnitud mínima para verlos todos.
+    </div>
+  }
+  @if (statsError(); as problem) {
+    <div class="banner warn" role="status">Las estadísticas no están disponibles: {{ problem }}.
+      @if (stats()) { Se muestran las de la última lectura correcta. }</div>
+  }
+
+  <!-- ===== estado del sistema ===== -->
+  <section class="info" aria-labelledby="h-estado" aria-live="polite">
+    <h2 id="h-estado">Estado del sistema</h2>
+    <p class="mode"><strong>{{ modeLabel() }}</strong></p>
+    <dl>
+      <div><dt>Estado de la API</dt><dd>
+        @if (backendDown()) { <span class="pill bad">Sin respuesta</span> }
+        @else if (stale()) { <span class="pill warn">Datos desactualizados</span> }
+        @else if (loading() && lastOkAt() === null) { <span class="pill">Consultando…</span> }
+        @else if (lastOkAt() !== null) { <span class="pill good">Accesible</span> }
+        @else { <span class="pill">Sin consulta</span> }
+      </dd></div>
+      <div><dt>Último acceso correcto a la API</dt><dd>{{ lastOkAt() === null ? 'Ninguno todavía' : date(lastOkAt()) + ' (hace ' + age(lastOkAt()) + ')' }}</dd></div>
+      <div><dt>{{ dataMode() === 'live' ? 'Última ingesta correcta de USGS' : 'Última ingesta aceptada (no es USGS en directo)' }}</dt><dd>
+        @if (isDemoFile()) { No aplica (archivo estático) }
+        @else if (health()?.last_ingestion != null || events()?.metadata?.last_ingestion != null) {
+          {{ date(health()?.last_ingestion ?? events()?.metadata?.last_ingestion) }} (hace {{ age(health()?.last_ingestion ?? events()?.metadata?.last_ingestion) }})
+        } @else { Ninguna registrada }
+      </dd></div>
+      <div><dt>Periodo consultado (UTC)</dt><dd>{{ period() }}</dd></div>
+      <div><dt>Respuesta generada por la API</dt><dd>{{ date(events()?.metadata?.generated) }}</dd></div>
+      <div><dt>Catálogo geográfico</dt><dd>{{ countriesStatus() }}</dd></div>
+    </dl>
+    @if (loading()) { <p class="loading">Actualizando…</p> }
+  </section>
+
+  <!-- ===== filtros ===== -->
+  @if (!isDemoFile()) {
+  <section class="filters" aria-labelledby="h-filtros">
+    <h2 id="h-filtros">Filtros</h2>
+    <form (submit)="applyFilters($event)" novalidate>
+      <label>Periodo
+        <select (change)="input('range', $event)" [value]="draft().range">
+          <option value="24h" [selected]="draft().range === '24h'">Últimas 24 horas</option>
+          <option value="7d" [selected]="draft().range === '7d'">Últimos 7 días</option>
+          <option value="30d" [selected]="draft().range === '30d'">Últimos 30 días</option>
+          <option value="custom" [selected]="draft().range === 'custom'">Fechas concretas (UTC)</option>
+        </select>
+      </label>
+      @if (draft().range === 'custom') {
+        <label>Desde (UTC, inclusive)
+          <input type="date" [value]="draft().startDate" (input)="input('startDate', $event)" />
+        </label>
+        <label>Hasta (UTC, inclusive)
+          <input type="date" [value]="draft().endDate" (input)="input('endDate', $event)" />
+        </label>
+      }
+      <label>Magnitud mínima
+        <input type="text" inputmode="decimal" placeholder="sin filtro" [value]="draft().minMag" (input)="input('minMag', $event)"
+               aria-describedby="ayuda-mag" />
+      </label>
+      <label>País
+        <select (change)="input('country', $event)">
+          <option value="" [selected]="draft().country === ''">Todos</option>
+          <option value="none" [selected]="draft().country === 'none'">Sin país asignado</option>
+          @for (c of countryOptions(); track c.id) {
+            <option [value]="c.id" [selected]="draft().country === c.id">{{ c.name }}</option>
+          }
+        </select>
+      </label>
+      <button type="submit" class="primary">Aplicar filtros</button>
+      <button type="button" (click)="resetFilters()">Restablecer</button>
+    </form>
+    <p id="ayuda-mag" class="help">Un evento sin magnitud (ND) nunca cumple un umbral de magnitud; se cuenta aparte. «Sin país asignado» reúne los eventos fuera de todo polígono (p. ej. océano). Los mismos filtros se aplican al mapa, la tabla y los gráficos.</p>
+    @if (filterError(); as problem) { <p class="field-error" role="alert">{{ problem }}</p> }
+  </section>
+  }
+
+  <!-- ===== mapa ===== -->
+  <section aria-labelledby="h-mapa">
+    <h2 id="h-mapa">Mapa de terremotos</h2>
+    <p class="count" aria-live="polite">
+      {{ events()?.metadata?.count ?? events()?.features?.length ?? 0 }} eventos dibujados
+      @if (events()?.metadata?.total != null) { de {{ events()?.metadata?.total }} que cumplen los filtros }
+      · {{ omitted() }} omitidos por coordenadas inválidas
+      @if ((events()?.metadata?.null_mag_count ?? 0) > 0) { · {{ events()?.metadata?.null_mag_count }} sin magnitud (ND) }
+      @if ((events()?.metadata?.null_mag_excluded ?? 0) > 0) { · {{ events()?.metadata?.null_mag_excluded }} sin magnitud excluidos por el umbral }
+    </p>
+    <app-event-map [events]="events()" [countries]="countries()" (omitted)="onOmitted($event)" />
+  </section>
+
+  <!-- ===== análisis ===== -->
+  @if (!isDemoFile()) {
+  <section class="analysis" aria-labelledby="h-analisis">
+    <h2 id="h-analisis">Análisis</h2>
+    @if (stats(); as s) {
+      <p class="count">
+        Calculado en la base de datos sobre <strong>{{ s.totals.events }}</strong> eventos que cumplen los filtros
+        ({{ date(s.totals.period.start) }} → {{ s.totals.period.end === null ? 'ahora' : date(s.totals.period.end) }}).
+        @if (s.totals.missing.magnitude > 0) { {{ s.totals.missing.magnitude }} sin magnitud. }
+        @if (s.totals.missing.depth > 0) { {{ s.totals.missing.depth }} sin profundidad. }
+      </p>
+
+      <div class="grid">
+        <article class="card wide">
+          <div class="card-head">
+            <h3>Terremotos por hora UTC</h3>
+            <label class="inline">Detalle de
+              <select (change)="setHourGroup($event)">
+                <option value="">Todos los eventos</option>
+                @for (g of groupOptions(); track g.id) { <option [value]="g.id">{{ g.name }}</option> }
+              </select>
+            </label>
+          </div>
+          <app-bar-chart [bars]="hourlyBars()" caption="Recuento por ventana fija de una hora UTC (tiempo de ocurrencia del evento)"
+            ariaLabel="Terremotos por hora UTC" xLabel="Hora UTC (HH) o día (DD/MM) de ocurrencia" firstColumn="Hora UTC" />
+          @if (hourlyIsSparse()) { <p class="help">Periodo largo: solo se muestran las horas con eventos.</p> }
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>{{ groupBy() === 'country' ? 'Por país' : 'Por subregión' }}</h3>
+            <div class="seg" role="group" aria-label="Agrupar por">
+              <button type="button" [attr.aria-pressed]="groupBy() === 'country'" (click)="setGroupBy('country')">País</button>
+              <button type="button" [attr.aria-pressed]="groupBy() === 'subregion'" (click)="setGroupBy('subregion')">Subregión</button>
+            </div>
+          </div>
+          <app-bar-chart [bars]="groupBars()" orientation="horizontal" caption="Terremotos por grupo (incluye «Sin país asignado»)"
+            ariaLabel="Terremotos por país o subregión" firstColumn="Grupo" />
+          @if (groupsHidden() > 0) { <p class="help">Se muestran los 15 grupos con más eventos; hay {{ groupsHidden() }} grupos más con menos eventos.</p> }
+        </article>
+
+        <article class="card">
+          <h3>Distribución de la magnitud</h3>
+          <app-bar-chart [bars]="magnitudeBars()" caption="Intervalos de 0,5 (desde el valor indicado, hasta el siguiente)"
+            ariaLabel="Distribución de magnitudes" xLabel="Magnitud (tipos de magnitud mixtos)" firstColumn="Desde (M)" />
+          <p class="help">{{ s.distributions.magnitude.with_value }} con magnitud · <strong>{{ s.distributions.magnitude.missing['magnitude'] }} sin magnitud (ND)</strong>, fuera del histograma.</p>
+        </article>
+
+        <article class="card">
+          <h3>Distribución de la profundidad</h3>
+          <app-bar-chart [bars]="depthBars()" caption="Intervalos de 10 km (desde el valor indicado, hasta el siguiente)"
+            ariaLabel="Distribución de profundidades" xLabel="Profundidad (km)" firstColumn="Desde (km)" color="#7b3fb6" />
+          <p class="help">{{ s.distributions.depth_km.with_value }} con profundidad · <strong>{{ s.distributions.depth_km.missing['depth'] }} sin profundidad (ND)</strong>, fuera del histograma.</p>
+        </article>
+
+        @if (comparison(); as c) {
+        <article class="card wide comparison">
+          <h3>Comparación con el histórico</h3>
+          @if (stale() || backendDown()) {
+            <p class="field-error" role="status">Atención: la ingesta live no está actualizada, así que el recuento de las últimas 24 h está incompleto y la comparación no es representativa.</p>
+          }
+          <p>Últimas 24 horas ({{ c.period }}) frente a la media diaria de {{ c.baseline?.year ?? 'ND' }},
+            con filtros geográficos y de magnitud equivalentes en ambos lados.</p>
+          @if (c.baseline; as b) {
+            <div class="kpis">
+              <div><span class="kpi">{{ c.count }}</span><span>terremotos en las últimas 24 h</span></div>
+              <div><span class="kpi">{{ b.mean }}</span><span>media diaria {{ b.year }} ({{ b.events }} eventos / {{ b.days }} días, incluidos {{ b.zeroDays }} sin eventos)</span></div>
+              <div><span class="kpi">{{ b.median }}</span><span>mediana diaria {{ b.year }} (mín. {{ b.min }}, máx. {{ b.max }})</span></div>
+              <div><span class="kpi">{{ c.ratio ?? 'ND' }}</span><span>veces la media diaria</span></div>
+            </div>
+            <p class="help">La media puede quedar elevada por jornadas extraordinarias (por ejemplo, secuencias de réplicas); la mediana y el rango ayudan a situar el valor reciente.</p>
+          } @else {
+            <p class="field-error">El histórico no está cargado en este entorno: no se puede calcular la comparación (no se muestra una media de cero).</p>
+          }
+          <p class="help">{{ c.note }}</p>
+          <ul class="caveats">
+            @for (item of c.caveats; track $index) { <li>{{ item }}</li> }
+          </ul>
+        </article>
+        }
+      </div>
+    } @else if (statsError()) {
+      <p class="field-error">No se pudieron cargar las estadísticas todavía.</p>
+    } @else {
+      <p class="count">Cargando estadísticas…</p>
+    }
+  </section>
+  } @else {
+    <section class="analysis"><h2>Análisis</h2><p class="count">Los gráficos y filtros requieren la API (modo «api» en config.json). El archivo de demostración solo alimenta el mapa y la tabla.</p></section>
+  }
+
+  <!-- ===== tabla ===== -->
+  <section aria-labelledby="h-tabla">
+    <h2 id="h-tabla">Tabla de eventos</h2>
+    <p class="help">Alternativa textual al mapa y al color: contiene los mismos eventos, con magnitud y profundidad «ND» cuando no existen.</p>
+    <app-event-table [events]="events()" />
+  </section>
+
+  <footer>
+    <p>Los recuentos describen eventos publicados por USGS; la cobertura de detección y los tipos de magnitud varían entre regiones y épocas. No son una predicción de terremotos ni una evaluación de riesgo.</p>
+    <p>Fuentes: USGS Earthquake Catalog (dominio público) · Natural Earth (dominio público) · mapa base © OpenStreetMap contributors.</p>
+  </footer>
+  }
 </main>

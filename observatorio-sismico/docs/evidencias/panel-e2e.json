@@ -1,0 +1,91 @@
+{
+  "fecha": "2026-11-18T16:13:42.374Z",
+  "url": "http://localhost:4200/",
+  "resultados": [
+    {
+      "name": "carga inicial: eventos dibujados",
+      "ok": true,
+      "detail": "57 eventos dibujados de 57 que cumplen los filtros · 0 omitidos por coordenadas inválidas"
+    },
+    {
+      "name": "hay estadísticas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "hay 3 gráficos de barras + tabla",
+      "ok": true,
+      "detail": "4"
+    },
+    {
+      "name": "tabla con filas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "leyenda visible con ND",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "min_mag=4: total del mapa = total de estadísticas",
+      "ok": true,
+      "detail": "[6,6]"
+    },
+    {
+      "name": "histograma de profundidad continuo: todos los intervalos separados 10 km",
+      "ok": true,
+      "detail": "[10]"
+    },
+    {
+      "name": "país «Sin país asignado»: coherente mapa/estadísticas",
+      "ok": true,
+      "detail": "[4,4]"
+    },
+    {
+      "name": "el ranking solo contiene «Sin país asignado»",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "min_mag inválido muestra error",
+      "ok": true,
+      "detail": "La magnitud mínima debe ser un número entre -10 y 10. | Atención: la ingesta live no está actualizada, así que el recuento de las últimas 24 h está incompleto y la comparación no es representativa."
+    },
+    {
+      "name": "rango 17-nov completo: coherente y con eventos",
+      "ok": true,
+      "detail": "[219,219] PERIODO CONSULTADO (UTC) 2026-11-17 00:00:00 UTC → 2026-11-18 00:00:00 UTC (exclusivo)"
+    },
+    {
+      "name": "FILA 9: con la API parada el panel muestra el fallo",
+      "ok": true,
+      "detail": "No se pudo actualizar. No hay conexión con la API (¿túnel cerrado, backend apagado o CORS?). Se conserva la última lectura correcta, tomada 2026-11-18 16:12:39 UTC (hace 31 s); los datos mostrados pueden no ser actuales. Se reintentará automáticamente."
+    },
+    {
+      "name": "FILA 9: conserva los eventos de la última lectura",
+      "ok": true,
+      "detail": "57 eventos dibujados de 57 que cumplen los filtros · 0 omitidos por coordenadas inválidas"
+    },
+    {
+      "name": "FILA 9: identifica la última lectura correcta",
+      "ok": true,
+      "detail": "ÚLTIMO ACCESO CORRECTO A LA API 2026-11-18 16:12:39 UTC (hace 31 s)"
+    },
+    {
+      "name": "FILA 9: estado de la API «Sin respuesta»",
+      "ok": true,
+      "detail": "Sin respuesta"
+    },
+    {
+      "name": "FILA 10: al volver la API se recupera sola, sin recargar la página",
+      "ok": true,
+      "detail": "Datos desactualizados. La API responde, pero la ingesta live no se está actualizando. La última consulta correcta a USGS fue 2026-11-17 22:19:34 UTC (hace 18 h)."
+    },
+    {
+      "name": "FILA 10: vuelve «Accesible/Datos desactualizados» según salud",
+      "ok": true,
+      "detail": "Datos desactualizados"
+    }
+  ]
+}

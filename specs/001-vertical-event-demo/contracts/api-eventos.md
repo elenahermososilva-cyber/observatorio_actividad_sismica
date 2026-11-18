@@ -91,6 +91,75 @@ Cuerpo común: `{"error": {"code": "<código>", "message": "<texto>"}}`. Nunca c
 
 La API solo informa de lo que observa en su propia consulta. **No existe un estado del consumidor en el contrato**, así que la API no afirma nada sobre él: un fallo del consumidor se aprecia en sus logs, en el retraso del grupo de Kafka y en que `last_ingestion` deja de avanzar. Si PostgreSQL cae mientras el consumidor procesa, este no confirma el offset y reintenta; no escribe en cuarentena porque no hay base donde hacerlo (la cuarentena es para datos inválidos).
 
-## Alcance de la primera entrega
+## API completa (Fase 9)
 
-El contrato de esta fase se limita a la demostración vertical del evento sintético y no incluye filtros avanzados, estadísticas históricas ni publicación en Netlify.
+Implementa `CONTRATO-API.md` completo. Todos los parámetros se validan antes de consultar la base: un valor inválido devuelve HTTP 400 sin tocarla.
+
+### `GET /api/eventos`: filtros y paginación
+
+| Parámetro | Significado |
+|---|---|
+| `start` / `end` | ISO8601; `start` inclusivo, `end` exclusivo, sobre el tiempo de ocurrencia. Sin `start`: últimas 24 h. |
+| `min_mag` | Magnitud mínima (número finito entre -10 y 10; `nan`, `inf` y texto dan 400). **Una magnitud nula nunca la cumple.** `0` es un umbral real, no «sin filtro». |
+| `country_id` | Código `ADM0_A3` (insensible a mayúsculas) o **`none`** para «Sin país asignado». Un código que no existe en el catálogo da 400 (no un resultado vacío que oculte una errata); un país válido sin eventos da 200 con `features: []`. |
+| `mode` | `demo`, `live` o `replay` (datos aislados). |
+| `limit` | Máximo de puntos por respuesta, de 1 a `API_MAX_FEATURES` (5000). Un valor mayor da 400: no se recorta en silencio. Por defecto, el máximo. |
+| `offset` | Desplazamiento para paginar (≥ 0). |
+
+Orden estable: ocurrencia descendente y, a igualdad, `id`. Todas las lecturas de una respuesta usan una instantánea (`REPEATABLE READ`), así que `total` y la página son coherentes. Para recorrer varias páginas sin que los eventos nuevos desplacen la ventana, fija `end`.
+
+Campos añadidos a `metadata` (los del contrato se conservan):
+
+| Campo | Significado |
+|---|---|
+| `total` | Eventos que cumplen los filtros, en **todas** las páginas. |
+| `truncated` | `true` si quedan eventos más allá de esta página. El panel no debe calcular estadísticas globales con una respuesta truncada: para eso existe `/api/estadisticas`. |
+| `limit`, `offset`, `next_offset` | Paginación; `next_offset` es `null` en la última página. |
+| `null_mag_count` | Eventos de magnitud nula **dentro** del resultado (se muestran como ND). |
+| `null_mag_excluded` | Con `min_mag`: eventos de magnitud nula que cumplen el resto de filtros y quedan fuera por no poder satisfacerlo. Se contabilizan por separado, como exige el contrato. |
+| `filters` | `{min_mag, country_id}` efectivos. |
+
+### `GET /api/estadisticas`
+
+Acepta los mismos `start`, `end`, `min_mag`, `country_id` y `mode` que `/api/eventos` (**misma semántica y mismo SQL**: un test comprueba que el total coincide con el del mapa para cada combinación) y además `group` (`country` por defecto, o `subregion`) y `baseline_year` (2025 por defecto). Se calcula en la base de datos sobre **todos** los eventos filtrados, nunca sobre una página ni una muestra, y siempre desde `event_current`: una revisión o un duplicado no puede contarse dos veces.
+
+Cada sección (`totals`, `hourly`, `groups`, `distributions.magnitude`, `distributions.depth_km`) declara su `period`, sus `filters`, su `unit` y sus registros sin valor (`missing`).
+
+| Sección | Contenido |
+|---|---|
+| `totals` | `events` y `missing` (magnitud y profundidad). |
+| `hourly` | Serie por **hora UTC fija** según el tiempo de ocurrencia, con ceros explícitos (`zero_filled`). Con más de 2.000 horas solo devuelve las que tienen eventos (`zero_filled: false`). El primer y el último intervalo pueden ser parciales si `start`/`end` no están alineados a la hora. |
+| `groups` | `hourly`: recuentos por hora y país (o subregión); `totals`: ranking. Incluye **«Sin país asignado»** (`key: null`) como grupo propio, distinto de `pending` (aún sin atribuir). |
+| `distributions` | Histogramas de magnitud (intervalos de 0,5) y profundidad (10 km), `[from, to)`, solo intervalos con eventos; `with_value` y `missing` suman el total. Las magnitudes y profundidades negativas se incluyen. |
+| `historical_comparison` | Últimas 24 h frente a la media diaria del año de referencia. Ver abajo. |
+
+**Comparación histórica.** Cuenta los terremotos de las 24 h anteriores a `end` (o a «ahora») en el modo consultado y los compara con el histórico del año `baseline_year`, **con los mismos filtros** de país y un umbral de magnitud común: `max(min_mag, 4)`, porque el histórico solo contiene M ≥ 4 (con `min_mag < 4` se compara a 4 y se indica). El denominador son **todos los días del año** (365 o 366), incluidos los que no tuvieron eventos; además de `mean_per_day` se devuelven `median_per_day`, `min_per_day` y `max_per_day` calculados sobre los mismos días, porque una jornada extrema (en 2025, 645 eventos el día de la secuencia de réplicas de Kamchatka) desplaza la media: en 2025 la media es 50,1 y la mediana 43. Si el histórico no está cargado, `baseline` es `{"available": false, "reason": "historico_not_loaded"}` y `ratio_vs_daily_mean` es `null`: nunca una media de cero. `caveats` recoge las salvedades que pide el enunciado (el periodo reciente puede estar incompleto por retrasos; el histórico es una instantánea; la cobertura y los tipos de magnitud varían; no es una predicción ni una evaluación de riesgo).
+
+### `GET /api/salud`
+
+Parámetro opcional `mode` (por defecto `API_DEFAULT_MODE`). Respuesta:
+
+| Campo | Significado |
+|---|---|
+| `status` | `ok`, `stale` (HTTP 200: la API y la base funcionan pero los datos live ya no se actualizan) o `error` (HTTP 503: la base no responde). |
+| `database` | `ok` o `unavailable`. |
+| `last_ingestion` | Última consulta correcta a USGS (live) o última ingesta aceptada (demo/replay). |
+| `stale` | `true`/`false` en live; `null` en demo y replay, que no esperan una ingesta continua. |
+| `stale_after_seconds`, `seconds_since_last_ingestion`, `stale_reason` | Umbral (`STALE_AFTER_SECONDS`, 300 por defecto), antigüedad y motivo (`no_successful_query` o `last_successful_query_too_old`). Una consulta fallida no refresca la frescura. |
+
+### CORS
+
+`CORS_ORIGINS` (lista de **orígenes exactos** separados por comas) se lee al arrancar. Por defecto, `http://localhost:4200`. Un comodín `*` o un origen mal formado (sin esquema, con ruta) detiene el arranque; una barra final se elimina avisando en el log. Solo se permiten los métodos `GET` y `OPTIONS` y la cabecera `ngrok-skip-browser-warning`; no hay cookies ni credenciales. El preflight lo atiende `CORSMiddleware`; un origen no listado recibe 400 y ninguna cabecera `Access-Control-Allow-Origin`. Las respuestas de error (400, 503) también llevan CORS para que el panel pueda leerlas. Una excepción no controlada (500) la genera una capa anterior al middleware y no lleva cabeceras CORS: es un fallo de programación, no un estado normal.
+
+**Para autorizar Netlify cuando exista su URL:** añádela en `.env` y recrea la API (no hace falta reconstruir la imagen):
+
+```bash
+CORS_ORIGINS=http://localhost:4200,https://mi-sitio.netlify.app
+docker compose up -d --force-recreate api
+```
+
+CORS no es autenticación: solo indica al navegador qué páginas pueden leer la respuesta. La API es de solo consulta y pública.
+
+### Superficie expuesta
+
+Solo existen `GET /api/eventos`, `GET /api/estadisticas` y `GET /api/salud` (más el preflight `OPTIONS`). No hay documentación interactiva, ni rutas de administración, ni acceso a la base de datos o al broker; cualquier otra ruta da 404 y cualquier otro método 405. Un fallo de base de datos devuelve 503 en los tres endpoints, nunca un resultado vacío.
