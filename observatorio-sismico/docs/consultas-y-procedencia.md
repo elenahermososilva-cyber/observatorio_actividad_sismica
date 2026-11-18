@@ -37,6 +37,17 @@ Extracción del 2026-11-17. Parámetros comunes: `format=geojson`, `minmagnitude
 - Deduplicación entre intervalos (los extremos pueden repetirse): 18,302 eventos únicos de 18,302 leídos → 0 duplicados.
 - Es una **instantánea** del catálogo en la fecha de extracción, no un registro de todas sus revisiones pasadas.
 
+### 2.1 Catálogo reciente 2026 (comparación equivalente)
+
+Mismos parámetros que el histórico, para la conclusión 4 de la memoria. Se guarda en `data/raw/reciente/` y **no se carga en la base de datos**. Generado por `scripts/comparacion_reciente.py`.
+
+| Intervalo (UTC) | Descargado | Reportado por `count` | Features recibidas | Tamaño | SHA-256 |
+|---|---|---:|---:|---:|---|
+| 2026-10-01 → 2026-11-01 | 2026-11-18 22:29:26 | 1,592 | 1,592 | 1,095 KiB | `1a8f9f7f2804…` |
+| 2026-11-01 → 2026-11-18 | 2026-11-18 22:29:29 | 435 | 435 | 300 KiB | `c871ee19e4c9…` |
+
+- 2,027 eventos M ≥ 4 en 48 días completos. Los días más recientes de una descarga pueden completarse después: el manifiesto fija la fecha de la instantánea.
+
 ## 3. Feed en vivo: registro de consultas (`ingest.extraction_log`)
 
 | Concepto | Valor |
@@ -72,6 +83,7 @@ Cada paso conserva el anterior: del panel se puede llegar al `event_id`, de ahí
 | Cifras | Procedimiento |
 |---|---|
 | Análisis, calidad antes/después, actualidad, revisiones | `scripts/memoria_datos.py` → `docs/evidencias/memoria-datos.json` |
+| Comparación equivalente con el catálogo reciente (conclusión 4) | `scripts/comparacion_reciente.py` → `docs/evidencias/comparacion-reciente.json` |
 | Complejidad, tiempo y memoria | `scripts/medir_complejidad.py` → `docs/evidencias/complejidad.{json,md}` (datos sintéticos, base temporal) |
 | Latencia de la API | `scripts/medir_api.py` → `docs/evidencias/api-latencia.json` |
 | Pruebas de aceptación | `tests/acceptance/` → `docs/evidencias/aceptacion-s11.{md,json}` y `pila-real.md` |

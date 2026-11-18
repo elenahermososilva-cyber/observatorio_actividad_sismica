@@ -30,6 +30,28 @@ for month, info in sorted(manifest["months"].items()):
             f"{q['features_received']:,} | {q['bytes'] / 1024:,.0f} KiB | {q['latency_ms']} ms | `{q['sha256'][:12]}…` |"
         )
 subdivididos = [m for m, i in manifest["months"].items() if i.get("subdivided")]
+reciente_path = ROOT / "docs" / "evidencias" / "comparacion-reciente.json"
+if reciente_path.exists():
+    rec = json.loads(reciente_path.read_text(encoding="utf-8"))
+    rec_rows = "\n".join(
+        f"| {q['start'][:10]} → {q['end'][:10]} | {q['retrieved_at'][:19].replace('T', ' ')} | {q['count_reported']:,} | "
+        f"{q['features_received']:,} | {q['bytes'] / 1024:,.0f} KiB | `{q['sha256'][:12]}…` |"
+        for q in rec["procedencia"]["consultas"]
+    )
+    seccion_reciente = f"""
+### 2.1 Catálogo reciente 2026 (comparación equivalente)
+
+Mismos parámetros que el histórico, para la conclusión 4 de la memoria. Se guarda en `data/raw/reciente/` y **no se carga en la base de datos**. Generado por `scripts/comparacion_reciente.py`.
+
+| Intervalo (UTC) | Descargado | Reportado por `count` | Features recibidas | Tamaño | SHA-256 |
+|---|---|---:|---:|---:|---|
+{rec_rows}
+
+- {rec['reciente']['eventos']:,} eventos M ≥ 4 en {rec['periodo_reciente']['dias']} días completos. Los días más recientes de una descarga pueden completarse después: el manifiesto fija la fecha de la instantánea.
+"""
+else:
+    seccion_reciente = ""
+
 ok = live["consultas"]["ok"]
 fallidas = live["consultas"].get("fallidas")
 dedup = live["deduplicacion_del_feed"]
@@ -63,7 +85,7 @@ Extracción del {manifest['months']['2025-01']['queries'][0]['retrieved_at'][:10
 - El número recibido coincide con el reportado en las 12 consultas: {'sí' if total_reported == total_received else 'NO'}.
 - Deduplicación entre intervalos (los extremos pueden repetirse): {h['eventos']:,} eventos únicos de {datos['calidad']['antes_historico_original']['features_leidas']:,} leídos → {datos['calidad']['antes_historico_original']['duplicados_entre_intervalos']} duplicados.
 - Es una **instantánea** del catálogo en la fecha de extracción, no un registro de todas sus revisiones pasadas.
-
+{seccion_reciente}
 ## 3. Feed en vivo: registro de consultas (`ingest.extraction_log`)
 
 | Concepto | Valor |
@@ -99,6 +121,7 @@ Cada paso conserva el anterior: del panel se puede llegar al `event_id`, de ahí
 | Cifras | Procedimiento |
 |---|---|
 | Análisis, calidad antes/después, actualidad, revisiones | `scripts/memoria_datos.py` → `docs/evidencias/memoria-datos.json` |
+| Comparación equivalente con el catálogo reciente (conclusión 4) | `scripts/comparacion_reciente.py` → `docs/evidencias/comparacion-reciente.json` |
 | Complejidad, tiempo y memoria | `scripts/medir_complejidad.py` → `docs/evidencias/complejidad.{{json,md}}` (datos sintéticos, base temporal) |
 | Latencia de la API | `scripts/medir_api.py` → `docs/evidencias/api-latencia.json` |
 | Pruebas de aceptación | `tests/acceptance/` → `docs/evidencias/aceptacion-s11.{{md,json}}` y `pila-real.md` |

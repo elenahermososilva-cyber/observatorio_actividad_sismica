@@ -9,7 +9,7 @@ Proyecto de aula de Big Data. Canalización de cinco servicios (productor → Ka
 | Extracción | §2 | `docs/consultas-y-procedencia.md`, `data/README.md`, `docs/evidencias/memoria-datos.json` |
 | Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), `docs/fase8-calidad-y-geografia.md` |
 | Modelado | §4 | `docs/diccionario-de-datos.md`, `backend/db/` |
-| Análisis | §5 | `docs/evidencias/analisis/*.png`, `memoria-datos.json` |
+| Análisis | §5 | `docs/evidencias/analisis/*.png`, `memoria-datos.json`, `comparacion-reciente.json` |
 | Reflexión | §6, §7, §8 | `docs/evidencias/complejidad.md`, `api-latencia.json` |
 | Pruebas de aceptación | §9 | `docs/evidencias/aceptacion-s11.md`, `pila-real.md`, `panel*.md` |
 
@@ -48,6 +48,7 @@ USGS ──HTTP/60 s──► productor ──► Kafka ──► consumidor ─
 |---|---|---|---|
 | Feed USGS `all_day.geojson` | Ventana móvil de 24 h, cada respuesta repite toda la ventana | GET cada 60 s | `ingest.extraction_log` |
 | API FDSN de USGS | Histórico 2025, mundo, M ≥ 4, `eventtype=earthquake` | 12 consultas mensuales | `data/raw/historico/manifest.json` |
+| API FDSN de USGS (periodo reciente) | 1-oct → 18-nov-2026 (exclusivo), mismos filtros que el histórico, para la comparación equivalente (§5, conclusión 4) | 2 consultas (una por mes) | `data/raw/reciente/manifest.json` |
 | Natural Earth 1:110M | 177 entidades con `ADM0_A3`, `NAME_ES`, `SUBREGION`… | Copia entregada (SHA-256 verificado) | `ref.dim_country` |
 
 Tipos y unidades de los campos de USGS (identificador, `time` y `updated` en **ms Unix UTC**, coordenadas **lon, lat, profundidad en km**, magnitud adimensional con tipo, `place` descriptivo, `type`) y cuáles son opcionales (`mag`, `magType`, `place`, profundidad) están en `docs/diccionario-de-datos.md` §1.
@@ -159,6 +160,8 @@ SELECT left(reason, strpos(reason, ':') - 1) AS motivo, count(*) FROM live.quara
 De 402 eventos, **31 tuvieron revisiones** (64 versiones posteriores a la primera). Entre versiones consecutivas: la magnitud cambia en 17, la ubicación en 15 y el tiempo de ocurrencia en 15; el mayor cambio de magnitud fue de 2,6; la mediana entre versiones es de 17,9 min. Una revisión puede por tanto mover un evento de país, de magnitud o de ventana horaria.
 
 Retraso de publicación de USGS (minutos entre la ocurrencia y la primera versión vista, **solo ciclos de funcionamiento normal**; se excluye el ciclo de arranque, que publica de golpe las 24 h anteriores y falsearía el dato): n = 28, mediana 3,1 min, p95 536 min; con M ≥ 4, n = 5 y mediana 25,5 min (frente a 1,6 min por debajo de M 4). Con **muestra todavía pequeña (n = 28; solo 5 de M ≥ 4)** no se estima un retraso medio fiable; sí se observa que **la distribución tiene cola larga**: algunos eventos aparecen horas después de ocurrir. Por eso la comparación de «últimas 24 horas» puede infravalorar el recuento reciente, como exige advertir el enunciado.
+
+**Madurez del catálogo (medida con el catálogo FDSN reciente, §5 conclusión 4).** El retraso no afecta solo a las primeras horas: descargado el 18-nov, el catálogo tiene entre el 29-oct y el 17-nov una media de **26,4 eventos M ≥ 4 por día**, frente a 53,5 entre el 1 y el 28-oct, y ese total queda **por debajo del mínimo de cualquier ventana de 20 días de 2025**. La caída es brusca, empieza unas tres semanas antes de la descarga y es más fuerte en M 4,0–4,4 (de 23,5 a 10,4 por día) que en M ≥ 4,5 (de 30,0 a 16,1). Es coherente con un catálogo que todavía se está completando; que la actividad mundial cayera a la vez en las dos bandas es mucho menos probable, pero **no queda demostrado**: se comprueba volviendo a descargar el mismo periodo más tarde (`RECIENTE_SNAPSHOT=reciente-2`, §10) y midiendo cuántos eventos aparecen en esos días.
 
 ### 3.6 Atribución de país: regla y verificación
 
@@ -282,15 +285,36 @@ Todas las cifras proceden de `docs/evidencias/memoria-datos.json` (consultas en 
 
 **Datos:** 365 días con los días sin eventos incluidos. Media **50,14**, mediana **43**, mínimo 20, máximo **645** (2025-07-30), cuartiles 36 y 53. Con la valla de Tukey (Q3 + 1,5·RIC = 78,5) hay **27 días atípicos que concentran 3.782 eventos (20,7 % del año)**; la media sin ellos es **42,96**, prácticamente la mediana. Julio (2.684 eventos) y agosto (2.222) tuvieron 2,0 y 1,7 veces la media del resto de meses (1.340).
 **Lectura:** una sola jornada desplaza la media. El terremoto de **M8,8 de la península de Kamchatka** (`us6000qw60`, 2025-07-29 23:24 UTC) y sus réplicas dan 121 eventos el 29-jul, **645 el 30-jul**, 315 el 31-jul y 234 el 1-ago; los eventos de una secuencia no son independientes. **Consecuencia para el panel:** la comparación histórica devuelve media, mediana, mínimo y máximo, y la memoria compara con la mediana (43) además de con la media (50,1).
-**Comparación equivalente con el feed** (M ≥ 4; día UTC completo 2026-11-17): **23 terremotos**, es decir 0,46 veces la media y 0,53 veces la mediana de 2025. Es un **único día**: un día de 23 eventos queda cerca del extremo bajo de 2025 (solo 4 de 365 días tuvieron 23 o menos), pero **con una sola jornada no es una conclusión** (ni sobre el comportamiento reciente ni sobre un posible retraso de publicación; ver §3.5). Los datos live acumulados deben ampliarse con más días completos antes de interpretar nada.
+**Comparación con el feed** (M ≥ 4; día UTC completo 2026-11-17): **23 terremotos** en la instantánea de `memoria-datos.json` (24 dos horas después, al publicarse otro), es decir 0,46 veces la media y 0,53 veces la mediana de 2025; solo 4 de 365 días de 2025 tuvieron 23 o menos. **No indica menos actividad**: el catálogo FDSN da para ese mismo día 25 eventos, de los que el feed vio 24, así que el pipeline no pierde eventos; lo que ocurre es que **los días recientes de USGS aún no están completos** (conclusión 4). Comparar un día de hace horas con un año ya consolidado no es una comparación equivalente, y la tarjeta del panel lo advierte.
 **Capturas:** `analisis/02-live-17nov-M4.png` (filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica.
 
 ### Conclusión 3: el 78 % de los epicentros M ≥ 4 queda fuera de todo país, y casi todos los profundos
 
 **Datos (2025, M ≥ 4):** 14.350 de 18.302 eventos (**78,4 %**) sin país asignado; entre los **1.102 eventos de 300 km o más, 1.077 (97,7 %)** están sin país. Profundidad: **74,8 %** (13.689) a menos de 70 km, 19,2 % entre 70 y 300 km y 6,0 % a 300 km o más (máxima 669,6 km; ninguna negativa). Países con más eventos asignados: China 354, Chile 348, Indonesia 306, Etiopía 265, Argentina 236. Por subregión: Sudamérica 973, Sudeste Asiático 580, Asia Oriental 548, Sur de Asia 443, África Oriental 290.
 **Lectura:** la sismicidad se concentra en zonas de subducción y dorsales, en gran parte bajo el mar; por eso «Sin país asignado» es **el grupo más grande** y debe estar siempre en el análisis (no se descarta ni se reasigna). El contraste con `place` (§3.6) confirma que son epicentros marítimos y no un fallo del cruce.
-**Muestra equivalente del feed** (M ≥ 4, día UTC 17-nov, n = 23): 60,9 % sin país (14 de 23), 56,5 % a menos de 70 km y 8,7 % a 300 km o más. Con n = 23 el error de una proporción ronda ±10 puntos, así que **no se puede afirmar que difiera del histórico**: es compatible con él en dirección (la mayoría sin país) pero no concluyente.
+**Muestra equivalente del feed** (M ≥ 4, día UTC 17-nov, n = 23): 60,9 % sin país (14 de 23), 56,5 % a menos de 70 km y 8,7 % a 300 km o más. Con n = 23 el error de una proporción ronda ±10 puntos, así que **no se puede afirmar que difiera del histórico**: es compatible con él en dirección (la mayoría sin país) pero no concluyente. Con una muestra mayor, el catálogo reciente (1-oct → 17-nov-2026, 2.027 eventos) da **70,4 %** sin país; el descenso se debe a la secuencia de Panamá, en tierra firme (conclusión 4): **excluyendo los 167 eventos a menos de 300 km del M7,7, la proporción es del 74,3 %**, cercana al 78,4 % de 2025. Profundidad: 73,2 % a menos de 70 km (74,8 % en 2025).
 **Capturas:** `analisis/03-live-17nov-M4-sin-pais.png` (filtros: 17-nov-2026, M ≥ 4, país «Sin país asignado»: 14 eventos) y `analisis/04-live-17y18nov-pais-USA.png` (país USA). El total del mapa coincide con el de los gráficos en cada combinación (prueba E2E).
+
+### Conclusión 4: en octubre de 2026 la actividad mundial M ≥ 4 fue normal salvo una secuencia en Panamá; los últimos 20 días todavía no son comparables
+
+**Datos:** catálogo FDSN de USGS del 1-oct al 17-nov-2026 (48 días completos), **con los mismos filtros que el histórico** (mundo, M ≥ 4, `earthquake`, misma API y misma regla de punto en polígono), descargado el 18-nov-2026: **2.027 eventos**. Script: `scripts/comparacion_reciente.py` → `docs/evidencias/comparacion-reciente.json`. Para no confundir una secuencia de réplicas con un cambio real, cada total reciente se compara con **todas las ventanas de 2025 de la misma duración** (paso de un día) y se da su percentil.
+
+| Tramo (2026) | Días | M ≥ 4 por día | Percentil en 2025 | M 4,0–4,4 por día (percentil) | M ≥ 4,5 por día (percentil) |
+|---|---:|---:|---:|---:|---:|
+| 1 → 28 oct | 28 | 53,5 | **80,5** | 23,5 (43,2) | 30,0 (89,6) |
+| 29 oct → 17 nov | 20 | 26,4 | **0** (bajo el mínimo de 2025) | 10,4 (0) | 16,1 (3,5) |
+| Total | 48 | 42,2 | 32,4 | 18,1 (0) | 24,2 (65,1) |
+| *2025 (referencia)* | 365 | 50,1 (mediana 43) | — | 26,7 | 23,4 |
+
+**Dónde:** el **M7,7 de Panamá** (`us6000u18k`, 2026-10-09 17:56 UTC, «10 km WSW of Pitaloza Arriba»), con réplicas de M6,6, M6,1 y M6,0, deja 167 eventos a menos de 300 km. **Centroamérica suma 140 eventos M ≥ 4 frente a 19 esperados con la tasa de 2025, por encima del máximo de cualquier ventana de 48 días de 2025 (39)**, y Panamá pasa a ser el país con más eventos asignados (120). Otros grandes eventos del periodo: M7,0 en el Tíbet (China, 22-oct), M6,9 en Kamchatka (16-oct), M6,8 en la dorsal mesoatlántica (13-oct) y M6,8 en Vanuatu (24-oct). Asia Oriental queda alta (103 frente a 72 esperados, percentil 96) pero dentro del rango de 2025 (máximo 177).
+**Lectura:**
+1. En el tramo **ya consolidado (1–28 oct)** la actividad mundial está en la parte alta de lo normal de 2025 (percentil 80,5), empujada por M ≥ 4,5 (percentil 89,6) y por la secuencia de Panamá; la banda M 4,0–4,4 es completamente normal (percentil 43). **No hay nada anómalo a escala mundial salvo secuencias localizadas**, igual que en 2025 con Kamchatka (conclusión 2).
+2. El tramo **final (29 oct → 17 nov)** está por debajo de todo lo observado en 2025 en las dos bandas. Que caiga de golpe hace unas tres semanas, y más en las magnitudes pequeñas, apunta a un **catálogo todavía incompleto** y no a un cambio físico (§3.5). Consecuencia práctica: **cualquier comparación del periodo más reciente (incluida la de «últimas 24 horas» del panel) está sesgada a la baja** frente a un histórico consolidado.
+3. Un recuento **por encima** del máximo de 2025 (Centroamérica) es robusto aunque falten eventos recientes, porque el sesgo va en la dirección contraria; un recuento **por debajo** (Sudeste Asiático, percentil 0) no se interpreta.
+
+**Captura:** no hay captura del panel para esta conclusión: el catálogo reciente se analiza con el script y **no se carga en la base de datos**, para no mezclar una descarga del catálogo con los datos live (que son los que muestra el panel). El efecto de la secuencia de Panamá no es visible en el panel live porque es anterior a su ventana.
+
+**Cautela:** describe eventos publicados por USGS; la cobertura de detección varía por región, y no es una predicción ni una evaluación de riesgo. El mismo periodo del calendario de 2025 (1-oct → 17-nov) tuvo 48,4 eventos por día, en línea con el resto del año.
 
 ### Resultado complementario (cautela): no hay un ciclo horario interpretable
 
@@ -298,7 +322,7 @@ Recuento 2025 por hora UTC de ocurrencia: máximo 832 (03 h), mínimo 681 (15 h)
 
 ### Qué se puede decir y qué no
 
-Se puede afirmar (con los datos de 2025): completitud del catálogo desde M ≈ 4,5, sesgo de la media por una secuencia concreta y predominio de epicentros marítimos y superficiales. **No** se puede afirmar a partir de un día de feed: que la actividad reciente sea menor o mayor que la de 2025, ni estimar el retraso de publicación de USGS.
+Se puede afirmar: completitud del catálogo desde M ≈ 4,5; sesgo de la media de 2025 por una secuencia concreta; predominio de epicentros marítimos y superficiales (también en 2026); actividad mundial normal en octubre de 2026, con una secuencia excepcional en Panamá; y que los días más recientes del catálogo están incompletos, de modo que comparar el periodo reciente con un histórico consolidado lo infravalora. **No** se puede afirmar que la actividad de las últimas semanas sea menor que la de 2025 (el déficit es coherente con publicación tardía, pendiente de confirmar con una segunda descarga), ni dar un retraso medio de publicación fiable con la muestra del feed.
 
 ---
 
@@ -408,7 +432,7 @@ Todos los importes son **supuestos ilustrativos** (marcados), no facturas. Una c
 | Un hueco de ingesta superior a 24 h pierde eventos del feed | Reconciliación automática con el catálogo FDSN para el intervalo |
 | No se reconcilian eventos eliminados o fusionados por USGS fuera de la ventana de 24 h | Revisión periódica contra el catálogo |
 | Catálogo geográfico 1:110M: sin islas menores, costas simplificadas | Natural Earth 1:10M o límites con zona económica exclusiva |
-| El feed live acumula pocos días: las comparaciones recientes no son concluyentes | Dejar el productor funcionando varias semanas y repetir el análisis |
+| El feed live acumula pocos días y el catálogo de las últimas ~3 semanas aún se completa: las comparaciones del periodo más reciente salen bajas | Comparar solo tramos consolidados, repetir la descarga reciente más tarde para medir cuánto se completa (`RECIENTE_SNAPSHOT`) y dejar el productor funcionando varias semanas |
 | Magnitudes de tipos mixtos (`mb`, `ml`, `md`, `mww`) en un mismo recuento | Filtrar por tipo o usar magnitud de momento (`mw`) cuando exista |
 | Los gráficos no permiten exportar | Descarga CSV desde la tabla |
 | Una excepción no controlada (500) sale sin cabeceras CORS (orden de capas de Starlette) | Capturar a nivel de middleware propio |
@@ -449,6 +473,8 @@ docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/da
     -v "${PWD}/docs/evidencias:/app/docs/evidencias" api python scripts/memoria_datos.py     # cifras de la memoria
 docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/docs/evidencias:/app/docs/evidencias" \
     -e EVIDENCE_DIR=/app/docs/evidencias -e PYTHONPATH=/app api python scripts/medir_complejidad.py   # complejidad
+docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/data/raw:/app/data/raw" \
+    -v "${PWD}/docs/evidencias:/app/docs/evidencias" -e PYTHONPATH=/app api python scripts/comparacion_reciente.py  # conclusión 4
 python scripts/medir_api.py && python scripts/procedencia.py                                # latencias y procedencia
 ```
 
