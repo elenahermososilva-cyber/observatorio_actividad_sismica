@@ -93,7 +93,7 @@ La API solo informa de lo que observa en su propia consulta. **No existe un esta
 
 ## API completa (Fase 9)
 
-Implementa `CONTRATO-API.md` completo. Todos los parámetros se validan antes de consultar la base: un valor inválido devuelve HTTP 400 sin tocarla.
+Implementa `docs/curso/CONTRATO-API.md` completo. Todos los parámetros se validan antes de consultar la base: un valor inválido devuelve HTTP 400 sin tocarla.
 
 ### `GET /api/eventos`: filtros y paginación
 

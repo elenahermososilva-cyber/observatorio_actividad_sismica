@@ -110,7 +110,7 @@ class MigrationTests(unittest.TestCase):
             ).fetchone()
             spain = conn.execute("SELECT name_es, admin, continent FROM ref.dim_country WHERE country_id = 'ESP'").fetchone()
         self.assertEqual((total, distinct), (177, 177))
-        # huella publicada en FUENTES-Y-LICENCIAS.md (independiente de CRLF/LF del equipo)
+        # huella publicada en docs/curso/FUENTES-Y-LICENCIAS.md (independiente de CRLF/LF del equipo)
         self.assertEqual(shas, ["6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f"])
         self.assertEqual(spain, ("España", "Spain", "Europe"))
 

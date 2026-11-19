@@ -1,6 +1,6 @@
 """API FastAPI de consulta (solo lectura). Uvicorn: backend.api.app:app en 0.0.0.0:8000.
 
-Endpoints (CONTRATO-API.md):
+Endpoints (docs/curso/CONTRATO-API.md):
   GET /api/eventos       GeoJSON. Filtros: start, end, min_mag, country_id, mode. Paginación: limit, offset.
   GET /api/estadisticas  Recuentos por hora UTC y país/subregión, distribuciones y comparación histórica.
                          Mismos filtros que /api/eventos.

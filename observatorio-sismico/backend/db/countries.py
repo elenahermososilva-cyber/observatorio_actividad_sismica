@@ -43,7 +43,7 @@ def fingerprint(raw: bytes) -> str:
     """SHA-256 con saltos de línea normalizados a LF.
 
     Con `core.autocrlf=true` (Git en Windows) la copia de trabajo tiene CRLF y su SHA difiere de la huella
-    publicada en FUENTES-Y-LICENCIAS.md, aunque el contenido sea el mismo. Normalizar da la misma huella en todo equipo.
+    publicada en docs/curso/FUENTES-Y-LICENCIAS.md, aunque el contenido sea el mismo. Normalizar da la misma huella en todo equipo.
     """
     return hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
 

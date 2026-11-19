@@ -1,4 +1,4 @@
-"""Construcción de GeoJSON conforme a CONTRATO-API.md (sin dependencias externas).
+"""Construcción de GeoJSON conforme a docs/curso/CONTRATO-API.md (sin dependencias externas).
 
 Reglas: `null` (nunca NaN/Infinity) para magnitud, profundidad o país desconocidos;
 coordenadas en orden longitud, latitud, profundidad (km); fechas en ms Unix UTC.

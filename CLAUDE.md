@@ -11,7 +11,8 @@ All project documents, specs and conversation with the user are in **Spanish**. 
 ## Layout (two roots)
 
 - `observatorio-sismico/`: the actual project. **Run all commands from here.** Imports such as `backend.consumer.versioning` resolve relative to this directory.
-  - `ENUNCIADO.md` (assignment + rubric), `FAQ-ALUMNADO.md`, `CONTRATO-API.md` (API contract, authoritative), `FUENTES-Y-LICENCIAS.md`, `VALIDACION.md`: supplied by the course. Treat them as requirements, not as files to edit.
+  - `docs/curso/` (index in `docs/curso/README.md`; the course README is `README-curso.md`):
+    `docs/curso/ENUNCIADO.md` (assignment + rubric), `docs/curso/FAQ-ALUMNADO.md`, `docs/curso/CONTRATO-API.md` (API contract, authoritative), `docs/curso/FUENTES-Y-LICENCIAS.md`, `docs/curso/VALIDACION.md`: supplied by the course. Treat them as requirements, not as files to edit.
   - `frontend/`: supplied Angular 20.3 + ngx-leaflet 20.0 + Leaflet 1.9.4 SPA (pinned versions; do not upgrade).
   - `backend/`: student-built Python backend (in progress).
   - `tests/unit/`: stdlib `unittest` tests.
@@ -60,7 +61,7 @@ The pipeline has **exactly five Docker Compose services**: Python producer → K
 - **Message contract** (`backend/producer/schema.py::EventMessage`): validates `mode` (`demo`/`live`/`replay`), `synthetic_flag` (demo ⇒ synthetic, live ⇒ not synthetic), UTC `ingested_at`, and the GeoJSON Point payload.
 - **Time semantics**: keep the four timestamps distinct: occurrence (`time`), source update (`updated`), ingestion and replay. All are in UTC, and the API uses Unix ms.
 - **Country attribution**: point-in-polygon against the Natural Earth catalogue (`frontend/public/datos/paises.geojson`). Never derive the country from the `place` text or from proximity. Events outside every country keep an explicit "no country" state (`null`).
-- **API** (`CONTRATO-API.md`):
+- **API** (`docs/curso/CONTRATO-API.md`):
   - `GET /api/eventos` returns a GeoJSON FeatureCollection with `metadata` {generated, last_ingestion, mode, count, truncated}. Filters: `start` (inclusive), `end` (exclusive), `min_mag`, `country_id`. Null magnitude never satisfies `min_mag`. Use `null`, never NaN.
   - `GET /api/salud` and `GET /api/estadisticas` also belong to the contract.
   - A DB failure must return an explicit error, never an empty `features: []` presented as success.
@@ -79,5 +80,5 @@ Test commands: unit tests run in the host (`python -m unittest discover -s tests
 ## Execution rules for Claude
 - Complete the remaining tasks in `specs/001-vertical-event-demo/tasks.md` in dependency order to establish the foundational end-to-end pipeline.
 - Consider the vertical demo complete once it passes the project's documented end-to-end verification.
-- Then continue implementing the remaining requirements in `ENUNCIADO.md`, `VALIDACION.md` and `CONTRATO-API.md`, while respecting the project constitution and treating supplied course documents as requirements, not files to edit.
+- Then continue implementing the remaining requirements in `docs/curso/ENUNCIADO.md`, `docs/curso/VALIDACION.md` and `docs/curso/CONTRATO-API.md`, while respecting the project constitution and treating supplied course documents as requirements, not files to edit.
 - After each implementation task, run the relevant unit tests from `observatorio-sismico/` before moving on.

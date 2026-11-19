@@ -29,7 +29,7 @@ El feed solo contiene las últimas 24 horas. Si el productor live estuvo parado 
 
 ## Huella del catálogo de países
 
-`ref.dim_country.source_sha256` guarda el SHA-256 del catálogo con saltos de línea normalizados a LF (`6866c877…c977f`, el publicado en `FUENTES-Y-LICENCIAS.md`). Con `core.autocrlf=true` en Windows la copia de trabajo tiene CRLF y el SHA del archivo en disco es otro (`d2aec98b…`); el contenido es el mismo.
+`ref.dim_country.source_sha256` guarda el SHA-256 del catálogo con saltos de línea normalizados a LF (`6866c877…c977f`, el publicado en `docs/curso/FUENTES-Y-LICENCIAS.md`). Con `core.autocrlf=true` en Windows la copia de trabajo tiene CRLF y el SHA del archivo en disco es otro (`d2aec98b…`); el contenido es el mismo.
 
 ## Permisos en Linux
 

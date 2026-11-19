@@ -1,6 +1,6 @@
 """Parámetros de consulta de la API: parseo y validación, sin dependencias externas.
 
-Los filtros de /api/eventos y de /api/estadisticas son LOS MISMOS (CONTRATO-API.md: «los filtros de estadísticas
+Los filtros de /api/eventos y de /api/estadisticas son LOS MISMOS (docs/curso/CONTRATO-API.md: «los filtros de estadísticas
 deben equivaler a los del mapa»), así que ambos endpoints pasan por `build_filters`.
 """
 

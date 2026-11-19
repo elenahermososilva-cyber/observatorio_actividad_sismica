@@ -6,11 +6,11 @@ Generado por `scripts/procedencia.py` a partir de `data/raw/historico/manifest.j
 
 | Fuente | Qué aporta | Acceso | Licencia / condiciones | Dónde queda |
 |---|---|---|---|---|
-| USGS Earthquake Catalog, **feed** `all_day.geojson` | Eventos de las últimas 24 h, actualizado cada minuto | HTTP GET cada 60 s (`USGS_FEED_URL`) | Datos del Gobierno de EE. UU., dominio público (FUENTES-Y-LICENCIAS.md) | Originales íntegros comprimidos en `data/raw/live/AAAA/MM/DD/HHMMSS.geojson.gz` (retención `RAW_RETENTION_DAYS`) y cada versión aceptada en `<esquema>.event_message.payload` |
+| USGS Earthquake Catalog, **feed** `all_day.geojson` | Eventos de las últimas 24 h, actualizado cada minuto | HTTP GET cada 60 s (`USGS_FEED_URL`) | Datos del Gobierno de EE. UU., dominio público (docs/curso/FUENTES-Y-LICENCIAS.md) | Originales íntegros comprimidos en `data/raw/live/AAAA/MM/DD/HHMMSS.geojson.gz` (retención `RAW_RETENTION_DAYS`) y cada versión aceptada en `<esquema>.event_message.payload` |
 | USGS Earthquake Catalog, **API FDSN** `fdsnws/event/1/query` | Histórico 2025, mundo, M ≥ 4, `eventtype=earthquake` | Descarga mensual con `history_download` (12 consultas; sin subdivisiones necesarias) | Igual que el feed | `data/raw/historico/AAAA-MM.geojson` + `manifest.json`; no se versionan en Git (se regeneran con el procedimiento de `data/README.md`) |
 | Natural Earth, Admin 0 Countries 1:110M | 177 entidades con `ADM0_A3`, `NAME_ES`, `ADMIN`, `CONTINENT`, `SUBREGION` | Copia entregada: `frontend/public/datos/paises.geojson` | Dominio público; se conserva el reconocimiento | `ref.dim_country` (cargada por el migrador, con la huella del archivo) |
 
-Huella SHA-256 del catálogo (normalizando CRLF→LF): `6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f`. Coincide con la de FUENTES-Y-LICENCIAS.md: sí.
+Huella SHA-256 del catálogo (normalizando CRLF→LF): `6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f`. Coincide con la de docs/curso/FUENTES-Y-LICENCIAS.md: sí.
 
 ## 2. Histórico 2025: consultas realizadas
 

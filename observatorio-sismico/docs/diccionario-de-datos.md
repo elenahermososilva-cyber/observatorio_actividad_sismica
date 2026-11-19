@@ -149,4 +149,4 @@ Los avisos señalan; solo las transformaciones `fixed_*` cambian el dato, y el o
 
 **`GET /api/salud`** — `status` (`ok`/`stale`/`error`), `database`, `last_ingestion`, `stale`, `stale_after_seconds`, `seconds_since_last_ingestion`, `stale_reason`.
 
-Detalle de parámetros y errores: `specs/001-vertical-event-demo/contracts/api-eventos.md` y `CONTRATO-API.md`. Registro de consultas y procedencia: `docs/consultas-y-procedencia.md`.
+Detalle de parámetros y errores: `specs/001-vertical-event-demo/contracts/api-eventos.md` y `docs/curso/CONTRATO-API.md`. Registro de consultas y procedencia: `docs/consultas-y-procedencia.md`.

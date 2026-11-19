@@ -1,4 +1,4 @@
-"""Contrato de GET /api/eventos y GET /api/salud (CONTRATO-API.md). Requiere fastapi+httpx (contenedor)."""
+"""Contrato de GET /api/eventos y GET /api/salud (docs/curso/CONTRATO-API.md). Requiere fastapi+httpx (contenedor)."""
 
 import json
 import math

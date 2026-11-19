@@ -117,7 +117,7 @@ Un desarrollador o evaluador debe poder levantar la arquitectura mínima para co
 - La entrega de prueba usa un evento sintético controlado y no requiere consumir la fuente live de USGS.
 - La validación del primer hito se realiza con un solo evento de prueba y no requiere completar la carga histórica ni la comparación con periodos previos.
 - La infraestructura mínima se entiende como la composición de cinco servicios que corresponden a la arquitectura obligatoria del proyecto.
-- La API de consulta se comporta según el contrato definido en `CONTRATO-API.md` y no se exige aún la implementación completa de filtros avanzados ni estadísticas de negocio.
+- La API de consulta se comporta según el contrato definido en `docs/curso/CONTRATO-API.md` y no se exige aún la implementación completa de filtros avanzados ni estadísticas de negocio.
 - Se asume que el sistema puede devolver resultados correctos o errores explícitos, pero no una respuesta vacía válida en caso de fallo de persistencia o consulta.
 - Esta primera entrega no incluye análisis geográfico, replay completo, publicación en Netlify ni memoria final; esos elementos quedan para una especificación posterior.
 - Si algo importante no está especificado, se utilizarán suposiciones razonables y se limitarán los puntos de aclaración a un máximo de tres, priorizando la frontera de alcance de la entrega.
