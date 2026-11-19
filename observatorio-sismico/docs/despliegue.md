@@ -17,18 +17,18 @@ Kafka y PostgreSQL **no** se publican: Compose solo mapea la API en `127.0.0.1:8
 | Panel (Netlify, producción) | `https://observatorio-sismico-elena.netlify.app` |
 | API pública (ngrok, dominio fijo gratuito) | `https://onset-deepen-situation.ngrok-free.dev` |
 | Origen CORS autorizado | `CORS_ORIGINS=http://localhost:4200,https://observatorio-sismico-elena.netlify.app` (en `.env`, que no se versiona) |
-| Modo de datos | `PRODUCER_MODE=live`, `API_DEFAULT_MODE=live`, `dataMode: "live"` en `config.json` |
+| Modo de datos | `PRODUCER_MODE=live`, `API_DEFAULT_MODE=live`, `dataMode: "live"` en [`config.json`](../frontend/public/config.json) |
 
 ## Secretos: dónde están y dónde no
 
-- El **authtoken de ngrok** se registró con `ngrok config add-authtoken` en el perfil del usuario de Windows (`%LOCALAPPDATA%\ngrok\ngrok.yml`). No está en el repositorio, ni en el frontend, ni en `config.json`, ni en `.env`.
+- El **authtoken de ngrok** se registró con `ngrok config add-authtoken` en el perfil del usuario de Windows (`%LOCALAPPDATA%\ngrok\ngrok.yml`). No está en el repositorio, ni en el frontend, ni en [`config.json`](../frontend/public/config.json), ni en `.env`.
 - La sesión del CLI de Netlify está en el perfil del usuario, fuera del repositorio.
-- `frontend/public/config.json` es **público** (se publica con el sitio): solo contiene la URL pública del túnel, el modo y el intervalo de refresco.
-- `.env` no se versiona; `.env.example` solo lleva valores de ejemplo.
+- [`frontend/public/config.json`](../frontend/public/config.json) es **público** (se publica con el sitio): solo contiene la URL pública del túnel, el modo y el intervalo de refresco.
+- `.env` no se versiona; [`.env.example`](../.env.example) solo lleva valores de ejemplo.
 
 ## Antes de la defensa (checklist)
 
-1. `docker compose up -d` desde `observatorio-sismico/` y `docker compose ps` con los 5 servicios `healthy`.
+1. `docker compose up -d` desde [`observatorio-sismico/`](../) y `docker compose ps` con los 5 servicios `healthy`.
 2. `PRODUCER_MODE=live` en `.env` (si se cambió, `docker compose up -d --force-recreate producer api`). El productor consulta USGS cada 60 s.
    **Comprobar los datos y la ingesta:** `docker compose logs --tail 3 producer` muestra `cycle ok` cada minuto. El histórico debe estar cargado (18.302 eventos):
    `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT (SELECT count(*) FROM historico.event_current) AS historico, (SELECT count(*) FROM live.event_current) AS live"'`.

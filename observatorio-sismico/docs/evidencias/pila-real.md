@@ -1,6 +1,6 @@
 # Evidencias en la pila Docker real (Kafka + PostgreSQL + consumidor + API)
 
-Ejecutadas el 2026-11-18 con los 5 servicios levantados (`docker compose up -d`). Complementan a `aceptacion-s11.md`, que usa PostgreSQL real pero entrega los mensajes al consumidor sin pasar por Kafka.
+Ejecutadas el 2026-11-18 con los 5 servicios levantados (`docker compose up -d`). Complementan a [`aceptacion-s11.md`](aceptacion-s11.md), que usa PostgreSQL real pero entrega los mensajes al consumidor sin pasar por Kafka.
 
 ## Reiniciar consumidor (ENUNCIADO §11, fila 8)
 
@@ -37,4 +37,4 @@ El tiempo de ocurrencia original se conserva (por ejemplo `2025-01-01 08:09 UTC`
 
 ## Cerrar y volver a abrir el túnel (filas 9 y 10)
 
-Pendientes de las Fases 11 (panel) y 12 (túnel ngrok). Ver el procedimiento manual en `aceptacion-s11.md`, pruebas P9 y P10.
+Pendientes de las Fases 11 (panel) y 12 (túnel ngrok). Ver el procedimiento manual en [`aceptacion-s11.md`](aceptacion-s11.md), pruebas P9 y P10.

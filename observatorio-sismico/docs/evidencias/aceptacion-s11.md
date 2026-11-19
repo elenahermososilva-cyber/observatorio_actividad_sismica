@@ -1,6 +1,6 @@
 # Evidencias de las pruebas de aceptación (ENUNCIADO §11)
 
-Generado por `tests/acceptance/test_aceptacion_s11.py` contra PostgreSQL real, el consumidor real y la API real.
+Generado por [`tests/acceptance/test_aceptacion_s11.py`](../../tests/acceptance/test_aceptacion_s11.py) contra PostgreSQL real, el consumidor real y la API real.
 Cada fila indica el resultado esperado del enunciado, lo observado y si la prueba pasó.
 
 | Prueba | Estado | Resultado esperado |
@@ -304,7 +304,7 @@ Cada fila indica el resultado esperado del enunciado, lo observado y si la prueb
 - Se simula el reinicio con relectura completa desde el offset 0 (el consumidor no había confirmado).
 - Decisiones en la relectura: ['stale', 'duplicate', 'duplicate', 'duplicate']: ningún efecto nuevo.
 - Filas de `event_current`, `event_message`, cuarentena y versiones vigentes: idénticas antes y después.
-- En la pila Docker real lo cubren `tests/integration/test_reconsume_event.py` (reset de offsets a earliest y `docker compose restart consumer`) y `test_failure_scenarios.py` (caída de PostgreSQL sin confirmar offsets).
+- En la pila Docker real lo cubren [`tests/integration/test_reconsume_event.py`](../../tests/integration/test_reconsume_event.py) (reset de offsets a earliest y `docker compose restart consumer`) y [`test_failure_scenarios.py`](../../tests/integration/test_failure_scenarios.py) (caída de PostgreSQL sin confirmar offsets).
 
 ```json
 {
@@ -348,8 +348,8 @@ Cada fila indica el resultado esperado del enunciado, lo observado y si la prueb
 **Pasos y observaciones:**
 
 - Precondición verificada aquí en la API: cada respuesta lleva `metadata.generated` y `last_ingestion`, que el panel usa para identificar la última lectura buena.
-- Comprobado en el panel real (Edge, `tests/e2e/panel_e2e.mjs`, ver `panel-e2e.json`): con el servicio `api` parado el panel muestra el aviso «No se pudo actualizar», conserva los eventos de la última lectura, indica cuándo fue y marca la API como «Sin respuesta».
-- Comprobado también con el túnel ngrok real y el panel publicado en Netlify (`panel-publicado-watch.json`, 18-nov-2026): al cerrar ngrok el panel mostró el aviso en ~60 s, con estado «Sin respuesta», y conservó 185 eventos idénticos hasta el final del fallo.
+- Comprobado en el panel real (Edge, [`tests/e2e/panel_e2e.mjs`](../../tests/e2e/panel_e2e.mjs), ver [`panel-e2e.json`](panel-e2e.json)): con el servicio `api` parado el panel muestra el aviso «No se pudo actualizar», conserva los eventos de la última lectura, indica cuándo fue y marca la API como «Sin respuesta».
+- Comprobado también con el túnel ngrok real y el panel publicado en Netlify ([`panel-publicado-watch.json`](panel-publicado-watch.json), 18-nov-2026): al cerrar ngrok el panel mostró el aviso en ~60 s, con estado «Sin respuesta», y conservó 185 eventos idénticos hasta el final del fallo.
 
 ```json
 {
@@ -383,9 +383,9 @@ Cada fila indica el resultado esperado del enunciado, lo observado y si la prueb
 
 **Pasos y observaciones:**
 
-- Comprobado en el panel real (`panel-e2e.json`): al arrancar de nuevo el servicio `api`, el aviso desaparece solo en el siguiente refresco, sin recargar la página, y el estado vuelve a «Accesible» o «Datos desactualizados» según `/api/salud`.
+- Comprobado en el panel real ([`panel-e2e.json`](panel-e2e.json)): al arrancar de nuevo el servicio `api`, el aviso desaparece solo en el siguiente refresco, sin recargar la página, y el estado vuelve a «Accesible» o «Datos desactualizados» según `/api/salud`.
 - Las lecturas de la API no tienen estado de sesión, de modo que la siguiente consulta recupera el estado completo.
-- Comprobado con el túnel ngrok real (`panel-publicado-watch.json`): al reabrir `ngrok http --url=<dominio-fijo> 8000` el panel publicado se recuperó solo, sin recargar la página, 183 s después del primer aviso (el tiempo depende de cuánto estuvo cerrado el túnel y del refresco de 60 s). Con el dominio fijo no hizo falta cambiar `config.json` ni volver a publicar.
+- Comprobado con el túnel ngrok real ([`panel-publicado-watch.json`](panel-publicado-watch.json)): al reabrir `ngrok http --url=<dominio-fijo> 8000` el panel publicado se recuperó solo, sin recargar la página, 183 s después del primer aviso (el tiempo depende de cuánto estuvo cerrado el túnel y del refresco de 60 s). Con el dominio fijo no hizo falta cambiar [`config.json`](../../frontend/public/config.json) ni volver a publicar.
 
 ## P11 · Reproducción histórica
 
@@ -401,7 +401,7 @@ Cada fila indica el resultado esperado del enunciado, lo observado y si la prueb
 - `/api/eventos?mode=replay` devuelve solo h0, h1, h2; `/api/eventos?mode=live` solo `live1`.
 - El tiempo de ocurrencia original se conserva y `replay_at` se guarda aparte.
 - Un mensaje de replay entregado al consumidor live se rechaza con `mode_mismatch` y va a cuarentena: nunca se mezcla.
-- La API devuelve `metadata.mode = replay` y el panel muestra el aviso «REPRODUCCIÓN» (`panel-replay.png`).
+- La API devuelve `metadata.mode = replay` y el panel muestra el aviso «REPRODUCCIÓN» ([`panel-replay.png`](panel-replay.png)).
 
 ```json
 {

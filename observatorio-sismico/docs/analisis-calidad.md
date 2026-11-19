@@ -1,7 +1,7 @@
 # Análisis de calidad de los datos (visual)
 
-Generado por `scripts/graficos_calidad.py` contra PostgreSQL real el 2026-11-19 20:31:22 UTC
-(cifras en `docs/evidencias/calidad/calidad-datos.json`). Complementa a la memoria (§3), que contiene la comparación
+Generado por [`scripts/graficos_calidad.py`](../scripts/graficos_calidad.py) contra PostgreSQL real el 2026-11-19 20:31:22 UTC
+(cifras en [`docs/evidencias/calidad/calidad-datos.json`](evidencias/calidad/calidad-datos.json)). Complementa a la memoria (§3), que contiene la comparación
 **antes/después** con los archivos originales, las reglas aplicadas y ejemplos reales; aquí se resume en gráficos el
 estado actual de cada conjunto. Las cifras del feed en vivo cambian con el tiempo: es una instantánea.
 

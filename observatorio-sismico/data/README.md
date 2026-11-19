@@ -6,8 +6,8 @@ Esta carpeta es la **ubicación documentada de los datos originales** (enunciado
 |---|---|---|
 | Respuestas originales del feed `all_day.geojson` | `data/raw/live/AAAA/MM/DD/HHMMSS.geojson.gz` (gzip, bytes íntegros) | las conserva el productor en modo `live` |
 | Histórico 2025 (M ≥ 4, mundo, `earthquake`) | `data/raw/historico/AAAA-MM.geojson` + `manifest.json` | `docker compose run --rm --no-deps producer python -m backend.producer.history_download` |
-| Catálogo reciente 2026 para la comparación equivalente (1-oct → 18-nov exclusivo, M ≥ 4, mundo, `earthquake`) | `data/raw/reciente/*.geojson` + `manifest.json` (segunda instantánea 23 h después en `data/raw/reciente-2/`, resultado en `docs/evidencias/comparacion-reciente-2.json`) | `scripts/comparacion_reciente.py` (comando en `docs/memoria.md` §10); no se carga en la base de datos |
-| Catálogo de países | `frontend/public/datos/paises.geojson` (entregado, sin modificar) | no se regenera: usar la copia entregada |
+| Catálogo reciente 2026 para la comparación equivalente (1-oct → 18-nov exclusivo, M ≥ 4, mundo, `earthquake`) | `data/raw/reciente/*.geojson` + `manifest.json` (segunda instantánea 23 h después en `data/raw/reciente-2/`, resultado en [`docs/evidencias/comparacion-reciente-2.json`](../docs/evidencias/comparacion-reciente-2.json)) | [`scripts/comparacion_reciente.py`](../scripts/comparacion_reciente.py) (comando en [`docs/memoria.md`](../docs/memoria.md) §10); no se carga en la base de datos |
+| Catálogo de países | [`frontend/public/datos/paises.geojson`](../frontend/public/datos/paises.geojson) (entregado, sin modificar) | no se regenera: usar la copia entregada |
 | Registro de consultas al feed | tabla `ingest.extraction_log` | lo escribe el productor live en cada consulta |
 | Registro de consultas del histórico | `data/raw/historico/manifest.json` | lo escribe la descarga del histórico |
 
@@ -21,7 +21,7 @@ Resultado de la extracción realizada el 2026-11-17: **12 consultas, 18.302 even
 
 - **Originales del feed live**: se conservan `RAW_RETENTION_DAYS` días (14 por defecto) y se podan en cada ciclo. El feed incluye `metadata.generated`, que cambia cada minuto aunque no haya novedades, así que la deduplicación usa el hash de las `features` y no el de los bytes: una respuesta con los mismos eventos que la última consulta correcta no se vuelve a guardar (en una prueba real, 3 consultas seguidas guardaron 1 original). La consulta sí queda registrada en `ingest.extraction_log` (`raw_path` nulo).
 - **Registro de consultas** (`ingest.extraction_log`) y **datos procesados** (`event_message`, `event_current`, `quarantine_record`): no se borran. El histórico almacenado se mantiene aunque un evento deje de aparecer en la ventana de 24 h; que un evento salga del feed **no** implica que USGS lo haya eliminado.
-- **Kafka**: 7 días o 1 GiB por partición (`compose.yaml`). Kafka es transporte, no archivo: la fuente de verdad es PostgreSQL.
+- **Kafka**: 7 días o 1 GiB por partición ([`compose.yaml`](../compose.yaml)). Kafka es transporte, no archivo: la fuente de verdad es PostgreSQL.
 
 ## Recuperar un hueco mayor de 24 h
 
@@ -29,7 +29,7 @@ El feed solo contiene las últimas 24 horas. Si el productor live estuvo parado 
 
 ## Huella del catálogo de países
 
-`ref.dim_country.source_sha256` guarda el SHA-256 del catálogo con saltos de línea normalizados a LF (`6866c877…c977f`, el publicado en `docs/curso/FUENTES-Y-LICENCIAS.md`). Con `core.autocrlf=true` en Windows la copia de trabajo tiene CRLF y el SHA del archivo en disco es otro (`d2aec98b…`); el contenido es el mismo.
+`ref.dim_country.source_sha256` guarda el SHA-256 del catálogo con saltos de línea normalizados a LF (`6866c877…c977f`, el publicado en [`docs/curso/FUENTES-Y-LICENCIAS.md`](../docs/curso/FUENTES-Y-LICENCIAS.md)). Con `core.autocrlf=true` en Windows la copia de trabajo tiene CRLF y el SHA del archivo en disco es otro (`d2aec98b…`); el contenido es el mismo.
 
 ## Permisos en Linux
 

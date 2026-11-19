@@ -15,11 +15,11 @@ Material de partida para el apartado de calidad de la memoria (enunciado §6 y �
 | Espacios sobrantes en `place`, `place` vacío, `magType` en mayúsculas | **Transformación** que cambia el dato, registrada | `fixed_*` |
 | Epicentro fuera de todo polígono | **Sin país asignado**: se conserva y permanece en el análisis | `country_status = 'unassigned'` |
 
-El original nunca se modifica: `event_message.payload` conserva el Feature exactamente como llegó; las transformaciones solo afectan a las columnas derivadas de `event_current`. Los códigos están documentados en `backend/consumer/quality.py` (`FLAG_CODES`).
+El original nunca se modifica: `event_message.payload` conserva el Feature exactamente como llegó; las transformaciones solo afectan a las columnas derivadas de `event_current`. Los códigos están documentados en [`backend/consumer/quality.py`](../backend/consumer/quality.py) (`FLAG_CODES`).
 
 ## 2. Regla de atribución de país
 
-Punto-en-polígono sobre Natural Earth 1:110M (`backend/consumer/geo.py`), WGS84, sin reproyectar.
+Punto-en-polígono sobre Natural Earth 1:110M ([`backend/consumer/geo.py`](../backend/consumer/geo.py)), WGS84, sin reproyectar.
 
 1. **Solo geometría.** El texto `place` y la proximidad nunca deciden el país.
 2. **Frontera:** predicado `covered_by`; un punto sobre el borde cuenta como dentro.

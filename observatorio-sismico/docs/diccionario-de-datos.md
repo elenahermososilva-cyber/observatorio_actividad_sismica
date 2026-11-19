@@ -1,6 +1,6 @@
 # Diccionario de datos
 
-Describe cada campo que usa el sistema: el mensaje de Kafka, las tablas de PostgreSQL y la respuesta de la API. La fuente de verdad es el código (`backend/db/schema.sql`, `backend/db/migrations/`, `backend/producer/schema.py`); este documento se contrastó con el catálogo real de la base (`information_schema` y `pg_constraint`). Convenciones: **todo tiempo en UTC**; tiempos de la fuente en **milisegundos Unix**; profundidad en **km**; coordenadas **WGS84 (EPSG:4326)** en grados, orden **longitud, latitud**.
+Describe cada campo que usa el sistema: el mensaje de Kafka, las tablas de PostgreSQL y la respuesta de la API. La fuente de verdad es el código ([`backend/db/schema.sql`](../backend/db/schema.sql), [`backend/db/migrations/`](../backend/db/migrations/), [`backend/producer/schema.py`](../backend/producer/schema.py)); este documento se contrastó con el catálogo real de la base (`information_schema` y `pg_constraint`). Convenciones: **todo tiempo en UTC**; tiempos de la fuente en **milisegundos Unix**; profundidad en **km**; coordenadas **WGS84 (EPSG:4326)** en grados, orden **longitud, latitud**.
 
 Cada modo tiene su propio esquema con tablas idénticas: `demo`, `live`, `replay` e `historico`. Los nombres de abajo (`event_message`, `event_current`, `quarantine_record`) existen en los cuatro; las restricciones `CHECK` impiden que un esquema admita un modo ajeno.
 
@@ -118,7 +118,7 @@ Grano: **una fila por `event_id`**. Se reemplaza solo si llega una versión estr
 | `source_sha256` | — | Huella SHA-256 del archivo de origen (normalizando CRLF→LF) |
 | `loaded_at` | — | Cuándo se cargó |
 
-177 entidades, 177 `ADM0_A3` distintos. La geometría no se guarda: el punto-en-polígono usa el GeoJSON en memoria (`backend/consumer/geo.py`).
+177 entidades, 177 `ADM0_A3` distintos. La geometría no se guarda: el punto-en-polígono usa el GeoJSON en memoria ([`backend/consumer/geo.py`](../backend/consumer/geo.py)).
 
 ## 8. Códigos de `quality_flags`
 
@@ -149,4 +149,4 @@ Los avisos señalan; solo las transformaciones `fixed_*` cambian el dato, y el o
 
 **`GET /api/salud`** — `status` (`ok`/`stale`/`error`), `database`, `last_ingestion`, `stale`, `stale_after_seconds`, `seconds_since_last_ingestion`, `stale_reason`.
 
-Detalle de parámetros y errores: `specs/001-vertical-event-demo/contracts/api-eventos.md` y `docs/curso/CONTRATO-API.md`. Registro de consultas y procedencia: `docs/consultas-y-procedencia.md`.
+Detalle de parámetros y errores: [`specs/001-vertical-event-demo/contracts/api-eventos.md`](../../specs/001-vertical-event-demo/contracts/api-eventos.md) y [`docs/curso/CONTRATO-API.md`](curso/CONTRATO-API.md). Registro de consultas y procedencia: [`docs/consultas-y-procedencia.md`](consultas-y-procedencia.md).

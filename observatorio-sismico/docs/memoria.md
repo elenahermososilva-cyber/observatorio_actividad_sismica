@@ -2,16 +2,16 @@
 
 Proyecto de aula de Big Data. Canalización de cinco servicios (productor → Kafka → consumidor → PostgreSQL → API) y panel Angular/Leaflet publicado en Netlify a través de un túnel ngrok.
 
-**Cómo leer este documento.** Cada apartado responde a un criterio de la rúbrica (ENUNCIADO §13). Todas las cifras proceden de scripts reproducibles (§10); ninguna se escribió a mano. Las cifras del feed en vivo son una **instantánea del 2026-11-18 20:53 UTC** y se regeneran con `scripts/memoria_datos.py`.
+**Cómo leer este documento.** Cada apartado responde a un criterio de la rúbrica (ENUNCIADO §13). Todas las cifras proceden de scripts reproducibles (§10); ninguna se escribió a mano. Las cifras del feed en vivo son una **instantánea del 2026-11-18 20:53 UTC** y se regeneran con [`scripts/memoria_datos.py`](../scripts/memoria_datos.py).
 
 | Criterio de la rúbrica | Apartado | Evidencia principal |
 |---|---|---|
-| Extracción | §2 | `docs/consultas-y-procedencia.md`, `data/README.md`, `docs/evidencias/memoria-datos.json` |
-| Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), `docs/analisis-calidad.md` (gráficos por dimensión y conjunto), `docs/reglas-calidad-y-geografia.md` |
-| Modelado | §4 | `docs/diccionario-de-datos.md`, `backend/db/` |
-| Análisis | §5 | `docs/evidencias/analisis/*.png`, `memoria-datos.json`, `comparacion-reciente.json`, `comparacion-reciente-2.json` |
-| Reflexión | §6, §7, §8 | `docs/evidencias/complejidad.md`, `api-latencia.json` |
-| Pruebas de aceptación y reproducción histórica | §9, §9.1 | `docs/evidencias/aceptacion-s11.md`, `pila-real.md`, `panel*.md` |
+| Extracción | §2 | [`docs/consultas-y-procedencia.md`](consultas-y-procedencia.md), [`data/README.md`](../data/README.md), [`docs/evidencias/memoria-datos.json`](evidencias/memoria-datos.json) |
+| Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), [`docs/analisis-calidad.md`](analisis-calidad.md) (gráficos por dimensión y conjunto), [`docs/reglas-calidad-y-geografia.md`](reglas-calidad-y-geografia.md) |
+| Modelado | §4 | [`docs/diccionario-de-datos.md`](diccionario-de-datos.md), [`backend/db/`](../backend/db/) |
+| Análisis | §5 | [`docs/evidencias/analisis/*.png`](evidencias/analisis/), [`memoria-datos.json`](evidencias/memoria-datos.json), [`comparacion-reciente.json`](evidencias/comparacion-reciente.json), [`comparacion-reciente-2.json`](evidencias/comparacion-reciente-2.json) |
+| Reflexión | §6, §7, §8 | [`docs/evidencias/complejidad.md`](evidencias/complejidad.md), [`api-latencia.json`](evidencias/api-latencia.json) |
+| Pruebas de aceptación y reproducción histórica | §9, §9.1 | [`docs/evidencias/aceptacion-s11.md`](evidencias/aceptacion-s11.md), [`pila-real.md`](evidencias/pila-real.md), `panel*.md` |
 
 ---
 
@@ -44,7 +44,7 @@ USGS ──HTTP/60 s──► productor ──► Kafka ──► consumidor ─
 
 | Decisión | Motivo |
 |---|---|
-| **Un topic y un esquema PostgreSQL por modo** (`demo`, `live`, `replay`; `historico` para la instantánea 2025) | Aislamiento verificable: la base rechaza con `CHECK` un modo ajeno, aunque se intente con SQL directo (prueba en `tests/acceptance`) |
+| **Un topic y un esquema PostgreSQL por modo** (`demo`, `live`, `replay`; `historico` para la instantánea 2025) | Aislamiento verificable: la base rechaza con `CHECK` un modo ajeno, aunque se intente con SQL directo (prueba en [`tests/acceptance`](../tests/acceptance/)) |
 | **El productor publica todo; el consumidor es el único punto de rechazo** | Nada se descarta en silencio: cada rechazo queda en `quarantine_record` con motivo y referencia al original |
 | **Versionado por `(event_id, updated)`** con upsert protegido (`WHERE current_version_ms < EXCLUDED.current_version_ms`) | Idempotencia: reenviar un mensaje no cambia el estado; una versión antigua no sustituye a la vigente |
 | **Offsets confirmados solo después del COMMIT** | Procesamiento al menos una vez con escritura idempotente (sin transacción distribuida) |
@@ -54,9 +54,9 @@ USGS ──HTTP/60 s──► productor ──► Kafka ──► consumidor ─
 | **Panel por secciones** (Resumen, Análisis, Eventos, Histórico 2025, Estado del sistema) con ficha por evento | Cada pregunta en su pantalla; los filtros comunes y los avisos de fallo quedan visibles en todas. El histórico se consulta paginado en el servidor (`mode=historico`, solo lectura), sin traer 18.302 eventos al navegador |
 | **Histórico por script de descarga + cargador**, sin sexto servicio | Se respeta el límite de cinco servicios |
 
-**Seguridad y exposición.** Solo la API se publica, en `127.0.0.1:8000`; Kafka y PostgreSQL no tienen puertos publicados. La API solo tiene tres rutas de lectura (`/api/eventos`, `/api/estadisticas`, `/api/salud`), sin documentación interactiva ni administración; el modo `historico` también es de solo lectura. El panel no lanza descargas ni importaciones: el histórico se carga con un script, fuera de la interfaz. CORS usa orígenes exactos (nunca `*`) desde `CORS_ORIGINS`. El authtoken de ngrok vive en el perfil del usuario, fuera de Git y del frontend; `config.json`, que es público, solo contiene la URL pública del túnel. Kafka conserva 168 h o 1 GiB por topic y los datos están en volúmenes persistentes.
+**Seguridad y exposición.** Solo la API se publica, en `127.0.0.1:8000`; Kafka y PostgreSQL no tienen puertos publicados. La API solo tiene tres rutas de lectura (`/api/eventos`, `/api/estadisticas`, `/api/salud`), sin documentación interactiva ni administración; el modo `historico` también es de solo lectura. El panel no lanza descargas ni importaciones: el histórico se carga con un script, fuera de la interfaz. CORS usa orígenes exactos (nunca `*`) desde `CORS_ORIGINS`. El authtoken de ngrok vive en el perfil del usuario, fuera de Git y del frontend; [`config.json`](../frontend/public/config.json), que es público, solo contiene la URL pública del túnel. Kafka conserva 168 h o 1 GiB por topic y los datos están en volúmenes persistentes.
 
-**Despliegue.** Panel: `https://observatorio-sismico-elena.netlify.app`; API: dominio fijo gratuito de ngrok. Procedimiento, checklist de defensa y tabla de fallos en `docs/despliegue.md`.
+**Despliegue.** Panel: `https://observatorio-sismico-elena.netlify.app`; API: dominio fijo gratuito de ngrok. Procedimiento, checklist de defensa y tabla de fallos en [`docs/despliegue.md`](despliegue.md).
 
 ---
 
@@ -71,11 +71,11 @@ USGS ──HTTP/60 s──► productor ──► Kafka ──► consumidor ─
 | API FDSN de USGS (periodo reciente) | 1-oct → 18-nov-2026 (exclusivo), mismos filtros que el histórico, para la comparación equivalente (§5, conclusión 4) | 2 consultas (una por mes) | `data/raw/reciente/manifest.json` |
 | Natural Earth 1:110M | 177 entidades con `ADM0_A3`, `NAME_ES`, `SUBREGION`… | Copia entregada (SHA-256 verificado) | `ref.dim_country` |
 
-Tipos y unidades de los campos de USGS (identificador, `time` y `updated` en **ms Unix UTC**, coordenadas **lon, lat, profundidad en km**, magnitud adimensional con tipo, `place` descriptivo, `type`) y cuáles son opcionales (`mag`, `magType`, `place`, profundidad) están en `docs/diccionario-de-datos.md` §1.
+Tipos y unidades de los campos de USGS (identificador, `time` y `updated` en **ms Unix UTC**, coordenadas **lon, lat, profundidad en km**, magnitud adimensional con tipo, `place` descriptivo, `type`) y cuáles son opcionales (`mag`, `magType`, `place`, profundidad) están en [`docs/diccionario-de-datos.md`](diccionario-de-datos.md) §1.
 
 ### 2.2 Automatización y robustez
 
-- Variables de entorno para dirección Kafka, topics, frecuencia y modo (`.env.example`).
+- Variables de entorno para dirección Kafka, topics, frecuencia y modo ([`.env.example`](../.env.example)).
 - Cliente HTTP con timeout, reintentos con espera progresiva, `Retry-After` en HTTP 429/5xx y control de JSON inválido. Un fallo se registra **sin borrar** el estado válido anterior.
 - Se conserva el GeoJSON original comprimido antes de transformarlo (`data/raw/live/AAAA/MM/DD/HHMMSS.geojson.gz`, retención 14 días). **No se guardan copias idénticas**: el hash se calcula sobre las `features` y no sobre los bytes, porque `metadata.generated` cambia cada minuto.
 - La versión se marca como publicada **solo tras el ack de Kafka**. Si el proceso cae entre ambas operaciones, se reenvía y el consumidor lo tolera (prueba `test_crash_between_ack_and_mark_republishes_and_consumer_tolerates_it`).
@@ -95,9 +95,9 @@ Tipos y unidades de los campos de USGS (identificador, `time` y `updated` en **m
 
 Sin la deduplicación del productor, cada versión se republicaría unas 76 veces de media (35.621 apariciones para 471 versiones: una por minuto mientras el evento permanece en la ventana de 24 h).
 
-**Histórico 2025:** 12 consultas, 18.302 eventos recibidos y reportados (coinciden), ninguna se acerca al límite de 20.000 (la mayor, julio, trae 2.684), 0 duplicados entre intervalos. Tabla completa con URL, fecha de extracción, tamaño y SHA-256 en `docs/consultas-y-procedencia.md`.
+**Histórico 2025:** 12 consultas, 18.302 eventos recibidos y reportados (coinciden), ninguna se acerca al límite de 20.000 (la mayor, julio, trae 2.684), 0 duplicados entre intervalos. Tabla completa con URL, fecha de extracción, tamaño y SHA-256 en [`docs/consultas-y-procedencia.md`](consultas-y-procedencia.md).
 
-**Hueco de ingesta.** El productor live estuvo parado 19,5 h (del 17-nov 22:19 al 18-nov 17:49 UTC). Como es menor que la ventana de 24 h del feed, **no se perdió ningún evento**: al reanudar, el primer ciclo publicó los eventos que faltaban (155 nuevos). Un hueco **mayor de 24 h** no se recupera con el feed: se descarga el intervalo con el catálogo FDSN (`history_download`) y se carga como histórico (`data/README.md`).
+**Hueco de ingesta.** El productor live estuvo parado 19,5 h (del 17-nov 22:19 al 18-nov 17:49 UTC). Como es menor que la ventana de 24 h del feed, **no se perdió ningún evento**: al reanudar, el primer ciclo publicó los eventos que faltaban (155 nuevos). Un hueco **mayor de 24 h** no se recupera con el feed: se descarga el intervalo con el catálogo FDSN (`history_download`) y se carga como histórico ([`data/README.md`](../data/README.md)).
 
 **Limitación declarada.** «No aparece en la siguiente ventana» no significa que USGS lo haya eliminado: puede haber envejecido más de 24 h, así que el histórico almacenado no se borra. La reconciliación exhaustiva de eventos eliminados o fusionados fuera del feed es una ampliación fuera del alcance.
 
@@ -105,7 +105,7 @@ Sin la deduplicación del productor, cada versión se republicaría unas 76 vece
 
 ## 3. Calidad y transformación
 
-El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `quality.py`, `geo.py`). Cada decisión está documentada en `docs/reglas-calidad-y-geografia.md`; aquí se presentan los resultados **antes y después** en las seis dimensiones. El estado actual de cada conjunto (vivo, histórico, reproducción), con gráficos e indicadores con su denominador, está en [`docs/analisis-calidad.md`](analisis-calidad.md).
+El consumidor aplica reglas explícitas ([`backend/consumer/processing.py`](../backend/consumer/processing.py), [`quality.py`](../backend/consumer/quality.py), [`geo.py`](../backend/consumer/geo.py)). Cada decisión está documentada en [`docs/reglas-calidad-y-geografia.md`](reglas-calidad-y-geografia.md); aquí se presentan los resultados **antes y después** en las seis dimensiones. El estado actual de cada conjunto (vivo, histórico, reproducción), con gráficos e indicadores con su denominador, está en [`docs/analisis-calidad.md`](analisis-calidad.md).
 
 ### 3.1 Qué se rechaza, qué se señala y qué se transforma
 
@@ -121,7 +121,7 @@ El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `qual
 
 ### 3.2 Resultados por dimensión: antes y después
 
-*Antes* = archivos originales de USGS sin transformar (`data/raw`); *después* = estado en PostgreSQL. Script: `scripts/memoria_datos.py`.
+*Antes* = archivos originales de USGS sin transformar (`data/raw`); *después* = estado en PostgreSQL. Script: [`scripts/memoria_datos.py`](../scripts/memoria_datos.py).
 
 | Dimensión | Comprobación | Antes (original) | Después (base de datos) | Decisión |
 |---|---|---|---|---|
@@ -173,7 +173,7 @@ SELECT left(reason, strpos(reason, ':') - 1) AS motivo, count(*) FROM live.quara
 
 **Revisión que cambia datos (`live.event_message`):** el evento `aka2026wupwhh` tuvo dos versiones. La primera (publicada a las 20:30:50 UTC) decía M0,9 con epicentro en [−154,699; 58,464]; la segunda (a las 05:55:34 UTC del día siguiente, 9 h después) lo dejó en **M3,5 en [−150,383; 56,040]**, unos 300 km al sur-este, con la hora de ocurrencia corregida en 10 s. En `event_current` solo queda la segunda (y el país se recalcula con la nueva posición); `event_message` conserva ambas. Esto confirma por qué las agregaciones se calculan desde `event_current` y no sumando mensajes.
 
-**Casos artificialmente dañados**, separados e identificados: no se mezclan con datos reales. Viven en las pruebas (`tests/unit/test_processing.py`, `tests/acceptance`) y en el modo `demo`/`replay` (`synthetic_flag = true`, `source = replay-injected`).
+**Casos artificialmente dañados**, separados e identificados: no se mezclan con datos reales. Viven en las pruebas ([`tests/unit/test_processing.py`](../tests/unit/test_processing.py), [`tests/acceptance`](../tests/acceptance/)) y en el modo `demo`/`replay` (`synthetic_flag = true`, `source = replay-injected`).
 
 ### 3.5 Revisiones y actualidad (feed live, instantánea)
 
@@ -288,7 +288,7 @@ La integración une cada evento con la dimensión país por geometría (no por t
 
 ## 5. Análisis y conclusiones
 
-Todas las cifras proceden de `docs/evidencias/memoria-datos.json` (consultas en `scripts/memoria_datos.py`). **Muestras equivalentes:** el histórico solo contiene M ≥ 4, así que cualquier comparación con el feed live se hace con el mismo umbral (M ≥ 4) y con días UTC completos. Estas estadísticas describen eventos publicados por USGS: la cobertura de detección y los tipos de magnitud varían entre regiones y épocas, y **no son una predicción de terremotos ni una evaluación de riesgo**.
+Todas las cifras proceden de [`docs/evidencias/memoria-datos.json`](evidencias/memoria-datos.json) (consultas en [`scripts/memoria_datos.py`](../scripts/memoria_datos.py)). **Muestras equivalentes:** el histórico solo contiene M ≥ 4, así que cualquier comparación con el feed live se hace con el mismo umbral (M ≥ 4) y con días UTC completos. Estas estadísticas describen eventos publicados por USGS: la cobertura de detección y los tipos de magnitud varían entre regiones y épocas, y **no son una predicción de terremotos ni una evaluación de riesgo**.
 
 ### Conclusión 1: el catálogo es completo a partir de M ≈ 4,5, y por debajo hay que interpretarlo con cuidado
 
@@ -302,25 +302,25 @@ Todas las cifras proceden de `docs/evidencias/memoria-datos.json` (consultas en 
 | 5,0 | 2.129 | **1,200** | 0,026 |
 
 **Lectura:** a partir de M 4,5 el valor es estable (1,20–1,21) y consistente entre umbrales; con M 4,0 baja a 0,77. Una b que cae al incluir las magnitudes más pequeñas indica que el catálogo **está incompleto entre M 4,0 y 4,4**: faltan eventos pequeños que las redes no detectan o no publican en todas partes. Por tanto, cualquier recuento o media por día con M ≥ 4 está **ligeramente infravalorado en el tramo bajo**, y las comparaciones sólidas se hacen a partir de M 4,5. **Cautela:** el valor de b ≈ 1,2 es algo mayor que el ≈ 1,0 que suele citarse; con un 89 % de magnitudes `mb` (tipos de magnitud mezclados) no se interpreta como una propiedad física, sino como una característica de este catálogo.
-**Captura:** los filtros del panel no ofrecen esta estimación (es un cálculo estadístico); se reproduce con el script. El histograma de magnitud del panel (`analisis/02-live-17nov-M4.png`) muestra la misma caída del recuento al subir la magnitud.
+**Captura:** los filtros del panel no ofrecen esta estimación (es un cálculo estadístico); se reproduce con el script. El histograma de magnitud del panel ([`analisis/02-live-17nov-M4.png`](evidencias/analisis/02-live-17nov-M4.png)) muestra la misma caída del recuento al subir la magnitud.
 
 ### Conclusión 2: la media diaria de 2025 (50,1) está inflada por la secuencia de réplicas de julio; la mediana (43) describe mejor un día típico
 
 **Datos:** 365 días con los días sin eventos incluidos. Media **50,14**, mediana **43**, mínimo 20, máximo **645** (2025-07-30), cuartiles 36 y 53. Con la valla de Tukey (Q3 + 1,5·RIC = 78,5) hay **27 días atípicos que concentran 3.782 eventos (20,7 % del año)**; la media sin ellos es **42,96**, prácticamente la mediana. Julio (2.684 eventos) y agosto (2.222) tuvieron 2,0 y 1,7 veces la media del resto de meses (1.340).
 **Lectura:** una sola jornada desplaza la media. El terremoto de **M8,8 de la península de Kamchatka** (`us6000qw60`, 2025-07-29 23:24 UTC) y sus réplicas dan 121 eventos el 29-jul, **645 el 30-jul**, 315 el 31-jul y 234 el 1-ago; los eventos de una secuencia no son independientes. **Consecuencia para el panel:** la comparación histórica devuelve media, mediana, mínimo y máximo, y la memoria compara con la mediana (43) además de con la media (50,1).
-**Comparación con el feed** (M ≥ 4; día UTC completo 2026-11-17): **23 terremotos** en la instantánea de `memoria-datos.json` (24 dos horas después, al publicarse otro), es decir 0,46 veces la media y 0,53 veces la mediana de 2025; solo 4 de 365 días de 2025 tuvieron 23 o menos. **No demuestra menos actividad ni retraso de USGS**: el catálogo FDSN da para ese mismo día 25 eventos, de los que el feed vio 24, y 23 horas después el catálogo seguía en 25 para ese día. Lo que sí se mide es que **el pipeline no pierde eventos**; el valor bajo del día es coherente con el tramo final del periodo reciente (conclusión 4), cuya causa —actividad real o catálogo aún incompleto— **no está resuelta**. Comparar un día reciente con un año ya consolidado no es una comparación equivalente, y la tarjeta del panel lo advierte.
-**Capturas:** `analisis/02-live-17nov-M4.png` (pestaña Análisis; filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica. Hoy muestra 24 eventos: el 25.º del catálogo aún no ha llegado al feed y el 23 de la instantánea de `memoria-datos.json` subió a 24 al publicarse otro.
+**Comparación con el feed** (M ≥ 4; día UTC completo 2026-11-17): **23 terremotos** en la instantánea de [`memoria-datos.json`](evidencias/memoria-datos.json) (24 dos horas después, al publicarse otro), es decir 0,46 veces la media y 0,53 veces la mediana de 2025; solo 4 de 365 días de 2025 tuvieron 23 o menos. **No demuestra menos actividad ni retraso de USGS**: el catálogo FDSN da para ese mismo día 25 eventos, de los que el feed vio 24, y 23 horas después el catálogo seguía en 25 para ese día. Lo que sí se mide es que **el pipeline no pierde eventos**; el valor bajo del día es coherente con el tramo final del periodo reciente (conclusión 4), cuya causa —actividad real o catálogo aún incompleto— **no está resuelta**. Comparar un día reciente con un año ya consolidado no es una comparación equivalente, y la tarjeta del panel lo advierte.
+**Capturas:** [`analisis/02-live-17nov-M4.png`](evidencias/analisis/02-live-17nov-M4.png) (pestaña Análisis; filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica. Hoy muestra 24 eventos: el 25.º del catálogo aún no ha llegado al feed y el 23 de la instantánea de [`memoria-datos.json`](evidencias/memoria-datos.json) subió a 24 al publicarse otro.
 
 ### Conclusión 3: el 78 % de los epicentros M ≥ 4 queda fuera de todo país, y casi todos los profundos
 
 **Datos (2025, M ≥ 4):** 14.350 de 18.302 eventos (**78,4 %**) sin país asignado; entre los **1.102 eventos de 300 km o más, 1.077 (97,7 %)** están sin país. Profundidad: **74,8 %** (13.689) a menos de 70 km, 19,2 % entre 70 y 300 km y 6,0 % a 300 km o más (máxima 669,6 km; ninguna negativa). Países con más eventos asignados: China 354, Chile 348, Indonesia 306, Etiopía 265, Argentina 236. Por subregión: Sudamérica 973, Sudeste Asiático 580, Asia Oriental 548, Sur de Asia 443, África Oriental 290.
 **Lectura:** la sismicidad se concentra en zonas de subducción y dorsales, en gran parte bajo el mar; por eso «Sin país asignado» es **el grupo más grande** y debe estar siempre en el análisis (no se descarta ni se reasigna). El contraste con `place` (§3.6) confirma que son epicentros marítimos y no un fallo del cruce.
 **Muestra equivalente del feed** (M ≥ 4, día UTC 17-nov, n = 23): 60,9 % sin país (14 de 23), 56,5 % a menos de 70 km y 8,7 % a 300 km o más. Con n = 23 el error de una proporción ronda ±10 puntos, así que **no se puede afirmar que difiera del histórico**: es compatible con él en dirección (la mayoría sin país) pero no concluyente. Con una muestra mayor, el catálogo reciente (1-oct → 17-nov-2026, 2.027 eventos) da **70,4 %** sin país; el descenso se debe a la secuencia de Panamá, en tierra firme (conclusión 4): **excluyendo los 167 eventos a menos de 300 km del M7,7, la proporción es del 74,3 %**, cercana al 78,4 % de 2025. Profundidad: 73,2 % a menos de 70 km (74,8 % en 2025).
-**Capturas** (pestaña Resumen, con los filtros visibles): `analisis/03-live-17nov-M4-sin-pais.png` (17-nov-2026, M ≥ 4, país «Sin país asignado»: 14 eventos) y `analisis/04-live-17y18nov-pais-USA.png` (17 y 18-nov, país USA). El total del mapa coincide con el de los gráficos en cada captura (`capturas-memoria.json`) y en cada combinación de filtros (prueba E2E).
+**Capturas** (pestaña Resumen, con los filtros visibles): [`analisis/03-live-17nov-M4-sin-pais.png`](evidencias/analisis/03-live-17nov-M4-sin-pais.png) (17-nov-2026, M ≥ 4, país «Sin país asignado»: 14 eventos) y [`analisis/04-live-17y18nov-pais-USA.png`](evidencias/analisis/04-live-17y18nov-pais-USA.png) (17 y 18-nov, país USA). El total del mapa coincide con el de los gráficos en cada captura ([`capturas-memoria.json`](evidencias/capturas-memoria.json)) y en cada combinación de filtros (prueba E2E).
 
 ### Conclusión 4: en octubre de 2026 la actividad mundial M ≥ 4 fue normal salvo una secuencia en Panamá; los últimos 20 días quedan por debajo de todo 2025 y la causa no está resuelta
 
-**Datos:** catálogo FDSN de USGS del 1-oct al 17-nov-2026 (48 días completos), **con los mismos filtros que el histórico** (mundo, M ≥ 4, `earthquake`, misma API y misma regla de punto en polígono), descargado el 18-nov-2026: **2.027 eventos**. Script: `scripts/comparacion_reciente.py` → `docs/evidencias/comparacion-reciente.json`. Para no confundir una secuencia de réplicas con un cambio real, cada total reciente se compara con **todas las ventanas de 2025 de la misma duración** (paso de un día) y se da su percentil.
+**Datos:** catálogo FDSN de USGS del 1-oct al 17-nov-2026 (48 días completos), **con los mismos filtros que el histórico** (mundo, M ≥ 4, `earthquake`, misma API y misma regla de punto en polígono), descargado el 18-nov-2026: **2.027 eventos**. Script: [`scripts/comparacion_reciente.py`](../scripts/comparacion_reciente.py) → [`docs/evidencias/comparacion-reciente.json`](evidencias/comparacion-reciente.json). Para no confundir una secuencia de réplicas con un cambio real, cada total reciente se compara con **todas las ventanas de 2025 de la misma duración** (paso de un día) y se da su percentil.
 
 | Tramo (2026) | Días | M ≥ 4 por día | Percentil en 2025 | M 4,0–4,4 por día (percentil) | M ≥ 4,5 por día (percentil) |
 |---|---:|---:|---:|---:|---:|
@@ -351,7 +351,7 @@ Se puede afirmar: completitud del catálogo desde M ≈ 4,5; sesgo de la media d
 
 ## 6. Complejidad, rendimiento y memoria
 
-Mediciones reproducibles (`scripts/medir_complejidad.py`, `scripts/medir_api.py`). Datos **sintéticos** (`syn-N`, puntos aleatorios, tiempos repartidos en un año) en una base temporal `bench_synthetic_*` que se elimina al terminar; nunca se mezclan con los datos reales.
+Mediciones reproducibles ([`scripts/medir_complejidad.py`](../scripts/medir_complejidad.py), [`scripts/medir_api.py`](../scripts/medir_api.py)). Datos **sintéticos** (`syn-N`, puntos aleatorios, tiempos repartidos en un año) en una base temporal `bench_synthetic_*` que se elimina al terminar; nunca se mezclan con los datos reales.
 
 **Equipo y procedimiento.** HP Laptop 14s-dq2xxx, Intel Core i3-1115G4 (2 núcleos, 4 hilos, 3,0 GHz), 15,7 GiB de RAM, SSD de 238 GB, Windows 11 Home, Docker 27.1.1 (Docker Desktop sobre WSL2; el contenedor ve 4 hilos y 7,6 GiB). Python 3.12.16, Shapely 2.2.0, PostgreSQL 17.2. Mediana de 5 repeticiones (3 en las medidas muy lentas). La pila completa estaba en funcionamiento durante las mediciones, de modo que hay algo de ruido. Memoria: `tracemalloc` para estructuras Python y RSS del proceso para GEOS (código C, invisible a `tracemalloc`). El tiempo de PostgreSQL es el de ejecución en el servidor (`EXPLAIN ANALYZE`), sin el viaje de red.
 
@@ -394,7 +394,7 @@ Ambos métodos dan el mismo país en 2.000 puntos aleatorios (0 discrepancias). 
 
 ### 6.4 Latencia real de la API (datos reales, mismo equipo, sin túnel)
 
-30 repeticiones por petición (`scripts/medir_api.py`; histórico de 18.302 eventos y 402 eventos live):
+30 repeticiones por petición ([`scripts/medir_api.py`](../scripts/medir_api.py); histórico de 18.302 eventos y 402 eventos live):
 
 | Petición | Mediana | p95 | Tamaño |
 |---|---:|---:|---:|
@@ -465,27 +465,27 @@ Una cuota gratuita no equivale a coste cero. **Medido**: el almacenamiento (tama
 
 ## 9. Pruebas de aceptación (ENUNCIADO §11)
 
-Una prueba por fila, ejecutadas contra PostgreSQL real y la API real (`tests/acceptance`), más ejecuciones en la pila Docker real y en el panel publicado. Detalle en `docs/evidencias/`.
+Una prueba por fila, ejecutadas contra PostgreSQL real y la API real ([`tests/acceptance`](../tests/acceptance/)), más ejecuciones en la pila Docker real y en el panel publicado. Detalle en [`docs/evidencias/`](evidencias/).
 
 Todas se han **ejecutado**: ninguna se da por superada solo porque el comportamiento esté programado.
 
 | Prueba | Resultado esperado | Resultado observado | Evidencia |
 |---|---|---|---|
-| Evento nuevo | Una fila actual, visible en API, mapa y análisis | Decisión NEW; 1 fila en `event_current`; la API y las estadísticas cuentan 1 evento | `aceptacion-s11.md` P1 |
+| Evento nuevo | Una fila actual, visible en API, mapa y análisis | Decisión NEW; 1 fila en `event_current`; la API y las estadísticas cuentan 1 evento | [`aceptacion-s11.md`](evidencias/aceptacion-s11.md) P1 |
 | Reenviar la misma versión | No aumenta el número de terremotos | 3 reenvíos → 3 DUPLICATE; total 1 antes y después; 1 sola fila en `event_message` | P2 |
 | Versión posterior | Cambian los datos actuales y las agregaciones afectadas | REVISION; la API pasa de M4,1 a M6,3 con total 1; el histograma pasa de [4,0-4,5) a [6,0-6,5) | P3 |
 | Versión antigua después | No sustituye a la más reciente | STALE; la API sigue en M6,3 y en la versión más reciente | P4 |
 | Magnitud nula | Se conserva y se visualiza como ND | Se guarda NULL (no 0), la API devuelve `null`, sale de `min_mag` y se cuenta en `null_mag_excluded` | P5 |
 | Coordenadas inválidas | Cuarentena y motivo; sin puntos inventados | Latitud 95 y longitud 200 → 2 filas en cuarentena con `invalid_coordinates`, payload original y referencia Kafka; la API devuelve 0 | P6 |
 | Evento marítimo | Sin país asignado; permanece en el análisis | `country_id: null`; las estadísticas lo cuentan en «Sin país asignado»; `country_id=none` lo devuelve | P7 |
-| Reiniciar consumidor | Reanuda sin duplicar | Relectura desde el offset 0 → solo STALE y DUPLICATE, con tablas idénticas; en la pila real, igual tras reset de offsets, `restart consumer` y caída de PostgreSQL | P8, `pila-real.md` |
-| Cerrar el túnel | El panel muestra el fallo y conserva la última lectura | Con ngrok cerrado, el panel publicado mostró «No se pudo actualizar» en ~60 s, la hora de la última lectura y estado «Sin respuesta», y conservó sus 185 eventos | P9, `panel.md`, `panel-publicado-watch.json` |
-| Volver a abrir el túnel | Se recuperan las consultas automáticamente | Se recuperó solo, sin recargar la página, 183 s después del primer aviso y sin tocar `config.json` | P10, `panel-publicado-watch.json` |
-| Reproducción histórica | Va por Kafka sin mezclarse con live | Prueba: NEW ×3, DUPLICATE, REVISION y STALE por `sismos.replay`; cada modo devuelve solo sus eventos, y un mensaje replay que llega al consumidor live va a cuarentena (`mode_mismatch`). Pila real: 10 eventos reproducidos y `live` sin cambios (227) | P11, §9.1, `pila-real.md` |
+| Reiniciar consumidor | Reanuda sin duplicar | Relectura desde el offset 0 → solo STALE y DUPLICATE, con tablas idénticas; en la pila real, igual tras reset de offsets, `restart consumer` y caída de PostgreSQL | P8, [`pila-real.md`](evidencias/pila-real.md) |
+| Cerrar el túnel | El panel muestra el fallo y conserva la última lectura | Con ngrok cerrado, el panel publicado mostró «No se pudo actualizar» en ~60 s, la hora de la última lectura y estado «Sin respuesta», y conservó sus 185 eventos | P9, [`panel.md`](evidencias/panel.md), [`panel-publicado-watch.json`](evidencias/panel-publicado-watch.json) |
+| Volver a abrir el túnel | Se recuperan las consultas automáticamente | Se recuperó solo, sin recargar la página, 183 s después del primer aviso y sin tocar [`config.json`](../frontend/public/config.json) | P10, [`panel-publicado-watch.json`](evidencias/panel-publicado-watch.json) |
+| Reproducción histórica | Va por Kafka sin mezclarse con live | Prueba: NEW ×3, DUPLICATE, REVISION y STALE por `sismos.replay`; cada modo devuelve solo sus eventos, y un mensaje replay que llega al consumidor live va a cuarentena (`mode_mismatch`). Pila real: 10 eventos reproducidos y `live` sin cambios (227) | P11, §9.1, [`pila-real.md`](evidencias/pila-real.md) |
 
-**Cómo repetirlas:** las filas 1-8 y 11, con el comando de aceptación del README (una base PostgreSQL temporal, el consumidor y la API reales; reescribe `aceptacion-s11.md`). Las de la pila real están en `specs/001-vertical-event-demo/quickstart.md` §4. Las filas 9-10, cerrando y abriendo ngrok con el panel abierto, o con `node tests/e2e/panel_published.mjs watch <url-del-panel> <ruta>`.
+**Cómo repetirlas:** las filas 1-8 y 11, con el comando de aceptación del README (una base PostgreSQL temporal, el consumidor y la API reales; reescribe [`aceptacion-s11.md`](evidencias/aceptacion-s11.md)). Las de la pila real están en [`specs/001-vertical-event-demo/quickstart.md`](../../specs/001-vertical-event-demo/quickstart.md) §4. Las filas 9-10, cerrando y abriendo ngrok con el panel abierto, o con `node tests/e2e/panel_published.mjs watch <url-del-panel> <ruta>`.
 
-Pruebas automáticas: 216 unitarias, 75 de contrato, 105 de integración con PostgreSQL, 10 de migraciones, 13 de aceptación, 10 contra la pila real y 17 + 12 + 21 de navegador (Edge) contra el panel (la última, `tests/e2e/panel_secciones.mjs`: pestañas, fichas, gráficos interactivos e histórico paginado; capturas en `docs/evidencias/secciones/`).
+Pruebas automáticas: 216 unitarias, 75 de contrato, 105 de integración con PostgreSQL, 10 de migraciones, 13 de aceptación, 10 contra la pila real y 17 + 12 + 21 de navegador (Edge) contra el panel (la última, [`tests/e2e/panel_secciones.mjs`](../tests/e2e/panel_secciones.mjs): pestañas, fichas, gráficos interactivos e histórico paginado; capturas en [`docs/evidencias/secciones/`](evidencias/secciones/)).
 
 ### 9.1 Reproducción histórica
 
@@ -495,8 +495,8 @@ Pruebas automáticas: 216 unitarias, 75 de contrato, 105 de integración con Pos
 | **Inicio y velocidad** | `docker compose run --rm --no-deps -e PRODUCER_MODE=replay -e REPLAY_INTERVAL_SECONDS=0.2 producer`: un evento cada 0,2 s (por defecto, 2 s), sin parar el productor live |
 | **Separación** | Topic propio (`sismos.replay`) y esquema propio (`replay.*`). El consumidor elige el esquema por el topic, y una restricción `CHECK` impide guardar un mensaje de otro modo aunque se intente con SQL directo. La API solo los devuelve con `?mode=replay` |
 | **Tiempos** | Se conserva la fecha original (`time`, `updated`) y el momento de la reproducción se guarda aparte (`replay_at`). La revisión inyectada lleva `synthetic_flag=true` y `source="replay-injected"` |
-| **En el panel** | `?mode=replay&range=custom&from=2025-01-01&to=2025-01-03`: aviso «REPRODUCCIÓN» y los 10 eventos (`docs/evidencias/panel-replay.png`). Con el filtro «últimas 24 h» no aparecen, porque son de 2025 |
-| **Esperado y observado** | Esperado: 10 NEW, 1 DUPLICATE, 1 REVISION y 1 STALE. Observado en la pila real: `replay.event_current` = 10 y `replay.event_message` = 11 (el duplicado y la versión antigua no se guardan), el evento revisado quedó en M5,2 sin que la versión antigua lo sustituyera, cuarentena 0, `replay_at` en 11 de 11 y `live.event_current` sin cambios (`pila-real.md`). Repetirlo no cambia nada; para empezar de cero: `TRUNCATE replay.event_current, replay.event_message, replay.quarantine_record;` |
+| **En el panel** | `?mode=replay&range=custom&from=2025-01-01&to=2025-01-03`: aviso «REPRODUCCIÓN» y los 10 eventos ([`docs/evidencias/panel-replay.png`](evidencias/panel-replay.png)). Con el filtro «últimas 24 h» no aparecen, porque son de 2025 |
+| **Esperado y observado** | Esperado: 10 NEW, 1 DUPLICATE, 1 REVISION y 1 STALE. Observado en la pila real: `replay.event_current` = 10 y `replay.event_message` = 11 (el duplicado y la versión antigua no se guardan), el evento revisado quedó en M5,2 sin que la versión antigua lo sustituyera, cuarentena 0, `replay_at` en 11 de 11 y `live.event_current` sin cambios ([`pila-real.md`](evidencias/pila-real.md)). Repetirlo no cambia nada; para empezar de cero: `TRUNCATE replay.event_current, replay.event_message, replay.quarantine_record;` |
 
 ---
 
@@ -517,4 +517,5 @@ docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/da
 docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/docs:/app/docs" api sh -c \
     "pip install -q --target /tmp/mpl matplotlib==3.10.9 && PYTHONPATH=/tmp/mpl MPLCONFIGDIR=/tmp/mplcfg python scripts/graficos_calidad.py"  # gráficos de calidad
 python scripts/medir_api.py && python scripts/procedencia.py                                # latencias y procedencia
+python scripts/enlazar_rutas.py                                                   # enlaces entre documentos (repetir tras regenerar docs)
 ```

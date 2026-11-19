@@ -1,14 +1,14 @@
 # Registro de consultas y procedencia
 
-Generado por `scripts/procedencia.py` a partir de `data/raw/historico/manifest.json` y `docs/evidencias/memoria-datos.json` (instantánea 2026-11-18T20:53:24+00:00). Complementa al diccionario de datos (`docs/diccionario-de-datos.md`).
+Generado por [`scripts/procedencia.py`](../scripts/procedencia.py) a partir de `data/raw/historico/manifest.json` y [`docs/evidencias/memoria-datos.json`](evidencias/memoria-datos.json) (instantánea 2026-11-18T20:53:24+00:00). Complementa al diccionario de datos ([`docs/diccionario-de-datos.md`](diccionario-de-datos.md)).
 
 ## 1. Fuentes
 
 | Fuente | Qué aporta | Acceso | Licencia / condiciones | Dónde queda |
 |---|---|---|---|---|
 | USGS Earthquake Catalog, **feed** `all_day.geojson` | Eventos de las últimas 24 h, actualizado cada minuto | HTTP GET cada 60 s (`USGS_FEED_URL`) | Datos del Gobierno de EE. UU., dominio público (docs/curso/FUENTES-Y-LICENCIAS.md) | Originales íntegros comprimidos en `data/raw/live/AAAA/MM/DD/HHMMSS.geojson.gz` (retención `RAW_RETENTION_DAYS`) y cada versión aceptada en `<esquema>.event_message.payload` |
-| USGS Earthquake Catalog, **API FDSN** `fdsnws/event/1/query` | Histórico 2025, mundo, M ≥ 4, `eventtype=earthquake` | Descarga mensual con `history_download` (12 consultas; sin subdivisiones necesarias) | Igual que el feed | `data/raw/historico/AAAA-MM.geojson` + `manifest.json`; no se versionan en Git (se regeneran con el procedimiento de `data/README.md`) |
-| Natural Earth, Admin 0 Countries 1:110M | 177 entidades con `ADM0_A3`, `NAME_ES`, `ADMIN`, `CONTINENT`, `SUBREGION` | Copia entregada: `frontend/public/datos/paises.geojson` | Dominio público; se conserva el reconocimiento | `ref.dim_country` (cargada por el migrador, con la huella del archivo) |
+| USGS Earthquake Catalog, **API FDSN** `fdsnws/event/1/query` | Histórico 2025, mundo, M ≥ 4, `eventtype=earthquake` | Descarga mensual con `history_download` (12 consultas; sin subdivisiones necesarias) | Igual que el feed | `data/raw/historico/AAAA-MM.geojson` + `manifest.json`; no se versionan en Git (se regeneran con el procedimiento de [`data/README.md`](../data/README.md)) |
+| Natural Earth, Admin 0 Countries 1:110M | 177 entidades con `ADM0_A3`, `NAME_ES`, `ADMIN`, `CONTINENT`, `SUBREGION` | Copia entregada: [`frontend/public/datos/paises.geojson`](../frontend/public/datos/paises.geojson) | Dominio público; se conserva el reconocimiento | `ref.dim_country` (cargada por el migrador, con la huella del archivo) |
 
 Huella SHA-256 del catálogo (normalizando CRLF→LF): `6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f`. Coincide con la de docs/curso/FUENTES-Y-LICENCIAS.md: sí.
 
@@ -39,7 +39,7 @@ Extracción del 2026-11-17. Parámetros comunes: `format=geojson`, `minmagnitude
 
 ### 2.1 Catálogo reciente 2026 (comparación equivalente)
 
-Mismos parámetros que el histórico, para la conclusión 4 de la memoria. Se guarda en `data/raw/reciente/` y **no se carga en la base de datos**. Generado por `scripts/comparacion_reciente.py`.
+Mismos parámetros que el histórico, para la conclusión 4 de la memoria. Se guarda en `data/raw/reciente/` y **no se carga en la base de datos**. Generado por [`scripts/comparacion_reciente.py`](../scripts/comparacion_reciente.py).
 
 | Intervalo (UTC) | Descargado | Reportado por `count` | Features recibidas | Tamaño | SHA-256 |
 |---|---|---:|---:|---:|---|
@@ -82,9 +82,9 @@ Cada paso conserva el anterior: del panel se puede llegar al `event_id`, de ahí
 
 | Cifras | Procedimiento |
 |---|---|
-| Análisis, calidad antes/después, actualidad, revisiones | `scripts/memoria_datos.py` → `docs/evidencias/memoria-datos.json` |
-| Comparación equivalente con el catálogo reciente (conclusión 4) | `scripts/comparacion_reciente.py` → `docs/evidencias/comparacion-reciente.json` |
-| Complejidad, tiempo y memoria | `scripts/medir_complejidad.py` → `docs/evidencias/complejidad.{json,md}` (datos sintéticos, base temporal) |
-| Latencia de la API | `scripts/medir_api.py` → `docs/evidencias/api-latencia.json` |
-| Pruebas de aceptación | `tests/acceptance/` → `docs/evidencias/aceptacion-s11.{md,json}` y `pila-real.md` |
-| Panel y túnel | `tests/e2e/` → `docs/evidencias/panel*.{md,json}` y `analisis/*.png` |
+| Análisis, calidad antes/después, actualidad, revisiones | [`scripts/memoria_datos.py`](../scripts/memoria_datos.py) → [`docs/evidencias/memoria-datos.json`](evidencias/memoria-datos.json) |
+| Comparación equivalente con el catálogo reciente (conclusión 4) | [`scripts/comparacion_reciente.py`](../scripts/comparacion_reciente.py) → [`docs/evidencias/comparacion-reciente.json`](evidencias/comparacion-reciente.json) |
+| Complejidad, tiempo y memoria | [`scripts/medir_complejidad.py`](../scripts/medir_complejidad.py) → `docs/evidencias/complejidad.{json,md}` (datos sintéticos, base temporal) |
+| Latencia de la API | [`scripts/medir_api.py`](../scripts/medir_api.py) → [`docs/evidencias/api-latencia.json`](evidencias/api-latencia.json) |
+| Pruebas de aceptación | [`tests/acceptance/`](../tests/acceptance/) → `docs/evidencias/aceptacion-s11.{md,json}` y [`pila-real.md`](evidencias/pila-real.md) |
+| Panel y túnel | [`tests/e2e/`](../tests/e2e/) → `docs/evidencias/panel*.{md,json}` y [`analisis/*.png`](evidencias/analisis/) |
