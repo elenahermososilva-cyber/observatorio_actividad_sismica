@@ -110,7 +110,7 @@ docker compose logs -f producer consumer
 
 Publica los 10 eventos más antiguos con M ≥ 5 desde `REPLAY_START`, en orden de ocurrencia, y añade tres casos controlados. Resultado esperado del consumidor: **10 `NEW`, 1 `DUPLICATE`, 1 `REVISION`, 1 `STALE`**; en `replay.event_current` quedan 10 filas y en `replay.event_message` 11. El tiempo de ocurrencia original no se toca; el de reproducción se guarda aparte (`replay_at`). La revisión inyectada lleva `synthetic_flag=true` y `source="replay-injected"`. Volver a ejecutarlo no cambia nada (todo es `DUPLICATE`/`STALE`); para repetir desde cero: `TRUNCATE replay.event_current, replay.event_message, replay.quarantine_record;`.
 
-Los tests de la Fase 7 (`test_phase7_pure`, `test_usgs_client`, `test_live_replay_db`) no salen a internet: simulan USGS y Kafka.
+Los tests de la Fase 7 (`test_live_replay_logic`, `test_usgs_client`, `test_live_replay_db`) no salen a internet: simulan USGS y Kafka.
 
 **Cargar el histórico en `historico`** (Fase 8; reutiliza el procesamiento del consumidor: validación, calidad y país):
 
@@ -120,7 +120,7 @@ docker compose exec postgres psql -U observatorio -d observatorio -c \
   "select country_status, count(*) from historico.event_current group by 1"
 ```
 
-Los eventos de cualquier modo se evalúan al escribirse; los anteriores a la atribución de país se completan solos al arrancar el consumidor (`geo_backfill`). Reglas, decisiones y resultados medidos: `docs/fase8-calidad-y-geografia.md`.
+Los eventos de cualquier modo se evalúan al escribirse; los anteriores a la atribución de país se completan solos al arrancar el consumidor (`geo_backfill`). Reglas, decisiones y resultados medidos: `docs/reglas-calidad-y-geografia.md`.
 
 ## 6. API completa: filtros, paginación, estadísticas, salud y CORS (Fase 9)
 

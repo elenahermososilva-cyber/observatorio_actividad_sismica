@@ -78,7 +78,7 @@ Histórico, enriquecimiento geográfico, estadísticas. Se añadieron mediante m
 
 ## Fase 8: calidad, país y modo `historical`
 
-**`quality_flags TEXT[]`** (migración 008, `event_current`): códigos de aviso y de transformación de la versión actual (`gap_*`, `anomaly_*`, `fixed_*`, `country_boundary_ambiguous`). `NULL` = aún no evaluado; `{}` = evaluado sin incidencias. Permite contar cuántos registros afecta cada regla con `unnest`. Reglas y umbrales en `backend/consumer/quality.py`; resultados medidos en `docs/fase8-calidad-y-geografia.md`.
+**`quality_flags TEXT[]`** (migración 008, `event_current`): códigos de aviso y de transformación de la versión actual (`gap_*`, `anomaly_*`, `fixed_*`, `country_boundary_ambiguous`). `NULL` = aún no evaluado; `{}` = evaluado sin incidencias. Permite contar cuántos registros afecta cada regla con `unnest`. Reglas y umbrales en `backend/consumer/quality.py`; resultados medidos en `docs/reglas-calidad-y-geografia.md`.
 
 **Modo `historical`** (migración 008): instantánea del catálogo USGS cargada por `history_loader` en el esquema `historico`, con `source="usgs-catalog"`. No llega por Kafka ni se consulta con `?mode=`.
 

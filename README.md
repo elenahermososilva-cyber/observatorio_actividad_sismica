@@ -44,11 +44,23 @@ Para publicar de nuevo el panel (si cambia `frontend/public/config.json`): ver �
 
 ## Pruebas
 
+Todos los comandos, desde `observatorio-sismico/`. Las unitarias se ejecutan en el equipo; las de contrato, integración y aceptación, dentro de la imagen `api` (crean y borran su propia base temporal, no tocan los datos reales).
+
 ```bash
-cd observatorio-sismico
-python -m unittest discover -s tests/unit                 # unitarias (Python 3.11+)
-# contrato, integración y aceptación se ejecutan dentro de la imagen `api`: ver specs/001-vertical-event-demo/quickstart.md
+# Unitarias (Python 3.11+ en el equipo)
+python -m unittest discover -s tests/unit
+
+# Contrato de la API e integración con PostgreSQL
+docker compose run --rm --no-deps -v "$(pwd)/tests:/app/tests" api sh -c \
+  "python -m unittest discover -s tests/contract -t . -p 'test_api_*.py' && \
+   python -m unittest discover -s tests/integration -t . -p 'test_*_db.py'"
+
+# Aceptación: una prueba por fila del ENUNCIADO §11 (con EVIDENCE_DIR reescribe docs/evidencias/aceptacion-s11.*)
+docker compose run --rm --no-deps -v "$(pwd)/tests:/app/tests" -v "$(pwd)/docs/evidencias:/app/docs/evidencias" \
+  -e EVIDENCE_DIR=/app/docs/evidencias api python -m unittest discover -s tests/acceptance -t . -v
 ```
+
+En PowerShell, sustituye `$(pwd)` por `${PWD}` y la barra invertida final por un acento grave (`` ` ``). Las pruebas contra la pila en marcha (arranque, reinicio del consumidor, caída de PostgreSQL) y las de navegador sobre el panel están en [`specs/001-vertical-event-demo/quickstart.md`](specs/001-vertical-event-demo/quickstart.md) (secciones 4, 7 y 8).
 
 ## Dónde está cada entregable (ENUNCIADO §12)
 
@@ -58,7 +70,7 @@ python -m unittest discover -s tests/unit                 # unitarias (Python 3.
 | Memoria: extracción, calidad (antes/después), modelo conceptual/lógico/físico e índices, análisis con 3 conclusiones, complejidad, costes, limitaciones | [`docs/memoria.md`](observatorio-sismico/docs/memoria.md) |
 | Diccionario de datos | [`docs/diccionario-de-datos.md`](observatorio-sismico/docs/diccionario-de-datos.md) |
 | Registro de consultas y procedencia | [`docs/consultas-y-procedencia.md`](observatorio-sismico/docs/consultas-y-procedencia.md) |
-| Reglas de calidad y geografía | [`docs/fase8-calidad-y-geografia.md`](observatorio-sismico/docs/fase8-calidad-y-geografia.md) |
+| Reglas de calidad y geografía | [`docs/reglas-calidad-y-geografia.md`](observatorio-sismico/docs/reglas-calidad-y-geografia.md) |
 | Informe de complejidad (mediciones) | `docs/evidencias/complejidad.md` y `api-latencia.json` |
 | Evidencias de aceptación y reproducción histórica | `docs/evidencias/aceptacion-s11.md`, `pila-real.md`, `panel.md` |
 | Capturas de los filtros del análisis | `docs/evidencias/analisis/*.png` |

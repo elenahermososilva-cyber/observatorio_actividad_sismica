@@ -7,7 +7,7 @@ Proyecto de aula de Big Data. Canalización de cinco servicios (productor → Ka
 | Criterio de la rúbrica | Apartado | Evidencia principal |
 |---|---|---|
 | Extracción | §2 | `docs/consultas-y-procedencia.md`, `data/README.md`, `docs/evidencias/memoria-datos.json` |
-| Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), `docs/fase8-calidad-y-geografia.md` |
+| Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), `docs/reglas-calidad-y-geografia.md` |
 | Modelado | §4 | `docs/diccionario-de-datos.md`, `backend/db/` |
 | Análisis | §5 | `docs/evidencias/analisis/*.png`, `memoria-datos.json`, `comparacion-reciente.json` |
 | Reflexión | §6, §7, §8 | `docs/evidencias/complejidad.md`, `api-latencia.json` |
@@ -85,7 +85,7 @@ Sin la deduplicación del productor, cada versión se republicaría unas 76 vece
 
 ## 3. Calidad y transformación
 
-El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `quality.py`, `geo.py`). Cada decisión está documentada en `docs/fase8-calidad-y-geografia.md`; aquí se presentan los resultados **antes y después** en las seis dimensiones.
+El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `quality.py`, `geo.py`). Cada decisión está documentada en `docs/reglas-calidad-y-geografia.md`; aquí se presentan los resultados **antes y después** en las seis dimensiones.
 
 ### 3.1 Qué se rechaza, qué se señala y qué se transforma
 
