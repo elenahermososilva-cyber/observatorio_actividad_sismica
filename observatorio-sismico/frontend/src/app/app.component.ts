@@ -6,14 +6,25 @@ import {
 import { Bar, BarChartComponent } from './bar-chart.component';
 import { EventMapComponent, formatDate } from './event-map.component';
 import { EventTableComponent } from './event-table.component';
-import type { Config, CountryOption, DataMode, EventCollection, Filters, Health, Statistics } from './models';
+import { EventDetailComponent } from './event-detail.component';
+import { ScatterChartComponent } from './scatter-chart.component';
+import type {
+  Config, CountryOption, DataMode, EventCollection, EventFeature, Filters, Health, HistFilters, Statistics, Tab,
+} from './models';
 
 const DEFAULT_FILTERS: Filters = { range: '24h', startDate: '', endDate: '', minMag: '', country: '' };
+const DEFAULT_HIST: HistFilters = { startDate: '2025-01-01', endDate: '2025-12-31', minMag: '', country: '', pageSize: 25 };
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'resumen', label: 'Resumen' }, { id: 'analisis', label: 'Análisis' }, { id: 'eventos', label: 'Eventos' },
+  { id: 'historico', label: 'Histórico 2025' }, { id: 'estado', label: 'Estado del sistema' },
+];
+const tabFromHash = (hash: string): Tab => (TABS.find((t) => `#${t.id}` === hash)?.id ?? 'resumen');
 const fmt = (value: number, digits = 1) => value.toLocaleString('es-ES', { maximumFractionDigits: digits });
 const signed = (value: number, digits = 1) => (value > 0 ? '+' : '') + fmt(value, digits);
 
 @Component({
-  selector: 'app-root', standalone: true, imports: [EventMapComponent, EventTableComponent, BarChartComponent],
+  selector: 'app-root', standalone: true,
+  imports: [EventMapComponent, EventTableComponent, BarChartComponent, ScatterChartComponent, EventDetailComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html', styleUrl: './app.component.css',
 })
@@ -42,6 +53,59 @@ export class AppComponent implements OnDestroy {
   protected readonly healthError = signal<string | null>(null);
   protected readonly omitted = signal(0);
   protected readonly now = signal(Date.now());
+
+  // ---- navegación por pestañas (se refleja en la URL: #resumen, #analisis…) y ficha de un evento
+  protected readonly tabs = TABS;
+  protected readonly tab = signal<Tab>(tabFromHash(window.location.hash));
+  protected readonly selected = signal<{ feature: EventFeature; source: string } | null>(null);
+  protected readonly usesFilters = computed(() => ['resumen', 'analisis', 'eventos'].includes(this.tab()));
+
+  // ---- histórico 2025: consulta paginada en el servidor (modo `historico`, solo lectura). No se refresca: no cambia.
+  protected readonly histDraft = signal<HistFilters>({ ...DEFAULT_HIST });
+  protected readonly histApplied = signal<HistFilters>({ ...DEFAULT_HIST });
+  protected readonly histPage = signal(0);
+  protected readonly histData = signal<EventCollection | null>(null);
+  protected readonly histStats = signal<Statistics | null>(null);
+  protected readonly histLoading = signal(false);
+  protected readonly histError = signal<string | null>(null);
+  protected readonly histFilterError = signal<string | null>(null);
+  private histController = new AbortController();
+  protected readonly histPages = computed(() => {
+    const total = this.histData()?.metadata?.total ?? 0;
+    return Math.max(1, Math.ceil(total / this.histApplied().pageSize));
+  });
+  protected readonly histCountryBars = computed<Bar[]>(() =>
+    (this.histStats()?.groups.totals ?? []).slice(0, 12).map((g) => ({ label: g.name, value: g.count, title: `${g.name}: ${fmt(g.count, 0)} terremotos` })));
+
+  protected readonly histNoCountryPct = computed(() => {
+    const s = this.histStats();
+    if (!s || s.totals.events === 0) return 'ND';
+    const none = s.groups.totals.find((g) => g.key === null)?.count ?? 0;
+    return fmt((none / s.totals.events) * 100, 0) + ' %';
+  });
+
+  // ---- indicadores del resumen (sobre los mismos filtros que el mapa)
+  protected readonly summary = computed(() => {
+    const data = this.events();
+    const s = this.stats();
+    if (!data) return null;
+    const features = data.features as EventFeature[];
+    let latest: EventFeature | null = null;
+    let strongest: EventFeature | null = null;
+    for (const f of features) {
+      if (!latest || f.properties.time > latest.properties.time) latest = f;
+      const m = f.properties.mag;
+      if (typeof m === 'number' && Number.isFinite(m) && (!strongest || m > (strongest.properties.mag as number))) strongest = f;
+    }
+    const total = s?.totals.events ?? data.metadata?.total ?? features.length;
+    // Si hay estadísticas pero ningún grupo «sin país» (p. ej. filtrando por un país), son 0 eventos, no «no disponible».
+    const noCountry = s ? (s.groups.totals.find((g) => g.key === null)?.count ?? 0) : null;
+    return {
+      total, latest, strongest, truncated: data.metadata?.truncated === true,
+      noCountryPct: noCountry === null || !s || s.totals.events === 0 ? 'ND' : fmt((noCountry / s.totals.events) * 100, 0) + ' %',
+      noCountry, nullMag: data.metadata?.null_mag_count ?? 0,
+    };
+  });
 
   protected readonly isDemoFile = computed(() => this.config()?.mode === 'demo');
   protected readonly replay = computed(() => (this.events()?.metadata?.mode ?? this.dataMode()) === 'replay');
@@ -132,9 +196,98 @@ export class AppComponent implements OnDestroy {
   private destroyed = false;
   private generation = 0;
 
+  private readonly onHash = () => this.tab.set(tabFromHash(window.location.hash));
+
   constructor() {
     this.clock = setInterval(() => this.now.set(Date.now()), 1000);
+    window.addEventListener('hashchange', this.onHash);
+    if (this.tab() === 'historico') void this.loadHistory(true);
     void this.start();
+  }
+
+  // ------------------------------------------------------------------ pestañas y ficha
+  protected setTab(id: Tab): void {
+    this.selected.set(null);
+    this.tab.set(id);
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${id}`);
+    if (id === 'historico' && this.histData() === null && !this.histLoading()) void this.loadHistory(true);
+  }
+  protected openDetail(feature: EventFeature, source: string): void {
+    this.selected.set({ feature, source });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  protected closeDetail(): void { this.selected.set(null); }
+  protected liveSource(): string {
+    return this.replay() ? 'Reproducción histórica' : this.synthetic() ? 'Demostración' : 'Evento en vivo (USGS)';
+  }
+
+  // ------------------------------------------------------------------ histórico 2025
+  protected histInput(key: keyof HistFilters, event: Event): void {
+    const raw = (event.target as HTMLInputElement | HTMLSelectElement).value;
+    this.histDraft.update((d) => ({ ...d, [key]: key === 'pageSize' ? Number(raw) : raw }));
+  }
+  protected applyHistory(event?: Event): void {
+    event?.preventDefault();
+    const d = this.histDraft();
+    const problem = validateFilters({ range: 'custom', startDate: d.startDate, endDate: d.endDate, minMag: d.minMag, country: d.country });
+    this.histFilterError.set(problem);
+    if (problem) return;
+    this.histApplied.set({ ...d });
+    this.histPage.set(0);
+    void this.loadHistory(true);
+  }
+  protected resetHistory(): void {
+    this.histDraft.set({ ...DEFAULT_HIST });
+    this.histFilterError.set(null);
+    this.histApplied.set({ ...DEFAULT_HIST });
+    this.histPage.set(0);
+    void this.loadHistory(true);
+  }
+  protected goHistory(step: number): void {
+    const next = Math.min(this.histPages() - 1, Math.max(0, this.histPage() + step));
+    if (next === this.histPage()) return;
+    this.histPage.set(next);
+    void this.loadHistory(false);
+  }
+  /** `withStats`: al cambiar los filtros también se recalculan los totales por país; al pasar de página, no. */
+  private async loadHistory(withStats: boolean): Promise<void> {
+    const config = this.config() ?? (await this.waitForConfig());
+    if (!config || config.mode !== 'api') return;
+    this.histController.abort();
+    this.histController = new AbortController();
+    const { signal } = this.histController;
+    const f = this.histApplied();
+    const params = filterParams({ range: 'custom', startDate: f.startDate, endDate: f.endDate, minMag: f.minMag, country: f.country }, 'live', Date.now());
+    params.set('mode', 'historico');
+    const page = new URLSearchParams(params);
+    page.set('limit', String(f.pageSize));
+    page.set('offset', String(this.histPage() * f.pageSize));
+    const statsParams = new URLSearchParams(params);
+    statsParams.set('group', 'country');
+    this.histLoading.set(true);
+    try {
+      const [events, stats] = await Promise.all([
+        readJson<EventCollection>(`${apiBase(config)}/api/eventos?${page}`, signal, apiHeaders(config)),
+        withStats ? readJson<Statistics>(`${apiBase(config)}/api/estadisticas?${statsParams}`, signal, apiHeaders(config)) : Promise.resolve(null),
+      ]);
+      if (signal.aborted) return;
+      this.histData.set(events);
+      if (stats) this.histStats.set(stats);
+      this.histError.set(null);
+    } catch (error) {
+      if (!signal.aborted) this.histError.set(this.describe(error));
+    } finally {
+      if (!signal.aborted) this.histLoading.set(false);
+    }
+  }
+  private waitForConfig(): Promise<Config | null> {
+    return new Promise((resolve) => {
+      let tries = 0;
+      const poll = setInterval(() => {
+        const c = this.config();
+        if (c || this.configError() || ++tries > 100) { clearInterval(poll); resolve(c); }
+      }, 100);
+    });
   }
 
   ngOnDestroy(): void {
@@ -142,6 +295,8 @@ export class AppComponent implements OnDestroy {
     clearTimeout(this.timer);
     clearInterval(this.clock);
     this.controller.abort();
+    this.histController.abort();
+    window.removeEventListener('hashchange', this.onHash);
   }
 
   // ------------------------------------------------------------------ arranque
@@ -294,6 +449,7 @@ export class AppComponent implements OnDestroy {
 
   // ------------------------------------------------------------------ utilidades de presentación
   protected date = formatDate;
+  protected fmtNum = fmt;
   protected age(ms: number | null | undefined): string {
     if (ms == null) return 'ND';
     const seconds = Math.max(0, Math.round((this.now() - ms) / 1000));

@@ -215,7 +215,7 @@ class StatisticsContractTests(unittest.TestCase):
         queries = FakeQueries(events())
         with make(queries) as client:
             for params in ({"group": "continent"}, {"baseline_year": "abc"}, {"baseline_year": "1500"},
-                           {"min_mag": "nan"}, {"mode": "historico"}, {"start": "ayer"}, {"country_id": "ZZZ"}):
+                           {"min_mag": "nan"}, {"mode": "historical"}, {"start": "ayer"}, {"country_id": "ZZZ"}):
                 response = client.get("/api/estadisticas", params=params)
                 self.assertEqual(response.status_code, 400, params)
         self.assertEqual(queries.stat_calls[:-1], [])  # solo la de país desconocido llega a la capa de datos
@@ -390,7 +390,7 @@ class HealthTests(unittest.TestCase):
             body = client.get("/api/salud", params={"mode": "live"}).json()
         self.assertEqual((queries.health_calls, body["stale"]), (["live"], True))
         with make(queries, default_mode="demo") as client:
-            self.assertEqual(client.get("/api/salud", params={"mode": "historico"}).status_code, 400)
+            self.assertEqual(client.get("/api/salud", params={"mode": "historical"}).status_code, 400)
 
     def test_database_down_is_503_with_explicit_state(self) -> None:
         with make(FailingQueries(), default_mode="live") as client:

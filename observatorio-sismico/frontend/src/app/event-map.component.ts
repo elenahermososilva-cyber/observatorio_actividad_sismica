@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, effect, inject, input, output, signal } from '@angular/core';
 import { LeafletDirective } from '@bluehalo/ngx-leaflet';
 import * as L from 'leaflet';
 import type { FeatureCollection } from 'geojson';
-import type { EventCollection } from './models';
+import type { EventCollection, EventFeature } from './models';
 
 export const NO_DATA_COLOR = '#64748b';
 
@@ -58,6 +58,11 @@ export class EventMapComponent {
   readonly countries = input<FeatureCollection | null>(null);
   /** Número de eventos con coordenadas inválidas que no se pudieron dibujar. */
   readonly omitted = output<number>();
+  /** Evento elegido desde su ventana emergente («Ver ficha»). */
+  readonly picked = output<EventFeature>();
+  /** Si el mapa está en una pestaña oculta, Leaflet no conoce su tamaño: al volver a mostrarse se recalcula. */
+  readonly visible = input<boolean>(true);
+  private readonly zone = inject(NgZone);
   readonly drawn = signal(0);
 
   readonly options: L.MapOptions = { center: L.latLng(18, 0), zoom: 2, minZoom: 2, maxZoom: 8, preferCanvas: true, worldCopyJump: false };
@@ -79,6 +84,10 @@ export class EventMapComponent {
       if (!this.map() || !catalogue) return;
       this.borders.clearLayers();
       this.borders.addData(catalogue);
+    });
+    effect(() => {
+      const map = this.map();
+      if (map && this.visible()) setTimeout(() => map.invalidateSize(), 0);
     });
     effect(() => {
       const collection = this.events();
@@ -111,7 +120,16 @@ export class EventMapComponent {
       const depth = typeof rawDepth === 'number' && Number.isFinite(rawDepth) ? rawDepth : null;
       const color = depthColor(depth);
       const popup = document.createElement('div');
-      popup.textContent =
+      const text = document.createElement('div');
+      text.style.whiteSpace = 'pre-line';
+      popup.appendChild(text);
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.textContent = 'Ver ficha completa →';
+      more.style.cssText = 'margin-top:8px;padding:4px 10px;border:1px solid #176b70;border-radius:6px;background:#176b70;color:white;cursor:pointer;font:inherit';
+      more.addEventListener('click', () => this.zone.run(() => this.picked.emit(feature as EventFeature)));
+      popup.appendChild(more);
+      text.textContent =
         `${p.place ?? 'Sin descripción'}\nMagnitud: ${magnitude ?? 'ND'}${p.magType ? ' (' + p.magType + ')' : ''}\n` +
         `Profundidad: ${depth === null ? 'ND' : depth + ' km'}\nFecha UTC: ${formatDate(p.time)}\n` +
         `Última actualización UTC: ${formatDate(p.updated)}\nPaís: ${p.country_name ?? 'Sin país asignado'}\nID: ${feature.id ?? 'ND'}`;

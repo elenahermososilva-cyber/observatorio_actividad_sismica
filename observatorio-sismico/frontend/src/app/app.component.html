@@ -1,3 +1,22 @@
+<nav class="topbar" aria-label="Secciones del panel">
+  <div class="topbar-inner">
+    <span class="brand">Observatorio sísmico</span>
+    <div class="tabs" role="tablist">
+      @for (t of tabs; track t.id) {
+        <button type="button" role="tab" [attr.aria-selected]="tab() === t.id && !selected()" [class.active]="tab() === t.id"
+                (click)="setTab(t.id)">{{ t.label }}</button>
+      }
+    </div>
+    <span class="conn" [class.bad]="backendDown()" [class.warn]="!backendDown() && stale()" role="status" aria-live="polite">
+      <i aria-hidden="true"></i>
+      @if (backendDown()) { Sin conexión con la API }
+      @else if (stale()) { Datos desactualizados }
+      @else if (lastOkAt() !== null) { {{ replay() ? 'Reproducción' : synthetic() ? 'Demostración' : 'En vivo' }} · conectado }
+      @else { Conectando… }
+    </span>
+  </div>
+</nav>
+
 <main>
   <header>
     <p class="eyebrow">BIG DATA · PROYECTO DE AULA</p>
@@ -9,7 +28,7 @@
     <div class="banner error" role="alert">{{ problem }}</div>
   } @else {
 
-  <!-- ===== avisos ===== -->
+  <!-- ===== avisos (siempre visibles, en cualquier pestaña) ===== -->
   @if (replay()) {
     <div class="banner replay" role="status"><strong>REPRODUCCIÓN</strong> · Datos históricos reproducidos de forma acelerada a través de Kafka. No son actividad en curso. El tiempo de cada evento es el original (por eso, para verlos, elige «Fechas concretas» en el periodo histórico reproducido); el de reproducción se guarda aparte.</div>
   }
@@ -41,35 +60,18 @@
       @if (stats()) { Se muestran las de la última lectura correcta. }</div>
   }
 
-  <!-- ===== estado del sistema ===== -->
-  <section class="info" aria-labelledby="h-estado" aria-live="polite">
-    <h2 id="h-estado">Estado del sistema</h2>
-    <p class="mode"><strong>{{ modeLabel() }}</strong></p>
-    <dl>
-      <div><dt>Estado de la API</dt><dd>
-        @if (backendDown()) { <span class="pill bad">Sin respuesta</span> }
-        @else if (stale()) { <span class="pill warn">Datos desactualizados</span> }
-        @else if (loading() && lastOkAt() === null) { <span class="pill">Consultando…</span> }
-        @else if (lastOkAt() !== null) { <span class="pill good">Accesible</span> }
-        @else { <span class="pill">Sin consulta</span> }
-      </dd></div>
-      <div><dt>Último acceso correcto a la API</dt><dd>{{ lastOkAt() === null ? 'Ninguno todavía' : date(lastOkAt()) + ' (hace ' + age(lastOkAt()) + ')' }}</dd></div>
-      <div><dt>{{ dataMode() === 'live' ? 'Última ingesta correcta de USGS' : 'Última ingesta aceptada (no es USGS en directo)' }}</dt><dd>
-        @if (isDemoFile()) { No aplica (archivo estático) }
-        @else if (health()?.last_ingestion != null || events()?.metadata?.last_ingestion != null) {
-          {{ date(health()?.last_ingestion ?? events()?.metadata?.last_ingestion) }} (hace {{ age(health()?.last_ingestion ?? events()?.metadata?.last_ingestion) }})
-        } @else { Ninguna registrada }
-      </dd></div>
-      <div><dt>Periodo consultado (UTC)</dt><dd>{{ period() }}</dd></div>
-      <div><dt>Respuesta generada por la API</dt><dd>{{ date(events()?.metadata?.generated) }}</dd></div>
-      <div><dt>Catálogo geográfico</dt><dd>{{ countriesStatus() }}</dd></div>
-    </dl>
-    @if (loading()) { <p class="loading">Actualizando…</p> }
-  </section>
+  <!-- ===== ficha de un evento (sustituye a la pestaña mientras está abierta) ===== -->
+  @if (selected(); as sel) {
+    @for (item of [sel]; track item.feature.id) {
+      <section class="detail-view" aria-label="Ficha del evento">
+        <app-event-detail [feature]="item.feature" [source]="item.source" (closed)="closeDetail()" />
+      </section>
+    }
+  }
 
-  <!-- ===== filtros ===== -->
+  <!-- ===== filtros comunes: resumen, análisis y eventos ===== -->
   @if (!isDemoFile()) {
-  <section class="filters" aria-labelledby="h-filtros">
+  <section class="filters" aria-labelledby="h-filtros" [hidden]="!usesFilters() || selected() !== null">
     <h2 id="h-filtros">Filtros</h2>
     <form (submit)="applyFilters($event)" novalidate>
       <label>Periodo
@@ -104,27 +106,64 @@
       <button type="submit" class="primary">Aplicar filtros</button>
       <button type="button" (click)="resetFilters()">Restablecer</button>
     </form>
-    <p id="ayuda-mag" class="help">Un evento sin magnitud (ND) nunca cumple un umbral de magnitud; se cuenta aparte. «Sin país asignado» reúne los eventos fuera de todo polígono (p. ej. océano). Los mismos filtros se aplican al mapa, la tabla y los gráficos.</p>
+    <p id="ayuda-mag" class="help">Un evento sin magnitud (ND) nunca cumple un umbral de magnitud; se cuenta aparte. «Sin país asignado» reúne los eventos fuera de todo polígono (p. ej. océano). Los mismos filtros se aplican al resumen, el mapa, el análisis y la tabla.</p>
     @if (filterError(); as problem) { <p class="field-error" role="alert">{{ problem }}</p> }
   </section>
   }
 
-  <!-- ===== mapa ===== -->
-  <section aria-labelledby="h-mapa">
-    <h2 id="h-mapa">Mapa de terremotos</h2>
-    <p class="count" aria-live="polite">
-      {{ events()?.metadata?.count ?? events()?.features?.length ?? 0 }} eventos dibujados
-      @if (events()?.metadata?.total != null) { de {{ events()?.metadata?.total }} que cumplen los filtros }
-      · {{ omitted() }} omitidos por coordenadas inválidas
-      @if ((events()?.metadata?.null_mag_count ?? 0) > 0) { · {{ events()?.metadata?.null_mag_count }} sin magnitud (ND) }
-      @if ((events()?.metadata?.null_mag_excluded ?? 0) > 0) { · {{ events()?.metadata?.null_mag_excluded }} sin magnitud excluidos por el umbral }
-    </p>
-    <app-event-map [events]="events()" [countries]="countries()" (omitted)="onOmitted($event)" />
+  <!-- ===== RESUMEN: indicadores + mapa ===== -->
+  <section class="tab-panel" [hidden]="tab() !== 'resumen' || selected() !== null" aria-label="Resumen">
+    @if (summary(); as k) {
+      <div class="stat-row five">
+        <div class="stat">
+          <span class="stat-label">Última lectura de la API</span>
+          <span class="stat-value">{{ lastOkAt() === null ? 'ND' : date(lastOkAt()).slice(11, 19) }}</span>
+          <span class="stat-sub">{{ lastOkAt() === null ? 'Sin lecturas' : 'hace ' + age(lastOkAt()) + ' · se actualiza cada 60 s' }}</span>
+        </div>
+        <div class="stat wide">
+          <span class="stat-label">Último terremoto registrado</span>
+          @if (k.latest; as e) {
+            <button type="button" class="stat-link" (click)="openDetail(e, liveSource())">{{ e.properties.place ?? 'Sin descripción' }}</button>
+            <span class="stat-sub">M {{ e.properties.mag ?? 'ND' }} · {{ date(e.properties.time) }} · hace {{ age(e.properties.time) }}</span>
+          } @else { <span class="stat-value">ND</span><span class="stat-sub">Sin eventos con estos filtros</span> }
+        </div>
+        <div class="stat">
+          <span class="stat-label">Terremotos (filtros)</span>
+          <span class="stat-value">{{ fmtNum(k.total, 0) }}</span>
+          <span class="stat-sub">{{ k.nullMag > 0 ? k.nullMag + ' sin magnitud (ND)' : 'todos con magnitud' }}</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Mayor magnitud{{ k.truncated ? ' (entre los dibujados)' : '' }}</span>
+          @if (k.strongest; as e) {
+            <button type="button" class="stat-link big" (click)="openDetail(e, liveSource())">M {{ e.properties.mag }}</button>
+            <span class="stat-sub">{{ e.properties.place ?? 'Sin descripción' }}</span>
+          } @else { <span class="stat-value">ND</span><span class="stat-sub">Sin magnitudes</span> }
+        </div>
+        <div class="stat">
+          <span class="stat-label">Sin país asignado</span>
+          <span class="stat-value">{{ k.noCountryPct }}</span>
+          <span class="stat-sub">{{ k.noCountry === null ? 'ND' : k.noCountry + ' eventos, casi todos en el mar' }}</span>
+        </div>
+      </div>
+    }
+
+    <section aria-labelledby="h-mapa">
+      <h2 id="h-mapa">Mapa de terremotos</h2>
+      <p class="count" aria-live="polite">
+        {{ events()?.metadata?.count ?? events()?.features?.length ?? 0 }} eventos dibujados
+        @if (events()?.metadata?.total != null) { de {{ events()?.metadata?.total }} que cumplen los filtros }
+        · {{ omitted() }} omitidos por coordenadas inválidas
+        @if ((events()?.metadata?.null_mag_count ?? 0) > 0) { · {{ events()?.metadata?.null_mag_count }} sin magnitud (ND) }
+        @if ((events()?.metadata?.null_mag_excluded ?? 0) > 0) { · {{ events()?.metadata?.null_mag_excluded }} sin magnitud excluidos por el umbral }
+      </p>
+      <app-event-map [events]="events()" [countries]="countries()" [visible]="tab() === 'resumen' && selected() === null"
+                     (omitted)="onOmitted($event)" (picked)="openDetail($event, liveSource())" />
+    </section>
   </section>
 
-  <!-- ===== análisis ===== -->
+  <!-- ===== ANÁLISIS ===== -->
   @if (!isDemoFile()) {
-  <section class="analysis" aria-labelledby="h-analisis">
+  <section class="analysis tab-panel" aria-labelledby="h-analisis" [hidden]="tab() !== 'analisis' || selected() !== null">
     <h2 id="h-analisis">Análisis</h2>
     @if (stats(); as s) {
       <p class="count">
@@ -132,6 +171,7 @@
         ({{ date(s.totals.period.start) }} → {{ s.totals.period.end === null ? 'ahora' : date(s.totals.period.end) }}).
         @if (s.totals.missing.magnitude > 0) { {{ s.totals.missing.magnitude }} sin magnitud. }
         @if (s.totals.missing.depth > 0) { {{ s.totals.missing.depth }} sin profundidad. }
+        Pasa el ratón por los gráficos para ver cada valor.
       </p>
 
       <div class="grid">
@@ -177,6 +217,12 @@
           <p class="help">{{ s.distributions.depth_km.with_value }} con profundidad · <strong>{{ s.distributions.depth_km.missing['depth'] }} sin profundidad (ND)</strong>, fuera del histograma.</p>
         </article>
 
+        <article class="card">
+          <h3>Magnitud frente a profundidad</h3>
+          <app-scatter-chart [events]="events()" caption="Cada punto es un evento; el color indica la clase de profundidad, como en el mapa"
+            (picked)="openDetail($event, liveSource())" />
+        </article>
+
         @if (comparison(); as c) {
         <article class="card wide comparison">
           <h3>Comparación con el histórico</h3>
@@ -211,14 +257,118 @@
     }
   </section>
   } @else {
-    <section class="analysis"><h2>Análisis</h2><p class="count">Los gráficos y filtros requieren la API (modo «api» en config.json). El archivo de demostración solo alimenta el mapa y la tabla.</p></section>
+    <section class="analysis tab-panel" [hidden]="tab() !== 'analisis' || selected() !== null"><h2>Análisis</h2><p class="count">Los gráficos y filtros requieren la API (modo «api» en config.json). El archivo de demostración solo alimenta el mapa y la tabla.</p></section>
   }
 
-  <!-- ===== tabla ===== -->
-  <section aria-labelledby="h-tabla">
+  <!-- ===== EVENTOS ===== -->
+  <section class="tab-panel" aria-labelledby="h-tabla" [hidden]="tab() !== 'eventos' || selected() !== null">
     <h2 id="h-tabla">Tabla de eventos</h2>
-    <p class="help">Alternativa textual al mapa y al color: contiene los mismos eventos, con magnitud y profundidad «ND» cuando no existen.</p>
-    <app-event-table [events]="events()" />
+    <p class="help">Los mismos eventos que el mapa, con magnitud y profundidad «ND» cuando no existen. Pulsa una fila para abrir su ficha.</p>
+    <app-event-table [events]="events()" (picked)="openDetail($event, liveSource())" />
+  </section>
+
+  <!-- ===== HISTÓRICO 2025 (consulta paginada en el servidor) ===== -->
+  <section class="tab-panel" aria-labelledby="h-historico" [hidden]="tab() !== 'historico' || selected() !== null">
+    <h2 id="h-historico">Histórico 2025</h2>
+    <p class="help">Catálogo FDSN de USGS para todo 2025 (mundo, M ≥ 4, solo terremotos), descargado una vez y cargado en su propio esquema de
+      PostgreSQL. Es la referencia de la comparación histórica. Se consulta en modo <code>historico</code>, solo de lectura, y no se mezcla con los datos en vivo.</p>
+    @if (config()?.mode !== 'api') {
+      <p class="field-error">El histórico requiere la API (modo «api» en config.json).</p>
+    } @else {
+    <div class="hist-layout">
+      <form class="hist-filters" (submit)="applyHistory($event)" novalidate aria-label="Filtros del histórico">
+        <h3>Filtros del histórico</h3>
+        <label>Desde (UTC, inclusive)
+          <input type="date" min="2025-01-01" max="2025-12-31" [value]="histDraft().startDate" (input)="histInput('startDate', $event)" />
+        </label>
+        <label>Hasta (UTC, inclusive)
+          <input type="date" min="2025-01-01" max="2025-12-31" [value]="histDraft().endDate" (input)="histInput('endDate', $event)" />
+        </label>
+        <label>Magnitud mínima
+          <input type="text" inputmode="decimal" placeholder="4 (todo el histórico)" [value]="histDraft().minMag" (input)="histInput('minMag', $event)" />
+        </label>
+        <label>País
+          <select (change)="histInput('country', $event)">
+            <option value="" [selected]="histDraft().country === ''">Todos</option>
+            <option value="none" [selected]="histDraft().country === 'none'">Sin país asignado</option>
+            @for (c of countryOptions(); track c.id) {
+              <option [value]="c.id" [selected]="histDraft().country === c.id">{{ c.name }}</option>
+            }
+          </select>
+        </label>
+        <label>Terremotos por página
+          <select (change)="histInput('pageSize', $event)">
+            @for (n of [25, 50, 100]; track n) { <option [value]="n" [selected]="histDraft().pageSize === n">{{ n }}</option> }
+          </select>
+        </label>
+        <button type="submit" class="primary">Buscar en el histórico</button>
+        <button type="button" (click)="resetHistory()">Restablecer</button>
+        @if (histFilterError(); as problem) { <p class="field-error" role="alert">{{ problem }}</p> }
+      </form>
+
+      <div class="hist-main">
+        @if (histError(); as problem) {
+          <p class="field-error" role="alert">No se pudo consultar el histórico: {{ problem }}.@if (histData()) { Se muestra la última consulta correcta. }</p>
+        }
+        @if (histData(); as h) {
+          <div class="stat-row compact">
+            <div class="stat"><span class="stat-label">Terremotos que cumplen los filtros</span><span class="stat-value">{{ fmtNum(h.metadata?.total ?? 0, 0) }}</span>
+              <span class="stat-sub">{{ histApplied().startDate }} → {{ histApplied().endDate }}</span></div>
+            <div class="stat"><span class="stat-label">Página</span><span class="stat-value">{{ histPage() + 1 }} / {{ fmtNum(histPages(), 0) }}</span>
+              <span class="stat-sub">{{ h.metadata?.count }} por página, más recientes primero</span></div>
+            @if (histStats(); as hs) {
+              <div class="stat"><span class="stat-label">Sin país asignado</span>
+                <span class="stat-value">{{ histNoCountryPct() }}</span>
+                <span class="stat-sub">epicentros fuera de todo polígono</span></div>
+            }
+          </div>
+          <app-event-table [events]="h" [pageSize]="histApplied().pageSize" [sortable]="false" (picked)="openDetail($event, 'Histórico 2025 (catálogo USGS)')" />
+          <nav class="pager" aria-label="Paginación del histórico">
+            <button type="button" (click)="goHistory(-1)" [disabled]="histPage() === 0 || histLoading()">‹ Anterior</button>
+            <span>Página {{ histPage() + 1 }} de {{ fmtNum(histPages(), 0) }}</span>
+            <button type="button" (click)="goHistory(1)" [disabled]="histPage() >= histPages() - 1 || histLoading()">Siguiente ›</button>
+          </nav>
+          @if (histCountryBars().length > 0) {
+            <article class="card">
+              <h3>Países con más terremotos en la selección</h3>
+              <app-bar-chart [bars]="histCountryBars()" orientation="horizontal" caption="Recuento por país (incluye «Sin país asignado»), calculado en la base de datos"
+                ariaLabel="Terremotos del histórico por país" firstColumn="País" color="#7b3fb6" />
+            </article>
+          }
+        } @else if (histLoading()) {
+          <p class="count">Consultando el histórico…</p>
+        }
+      </div>
+    </div>
+    }
+  </section>
+
+  <!-- ===== ESTADO DEL SISTEMA ===== -->
+  <section class="info tab-panel" aria-labelledby="h-estado" aria-live="polite" [hidden]="tab() !== 'estado' || selected() !== null">
+    <h2 id="h-estado">Estado del sistema</h2>
+    <p class="mode"><strong>{{ modeLabel() }}</strong></p>
+    <dl>
+      <div><dt>Estado de la API</dt><dd>
+        @if (backendDown()) { <span class="pill bad">Sin respuesta</span> }
+        @else if (stale()) { <span class="pill warn">Datos desactualizados</span> }
+        @else if (loading() && lastOkAt() === null) { <span class="pill">Consultando…</span> }
+        @else if (lastOkAt() !== null) { <span class="pill good">Accesible</span> }
+        @else { <span class="pill">Sin consulta</span> }
+      </dd></div>
+      <div><dt>Último acceso correcto a la API</dt><dd>{{ lastOkAt() === null ? 'Ninguno todavía' : date(lastOkAt()) + ' (hace ' + age(lastOkAt()) + ')' }}</dd></div>
+      <div><dt>{{ dataMode() === 'live' ? 'Última ingesta correcta de USGS' : 'Última ingesta aceptada (no es USGS en directo)' }}</dt><dd>
+        @if (isDemoFile()) { No aplica (archivo estático) }
+        @else if (health()?.last_ingestion != null || events()?.metadata?.last_ingestion != null) {
+          {{ date(health()?.last_ingestion ?? events()?.metadata?.last_ingestion) }} (hace {{ age(health()?.last_ingestion ?? events()?.metadata?.last_ingestion) }})
+        } @else { Ninguna registrada }
+      </dd></div>
+      <div><dt>Periodo consultado (UTC)</dt><dd>{{ period() }}</dd></div>
+      <div><dt>Respuesta generada por la API</dt><dd>{{ date(events()?.metadata?.generated) }}</dd></div>
+      <div><dt>Catálogo geográfico</dt><dd>{{ countriesStatus() }}</dd></div>
+    </dl>
+    @if (loading()) { <p class="loading">Actualizando…</p> }
+    <p class="help">Recorrido de los datos: USGS → productor (cada 60 s) → Kafka → consumidor (valida, versiona, asigna país) → PostgreSQL → API → este panel.
+      Si la API deja de responder, el panel lo avisa arriba, conserva la última lectura correcta y reintenta solo.</p>
   </section>
 
   <footer>

@@ -70,7 +70,7 @@
 
 - `start` (ISO8601, **inclusivo**) y `end` (ISO8601, **exclusivo**) filtran por el tiempo de **ocurrencia** (`properties.time`). Sin zona horaria se interpreta UTC.
 - Sin parámetros, la ventana es `[ahora - 24 h, ∞)`. El evento sintético `demo-evt-001` ocurre el 2026-10-27T14:00:00Z, así que la verificación de la demo debe pasar una ventana explícita, por ejemplo `GET /api/eventos?start=2026-10-27T00:00:00Z`. No se alteran las fechas del evento para que aparezca.
-- `mode` (`demo` | `live` | `replay`) elige los datos, aislados por modo en esquemas distintos de PostgreSQL. Si se omite, se usa `API_DEFAULT_MODE` (`live` si no está definida; `.env.example` la fija en `demo` mientras no exista ingesta live). `metadata.mode` devuelve el modo consultado. Cualquier otro valor (incluido `historico`) devuelve HTTP 400. Los datos de un modo nunca aparecen en las consultas de otro.
+- `mode` (`demo` | `live` | `replay` | `historico`) elige los datos, aislados por modo en esquemas distintos de PostgreSQL. `historico` es **solo de lectura**: expone la carga única del catálogo 2025 (nunca llega por Kafka ni puede ser `API_DEFAULT_MODE`); lo usa la pestaña «Histórico 2025» del panel con `limit`/`offset`. Si se omite, se usa `API_DEFAULT_MODE` (`live` si no está definida). `metadata.mode` devuelve el modo consultado. Cualquier otro valor (por ejemplo `historical` o `public`) devuelve HTTP 400. Los datos de un modo nunca aparecen en las consultas de otro.
 - `start >= end` o una fecha no parseable devuelven HTTP 400.
 - `metadata` añade `total` (eventos que cumplen el filtro, aunque se trunque), `start` y `end` (ms Unix; `end` puede ser `null`).
 - `metadata.last_ingestion` (ms Unix UTC; `null` si no hay ninguna): en modo `live` es el inicio de la **última consulta correcta a USGS** (`ingest.extraction_log`, `ok = true`), que avanza aunque no haya eventos nuevos y se detiene si el productor falla o USGS no responde; una consulta fallida no la mueve. En `demo` y `replay`, que no consultan a USGS, es la última ingesta de mensajes aceptada en ese modo.
@@ -102,7 +102,7 @@ Implementa `CONTRATO-API.md` completo. Todos los parámetros se validan antes de
 | `start` / `end` | ISO8601; `start` inclusivo, `end` exclusivo, sobre el tiempo de ocurrencia. Sin `start`: últimas 24 h. |
 | `min_mag` | Magnitud mínima (número finito entre -10 y 10; `nan`, `inf` y texto dan 400). **Una magnitud nula nunca la cumple.** `0` es un umbral real, no «sin filtro». |
 | `country_id` | Código `ADM0_A3` (insensible a mayúsculas) o **`none`** para «Sin país asignado». Un código que no existe en el catálogo da 400 (no un resultado vacío que oculte una errata); un país válido sin eventos da 200 con `features: []`. |
-| `mode` | `demo`, `live` o `replay` (datos aislados). |
+| `mode` | `demo`, `live`, `replay` o `historico` (datos aislados; `historico`, solo lectura). |
 | `limit` | Máximo de puntos por respuesta, de 1 a `API_MAX_FEATURES` (5000). Un valor mayor da 400: no se recorta en silencio. Por defecto, el máximo. |
 | `offset` | Desplazamiento para paginar (≥ 0). |
 

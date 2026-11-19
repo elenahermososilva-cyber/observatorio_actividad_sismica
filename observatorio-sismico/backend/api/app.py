@@ -9,7 +9,7 @@ Endpoints (CONTRATO-API.md):
 No hay rutas de administración ni de documentación. Si la base falla, todos los endpoints devuelven un error
 explícito (503); nunca un resultado vacío como si fuera válido.
 
-`mode` (demo | live | replay) elige el esquema aislado de datos. Su valor por defecto es API_DEFAULT_MODE
+`mode` (demo | live | replay | historico) elige el esquema aislado de datos (historico: carga 2025, solo lectura). Su valor por defecto es API_DEFAULT_MODE
 (`live` si no se define). CORS: orígenes exactos de CORS_ORIGINS; solo GET y OPTIONS.
 """
 
@@ -31,7 +31,7 @@ from backend.api.queries import EventQueries, PostgresQueries
 from backend.api.stats import GROUPINGS, assess_freshness, build_statistics
 from backend.common.config import database_url, get_int, get_str
 from backend.common.logging_setup import configure_logging
-from backend.db.modes import EVENT_MODES
+from backend.db.modes import EVENT_MODES, READ_MODES
 
 log = logging.getLogger("api")
 DEFAULT_BASELINE_YEAR = 2025
@@ -98,8 +98,8 @@ def create_app(
 
     def check_mode(mode: str | None) -> str:
         mode = mode or state["default_mode"]
-        if mode not in EVENT_MODES:
-            raise InvalidParameter(f"mode must be one of {', '.join(EVENT_MODES)}, got {mode!r}")
+        if mode not in READ_MODES:
+            raise InvalidParameter(f"mode must be one of {', '.join(READ_MODES)}, got {mode!r}")
         return mode
 
     @app.get("/api/eventos")
@@ -108,7 +108,7 @@ def create_app(
         end: str | None = Query(None, description="ISO8601, exclusivo"),
         min_mag: str | None = Query(None, description="Magnitud mínima. Una magnitud nula nunca la cumple"),
         country_id: str | None = Query(None, description="ADM0_A3, o 'none' para «Sin país asignado»"),
-        mode: str | None = Query(None, description="demo | live | replay (datos aislados por modo)"),
+        mode: str | None = Query(None, description="demo | live | replay | historico (datos aislados por modo; historico = carga 2025, solo lectura)"),
         limit: str | None = Query(None, description="Máximo de puntos por respuesta (≤ API_MAX_FEATURES)"),
         offset: str | None = Query(None, description="Desplazamiento para paginar"),
     ) -> JSONResponse:

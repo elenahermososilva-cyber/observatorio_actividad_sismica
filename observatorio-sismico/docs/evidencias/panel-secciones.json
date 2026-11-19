@@ -1,0 +1,113 @@
+{
+  "url": "http://localhost:4200/",
+  "at": "2026-11-19T20:57:38.870Z",
+  "ok": 21,
+  "total": 21,
+  "results": [
+    {
+      "name": "el resumen carga eventos",
+      "ok": true,
+      "detail": "214 eventos dibujados de 214 que cumplen los filtros · 0 omitidos por coordenadas inválidas"
+    },
+    {
+      "name": "hay 5 pestañas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "el resumen muestra indicadores",
+      "ok": true,
+      "detail": "ÚLTIMA LECTURA DE LA API | ÚLTIMO TERREMOTO REGISTRADO | TERREMOTOS (FILTROS) | MAYOR MAGNITUD | SIN PAÍS ASIGNADO"
+    },
+    {
+      "name": "indicador de conexión visible",
+      "ok": true,
+      "detail": "En vivo · conectado"
+    },
+    {
+      "name": "pestaña Análisis: solo se ve el análisis",
+      "ok": true,
+      "detail": "Filtros | Análisis"
+    },
+    {
+      "name": "Análisis: gráficos dibujados",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Análisis: la barra señalada muestra su valor",
+      "ok": true,
+      "detail": "2026-11-18 20:00–20:59 UTC · 3 terremotos"
+    },
+    {
+      "name": "la URL refleja la pestaña",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Dispersión: el punto señalado muestra el evento",
+      "ok": true,
+      "detail": "M 2.41 · 7.2 km · 42 km WSW of Olancha, CA · 2026-11-19 20:49:27 UTC Pulsa para ver la ficha"
+    },
+    {
+      "name": "Dispersión: al pulsar un punto se abre su ficha",
+      "ok": true,
+      "detail": "42 km WSW of Olancha, CA"
+    },
+    {
+      "name": "«Volver» regresa a la pestaña de origen",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "pestaña Eventos: tabla con filas",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Eventos: al pulsar una fila se abre su ficha",
+      "ok": true,
+      "detail": "42 km WSW of Olancha, CA"
+    },
+    {
+      "name": "Ficha: muestra mapa del epicentro y enlace a USGS",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Histórico: total de 2025 desde la API",
+      "ok": true,
+      "detail": "18.302 | 1 / 733 | 78 %"
+    },
+    {
+      "name": "Histórico: 25 filas por página",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Histórico: «Siguiente» trae otra página del servidor",
+      "ok": true,
+      "detail": "Página 2 de 733"
+    },
+    {
+      "name": "Histórico: filtro país + magnitud aplicado en el servidor",
+      "ok": true,
+      "detail": "5 | 1 / 1 | 0 %"
+    },
+    {
+      "name": "Histórico: ficha de un evento de 2025",
+      "ok": true,
+      "detail": "10 km N of Aso, Japan"
+    },
+    {
+      "name": "Estado del sistema: API accesible",
+      "ok": true,
+      "detail": "Accesible"
+    },
+    {
+      "name": "Resumen: el último terremoto abre su ficha",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

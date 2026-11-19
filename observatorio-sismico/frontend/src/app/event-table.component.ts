@@ -1,11 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
-import type { EventCollection } from './models';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
+import type { EventCollection, EventFeature } from './models';
 import { formatDate } from './event-map.component';
 
-type Row = { id: string; time: number; mag: number | null; depth: number | null; place: string; country: string; lon: number; lat: number };
+type Row = { id: string; time: number; mag: number | null; depth: number | null; place: string; country: string; lon: number; lat: number; feature: EventFeature };
 type SortKey = 'time' | 'mag' | 'depth' | 'place' | 'country';
 
-const PAGE = 25;
 
 /** Tabla consultable de los eventos: alternativa textual al mapa y al color. */
 @Component({
@@ -15,7 +14,8 @@ const PAGE = 25;
   template: `
     <p class="meta" aria-live="polite">
       {{ rows().length }} eventos en la tabla
-      @if (rows().length > 0) { · mostrando {{ first() }}–{{ last() }} }
+      @if (rows().length > 0 && pages() > 1) { · mostrando {{ first() }}–{{ last() }} }
+      @if (rows().length > 0) { · pulsa una fila para ver su ficha }
     </p>
     <div class="scroll" tabindex="0" role="region" aria-label="Tabla de eventos, desplazable">
       <table>
@@ -23,8 +23,9 @@ const PAGE = 25;
         <thead>
           <tr>
             @for (c of columns; track c.key) {
-              <th scope="col" [attr.aria-sort]="ariaSort(c.key)">
-                <button type="button" (click)="sortBy(c.key)">{{ c.label }}{{ arrow(c.key) }}</button>
+              <th scope="col" [attr.aria-sort]="sortable() ? ariaSort(c.key) : null">
+                @if (sortable()) { <button type="button" (click)="sortBy(c.key)">{{ c.label }}{{ arrow(c.key) }}</button> }
+                @else { {{ c.label }} }
               </th>
             }
             <th scope="col">Coordenadas</th><th scope="col">ID</th>
@@ -32,11 +33,11 @@ const PAGE = 25;
         </thead>
         <tbody>
           @for (r of page(); track r.id) {
-            <tr>
+            <tr class="clickable" (click)="picked.emit(r.feature)">
               <td>{{ date(r.time) }}</td>
               <td class="num" [class.nd]="r.mag === null">{{ r.mag === null ? 'ND' : r.mag }}</td>
               <td class="num" [class.nd]="r.depth === null">{{ r.depth === null ? 'ND' : r.depth + ' km' }}</td>
-              <td>{{ r.place }}</td>
+              <td><button type="button" class="link" (click)="$event.stopPropagation(); picked.emit(r.feature)">{{ r.place }}</button></td>
               <td [class.nd]="r.country === 'Sin país asignado'">{{ r.country }}</td>
               <td class="num">{{ r.lat }}, {{ r.lon }}</td>
               <td class="id">{{ r.id }}</td>
@@ -66,11 +67,19 @@ const PAGE = 25;
     td.id { color: #64748b; font-size: .8rem; } td.empty { text-align: center; padding: 18px; color: #42596b; font-style: italic; }
     .pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 8px; }
     .pager button { padding: 4px 12px; }
+    tr.clickable { cursor: pointer; } tr.clickable:hover td { background: #eef6f6; }
+    button.link { all: unset; cursor: pointer; color: #0f4f53; text-decoration: underline; text-underline-offset: 2px; }
+    button.link:focus-visible { outline: 2px solid #176b70; outline-offset: 2px; }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   `],
 })
 export class EventTableComponent {
   readonly events = input.required<EventCollection | null>();
+  /** Filas por página interna (con paginación del servidor se pasa el tamaño de la página recibida). */
+  readonly pageSize = input<number>(25);
+  /** Con paginación del servidor el orden lo fija la API (más recientes primero): ordenar solo una página confundiría. */
+  readonly sortable = input<boolean>(true);
+  readonly picked = output<EventFeature>();
   protected readonly columns: { key: SortKey; label: string }[] = [
     { key: 'time', label: 'Fecha UTC' }, { key: 'mag', label: 'Magnitud' }, { key: 'depth', label: 'Profundidad' },
     { key: 'place', label: 'Lugar' }, { key: 'country', label: 'País' },
@@ -89,9 +98,10 @@ export class EventTableComponent {
       rows.push({
         id: String(f.id ?? 'ND'), time: p.time, mag: typeof p.mag === 'number' && Number.isFinite(p.mag) ? p.mag : null,
         depth: typeof depth === 'number' && Number.isFinite(depth) ? depth : null, place: p.place ?? 'Sin descripción',
-        country: p.country_name ?? 'Sin país asignado', lon, lat,
+        country: p.country_name ?? 'Sin país asignado', lon, lat, feature: f as EventFeature,
       });
     }
+    if (!this.sortable()) return rows;
     const { key, dir } = this.sort();
     // Los valores ND siempre al final, sea cual sea el sentido del orden.
     return rows.sort((a, b) => {
@@ -103,10 +113,10 @@ export class EventTableComponent {
     });
   });
 
-  protected readonly pages = computed(() => Math.max(1, Math.ceil(this.rows().length / PAGE)));
-  protected readonly page = computed(() => this.rows().slice(this.index() * PAGE, (this.index() + 1) * PAGE));
-  protected readonly first = computed(() => this.index() * PAGE + 1);
-  protected readonly last = computed(() => Math.min(this.rows().length, (this.index() + 1) * PAGE));
+  protected readonly pages = computed(() => Math.max(1, Math.ceil(this.rows().length / this.pageSize())));
+  protected readonly page = computed(() => this.rows().slice(this.index() * this.pageSize(), (this.index() + 1) * this.pageSize()));
+  protected readonly first = computed(() => this.index() * this.pageSize() + 1);
+  protected readonly last = computed(() => Math.min(this.rows().length, (this.index() + 1) * this.pageSize()));
 
   constructor() {
     effect(() => { this.rows(); this.index.set(0); }); // nuevos datos u orden: volver a la primera página

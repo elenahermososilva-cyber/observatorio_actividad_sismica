@@ -392,7 +392,7 @@ class AcceptanceTests(unittest.IsolatedAsyncioTestCase):
              f"Decisiones del consumidor: {decisions}.", "`/api/eventos?mode=replay` devuelve solo h0, h1, h2; `/api/eventos?mode=live` solo `live1`.",
              "El tiempo de ocurrencia original se conserva y `replay_at` se guarda aparte.",
              "Un mensaje de replay entregado al consumidor live se rechaza con `mode_mismatch` y va a cuarentena: nunca se mezcla.",
-             "El panel mostrará el banner «REPRODUCCIÓN» (Fase 11): la API ya devuelve `metadata.mode = replay`."],
+             "La API devuelve `metadata.mode = replay` y el panel muestra el aviso «REPRODUCCIÓN» (`panel-replay.png`)."],
             {"decisiones": decisions, "replay": self.compact(replay), "live": self.compact(live)},
         )
 

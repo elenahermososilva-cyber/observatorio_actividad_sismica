@@ -7,11 +7,29 @@ Proyecto de aula de Big Data. Canalización de cinco servicios (productor → Ka
 | Criterio de la rúbrica | Apartado | Evidencia principal |
 |---|---|---|
 | Extracción | §2 | `docs/consultas-y-procedencia.md`, `data/README.md`, `docs/evidencias/memoria-datos.json` |
-| Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), `docs/reglas-calidad-y-geografia.md` |
+| Calidad | §3 | §3 (código, consultas, antes/después, ejemplos), `docs/analisis-calidad.md` (gráficos por dimensión y conjunto), `docs/reglas-calidad-y-geografia.md` |
 | Modelado | §4 | `docs/diccionario-de-datos.md`, `backend/db/` |
 | Análisis | §5 | `docs/evidencias/analisis/*.png`, `memoria-datos.json`, `comparacion-reciente.json` |
 | Reflexión | §6, §7, §8 | `docs/evidencias/complejidad.md`, `api-latencia.json` |
-| Pruebas de aceptación | §9 | `docs/evidencias/aceptacion-s11.md`, `pila-real.md`, `panel*.md` |
+| Pruebas de aceptación y reproducción histórica | §9, §9.1 | `docs/evidencias/aceptacion-s11.md`, `pila-real.md`, `panel*.md` |
+
+---
+
+## Objetivo y alcance
+
+**Pregunta que responde el observatorio:** ¿cuántos terremotos M ≥ 4 se están registrando ahora en el mundo, dónde (por país y subregión, o en mar abierto) y si esa actividad es normal comparada con un año completo de referencia (2025) bajo los mismos filtros?
+
+**Cómo circulan los datos:** el productor consulta el feed de USGS cada 60 s y publica en Kafka solo las versiones nuevas. El consumidor valida cada mensaje, manda a cuarentena lo inválido, decide si es un evento nuevo, un duplicado, una revisión o una versión antigua, asigna el país por punto en polígono y lo guarda en PostgreSQL. Solo después confirma el offset. La API consulta PostgreSQL y el panel muestra el resultado en mapa, tabla y gráficos.
+
+**Decisiones de alcance:**
+
+| Aspecto | Decisión |
+|---|---|
+| Datos recientes | Feed `all_day.geojson` (ventana móvil de 24 h, todas las magnitudes). Solo se aceptan los de tipo `earthquake`: los demás (explosiones, voladuras…) van a cuarentena con el motivo `non_earthquake_type`. El filtro M ≥ 4 de la comparación histórica se aplica en la consulta |
+| Histórico de referencia | Año 2025 completo (`[2025-01-01, 2026-01-01)` UTC), mundo, M ≥ 4, `eventtype=earthquake`: 18.302 eventos |
+| Ámbito geográfico | Mundo; país según Natural Earth 1:110M (177 entidades). Lo que cae fuera de todo polígono queda «Sin país asignado» |
+| Tiempo | Todo en UTC; la API usa milisegundos Unix; ventanas `[inicio, fin)` |
+| Fuera de alcance | Predicción, evaluación de riesgo, reconciliación de eventos eliminados fuera de la ventana de 24 h (§8) |
 
 ---
 
@@ -31,10 +49,11 @@ USGS ──HTTP/60 s──► productor ──► Kafka ──► consumidor ─
 | **Versionado por `(event_id, updated)`** con upsert protegido (`WHERE current_version_ms < EXCLUDED.current_version_ms`) | Idempotencia: reenviar un mensaje no cambia el estado; una versión antigua no sustituye a la vigente |
 | **Offsets confirmados solo después del COMMIT** | Procesamiento al menos una vez con escritura idempotente (sin transacción distribuida) |
 | **País solo por punto en polígono** (nunca por `place` ni por cercanía) | Lo exige el enunciado y se demostró que el texto da resultados erróneos (§3.6) |
-| **Gráficos SVG hechos a mano**, sin librerías | Menos dependencias y control total del tratamiento de nulos (ND) |
+| **Gráficos SVG hechos a mano**, sin librerías, e interactivos (valor al pasar el ratón; un punto de la dispersión abre la ficha del evento) | Menos dependencias y control total del tratamiento de nulos (ND). Los gráficos de la memoria sí usan matplotlib, porque se generan fuera del panel |
+| **Panel por secciones** (Resumen, Análisis, Eventos, Histórico 2025, Estado del sistema) con ficha por evento | Cada pregunta en su pantalla; los filtros comunes y los avisos de fallo quedan visibles en todas. El histórico se consulta paginado en el servidor (`mode=historico`, solo lectura), sin traer 18.302 eventos al navegador |
 | **Histórico por script de descarga + cargador**, sin sexto servicio | Se respeta el límite de cinco servicios |
 
-**Seguridad y exposición.** Solo la API se publica, en `127.0.0.1:8000`; Kafka y PostgreSQL no tienen puertos publicados. La API solo tiene tres rutas de lectura (`/api/eventos`, `/api/estadisticas`, `/api/salud`), sin documentación interactiva ni administración. CORS usa orígenes exactos (nunca `*`) desde `CORS_ORIGINS`. El authtoken de ngrok vive en el perfil del usuario, fuera de Git y del frontend; `config.json`, que es público, solo contiene la URL pública del túnel. Kafka conserva 168 h o 1 GiB por topic y los datos están en volúmenes persistentes.
+**Seguridad y exposición.** Solo la API se publica, en `127.0.0.1:8000`; Kafka y PostgreSQL no tienen puertos publicados. La API solo tiene tres rutas de lectura (`/api/eventos`, `/api/estadisticas`, `/api/salud`), sin documentación interactiva ni administración; el modo `historico` también es de solo lectura. El panel no lanza descargas ni importaciones: el histórico se carga con un script, fuera de la interfaz. CORS usa orígenes exactos (nunca `*`) desde `CORS_ORIGINS`. El authtoken de ngrok vive en el perfil del usuario, fuera de Git y del frontend; `config.json`, que es público, solo contiene la URL pública del túnel. Kafka conserva 168 h o 1 GiB por topic y los datos están en volúmenes persistentes.
 
 **Despliegue.** Panel: `https://observatorio-sismico-elena.netlify.app`; API: dominio fijo gratuito de ngrok. Procedimiento, checklist de defensa y tabla de fallos en `docs/despliegue.md`.
 
@@ -85,7 +104,7 @@ Sin la deduplicación del productor, cada versión se republicaría unas 76 vece
 
 ## 3. Calidad y transformación
 
-El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `quality.py`, `geo.py`). Cada decisión está documentada en `docs/reglas-calidad-y-geografia.md`; aquí se presentan los resultados **antes y después** en las seis dimensiones.
+El consumidor aplica reglas explícitas (`backend/consumer/processing.py`, `quality.py`, `geo.py`). Cada decisión está documentada en `docs/reglas-calidad-y-geografia.md`; aquí se presentan los resultados **antes y después** en las seis dimensiones. El estado actual de cada conjunto (vivo, histórico, reproducción), con gráficos e indicadores con su denominador, está en [`docs/analisis-calidad.md`](analisis-calidad.md).
 
 ### 3.1 Qué se rechaza, qué se señala y qué se transforma
 
@@ -289,14 +308,14 @@ Todas las cifras proceden de `docs/evidencias/memoria-datos.json` (consultas en 
 **Datos:** 365 días con los días sin eventos incluidos. Media **50,14**, mediana **43**, mínimo 20, máximo **645** (2025-07-30), cuartiles 36 y 53. Con la valla de Tukey (Q3 + 1,5·RIC = 78,5) hay **27 días atípicos que concentran 3.782 eventos (20,7 % del año)**; la media sin ellos es **42,96**, prácticamente la mediana. Julio (2.684 eventos) y agosto (2.222) tuvieron 2,0 y 1,7 veces la media del resto de meses (1.340).
 **Lectura:** una sola jornada desplaza la media. El terremoto de **M8,8 de la península de Kamchatka** (`us6000qw60`, 2025-07-29 23:24 UTC) y sus réplicas dan 121 eventos el 29-jul, **645 el 30-jul**, 315 el 31-jul y 234 el 1-ago; los eventos de una secuencia no son independientes. **Consecuencia para el panel:** la comparación histórica devuelve media, mediana, mínimo y máximo, y la memoria compara con la mediana (43) además de con la media (50,1).
 **Comparación con el feed** (M ≥ 4; día UTC completo 2026-11-17): **23 terremotos** en la instantánea de `memoria-datos.json` (24 dos horas después, al publicarse otro), es decir 0,46 veces la media y 0,53 veces la mediana de 2025; solo 4 de 365 días de 2025 tuvieron 23 o menos. **No indica menos actividad**: el catálogo FDSN da para ese mismo día 25 eventos, de los que el feed vio 24, así que el pipeline no pierde eventos; lo que ocurre es que **los días recientes de USGS aún no están completos** (conclusión 4). Comparar un día de hace horas con un año ya consolidado no es una comparación equivalente, y la tarjeta del panel lo advierte.
-**Capturas:** `analisis/02-live-17nov-M4.png` (filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica.
+**Capturas:** `analisis/02-live-17nov-M4.png` (pestaña Análisis; filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica. Hoy muestra 24 eventos: el 25.º del catálogo aún no ha llegado al feed y el 23 de la instantánea de `memoria-datos.json` subió a 24 al publicarse otro.
 
 ### Conclusión 3: el 78 % de los epicentros M ≥ 4 queda fuera de todo país, y casi todos los profundos
 
 **Datos (2025, M ≥ 4):** 14.350 de 18.302 eventos (**78,4 %**) sin país asignado; entre los **1.102 eventos de 300 km o más, 1.077 (97,7 %)** están sin país. Profundidad: **74,8 %** (13.689) a menos de 70 km, 19,2 % entre 70 y 300 km y 6,0 % a 300 km o más (máxima 669,6 km; ninguna negativa). Países con más eventos asignados: China 354, Chile 348, Indonesia 306, Etiopía 265, Argentina 236. Por subregión: Sudamérica 973, Sudeste Asiático 580, Asia Oriental 548, Sur de Asia 443, África Oriental 290.
 **Lectura:** la sismicidad se concentra en zonas de subducción y dorsales, en gran parte bajo el mar; por eso «Sin país asignado» es **el grupo más grande** y debe estar siempre en el análisis (no se descarta ni se reasigna). El contraste con `place` (§3.6) confirma que son epicentros marítimos y no un fallo del cruce.
 **Muestra equivalente del feed** (M ≥ 4, día UTC 17-nov, n = 23): 60,9 % sin país (14 de 23), 56,5 % a menos de 70 km y 8,7 % a 300 km o más. Con n = 23 el error de una proporción ronda ±10 puntos, así que **no se puede afirmar que difiera del histórico**: es compatible con él en dirección (la mayoría sin país) pero no concluyente. Con una muestra mayor, el catálogo reciente (1-oct → 17-nov-2026, 2.027 eventos) da **70,4 %** sin país; el descenso se debe a la secuencia de Panamá, en tierra firme (conclusión 4): **excluyendo los 167 eventos a menos de 300 km del M7,7, la proporción es del 74,3 %**, cercana al 78,4 % de 2025. Profundidad: 73,2 % a menos de 70 km (74,8 % en 2025).
-**Capturas:** `analisis/03-live-17nov-M4-sin-pais.png` (filtros: 17-nov-2026, M ≥ 4, país «Sin país asignado»: 14 eventos) y `analisis/04-live-17y18nov-pais-USA.png` (país USA). El total del mapa coincide con el de los gráficos en cada combinación (prueba E2E).
+**Capturas** (pestaña Resumen, con los filtros visibles): `analisis/03-live-17nov-M4-sin-pais.png` (17-nov-2026, M ≥ 4, país «Sin país asignado»: 14 eventos) y `analisis/04-live-17y18nov-pais-USA.png` (17 y 18-nov, país USA). El total del mapa coincide con el de los gráficos en cada captura (`capturas-memoria.json`) y en cada combinación de filtros (prueba E2E).
 
 ### Conclusión 4: en octubre de 2026 la actividad mundial M ≥ 4 fue normal salvo una secuencia en Panamá; los últimos 20 días todavía no son comparables
 
@@ -409,19 +428,19 @@ Extrapolando las mediciones (y razonando donde no se midió; son estimaciones, n
 
 ## 7. Costes
 
-Todos los importes son **supuestos ilustrativos** (marcados), no facturas. Una cuota gratuita no equivale a coste cero.
+Una cuota gratuita no equivale a coste cero. **Medido**: el almacenamiento (tamaño de la base y de los originales) y los tamaños de las respuestas de USGS y de la API. **Estimado**: las horas de trabajo, la potencia del equipo, el precio de la electricidad y la amortización del portátil; son órdenes de magnitud razonados, no facturas ni mediciones con instrumentos.
 
 | Concepto | Supuesto | Estimación |
 |---|---|---|
-| **Hardware** | Portátil existente; amortización ilustrativa de 450 € a 4 años si se dedicase 24/7 | ≈ 112 €/año (≈ 2 €/semana de proyecto) |
-| **Electricidad** | **25 W** medios (supuesto: sin medir) × 24 h × 365 d; **0,20 €/kWh** (supuesto) | 219 kWh/año ≈ **44 €/año**; los ≈ 3 días de la demostración consumirían ≈ 1,8 kWh ≈ 0,36 € |
+| **Hardware** | Portátil existente; amortización de 450 € a 4 años si se dedicase 24/7 | ≈ 112 €/año (≈ 2 €/semana de proyecto) |
+| **Electricidad** | 25 W medios × 24 h × 365 d; 0,20 €/kWh | 219 kWh/año ≈ **44 €/año**; los ≈ 3 días de la demostración consumirían ≈ 1,8 kWh ≈ 0,36 € |
 | **Almacenamiento** | Hoy: base de datos 37 MB (27 MB histórico con índices, ≈ 1 MB live), originales 12,4 MiB (histórico) y 1,8 MiB (live tras 189 consultas, ≈ 3 h de funcionamiento efectivo). Extrapolando con cuidado a partir de esa muestra corta (90 archivos de ≈ 20 KB en 189 consultas, es decir, ≈ 48 % de las respuestas traen contenido nuevo): ≈ 690 originales/día | Originales en vivo ≈ 14 MB/día, topados por la retención de 14 días (≈ 195 MB); base de datos live ≈ 1 MB/día |
 | **Transferencia** | ≈ 60 KB por refresco y pestaña ≈ 90 MB/día por panel abierto; USGS: ≈ 20–25 KB comprimidos por consulta | Despreciable para un panel; las cuotas de ngrok y Netlify gratuitos son **condiciones externas que no se verificaron aquí y deben comprobarse antes de la defensa** |
 | **Mantenimiento** | Reiniciar el túnel, vigilar la pila, rotar originales (automático), actualizar dependencias fijadas | ≈ 1–2 h/mes en operación real |
-| **Tiempo de desarrollo** | Estimación por fases (**a sustituir por las horas reales de la persona autora**): infraestructura y productor ≈ 14 h; consumidor, versionado y calidad ≈ 20 h; API y panel ≈ 25 h; pruebas y despliegue ≈ 12 h; memoria ≈ 10 h | ≈ 80 h; a 12 €/h (supuesto) ≈ 960 € |
+| **Tiempo de desarrollo** | Por fases: infraestructura y productor ≈ 5 h; consumidor, versionado y calidad ≈ 8 h; API y panel ≈ 9 h; pruebas y despliegue ≈ 5 h; memoria y análisis ≈ 5 h | **≈ 32 h** en total (proyecto de clase: no se le asigna un precio por hora) |
 | **Servicios externos** | ngrok, Netlify y OpenStreetMap en plan gratuito | 0 € directos, con límites y sin garantías de disponibilidad |
 
-**Coste total ilustrativo del prototipo:** dominado por el tiempo de desarrollo; el coste de operar es pequeño (≈ 150 €/año con las amortizaciones supuestas). No se define ROI: el observatorio no tiene un beneficio económico medible ni se inventa uno.
+**Coste del prototipo:** el recurso principal es el tiempo de desarrollo (≈ 32 h); el coste de operar es pequeño (≈ 150 €/año con la amortización y la electricidad anteriores, o unos céntimos por los días de demostración). No se define ROI: el observatorio no tiene un beneficio económico medible ni se inventa uno.
 
 **Escalado real (propuesta, sin contratar nada):** PostgreSQL gestionado y Kafka gestionado (o redpanda en una VM) con almacenamiento de objetos para los originales; para 100 M de registros el coste dominante pasaría a ser almacenamiento (≈ 100 GiB) y operación, no cómputo.
 
@@ -429,16 +448,17 @@ Todos los importes son **supuestos ilustrativos** (marcados), no facturas. Una c
 
 ## 8. Limitaciones y mejoras
 
-| Limitación | Mejora propuesta |
-|---|---|
-| El sistema depende de un equipo local y de un túnel gratuito: si se apaga, el panel muestra el aviso y conserva la última lectura (probado), pero no hay datos nuevos | Despliegue en un servidor pequeño con dominio estable |
-| Un hueco de ingesta superior a 24 h pierde eventos del feed | Reconciliación automática con el catálogo FDSN para el intervalo |
-| No se reconcilian eventos eliminados o fusionados por USGS fuera de la ventana de 24 h | Revisión periódica contra el catálogo |
-| Catálogo geográfico 1:110M: sin islas menores, costas simplificadas | Natural Earth 1:10M o límites con zona económica exclusiva |
-| El feed live acumula pocos días y el catálogo de las últimas ~3 semanas aún se completa: las comparaciones del periodo más reciente salen bajas | Comparar solo tramos consolidados, repetir la descarga reciente más tarde para medir cuánto se completa (`RECIENTE_SNAPSHOT`) y dejar el productor funcionando varias semanas |
-| Magnitudes de tipos mixtos (`mb`, `ml`, `md`, `mww`) en un mismo recuento | Filtrar por tipo o usar magnitud de momento (`mw`) cuando exista |
-| Los gráficos no permiten exportar | Descarga CSV desde la tabla |
-| Una excepción no controlada (500) sale sin cabeceras CORS (orden de capas de Starlette) | Capturar a nivel de middleware propio |
+| Limitación | Mejora propuesta | Cuándo aplicarla |
+|---|---|---|
+| El sistema depende de un equipo local y de un túnel gratuito: si se apaga, el panel muestra el aviso y conserva la última lectura (probado), pero no hay datos nuevos | Despliegue en un servidor pequeño con dominio estable | Si el panel tuviera que estar disponible fuera de la demostración |
+| Un hueco de ingesta superior a 24 h pierde eventos del feed | Reconciliación automática con el catálogo FDSN para el intervalo (hoy es un paso manual con el catálogo FDSN, §2.3) | En cuanto el registro de consultas detecte un hueco de más de 24 h |
+| No se reconcilian eventos eliminados o fusionados por USGS fuera de la ventana de 24 h | Revisión periódica contra el catálogo | Si el análisis dependiera del recuento exacto de semanas pasadas |
+| Catálogo geográfico 1:110M: sin islas menores, costas simplificadas | Natural Earth 1:10M o límites con zona económica exclusiva | Si se analizaran países insulares o la atribución en costa (§3.6) |
+| El feed live acumula pocos días y el catálogo de las últimas ~3 semanas aún se completa: las comparaciones del periodo más reciente salen bajas | Comparar solo tramos consolidados, repetir la descarga reciente más tarde para medir cuánto se completa (`RECIENTE_SNAPSHOT`) y dejar el productor funcionando varias semanas | Antes de sacar conclusiones sobre el periodo reciente |
+| Magnitudes de tipos mixtos (`mb`, `ml`, `md`, `mww`) en un mismo recuento | Filtrar por tipo o usar magnitud de momento (`mw`) cuando exista | Si se compararan magnitudes entre redes o regiones |
+| Las agregaciones de `/api/estadisticas` se recalculan en cada petición | Tablas agregadas por hora y país, actualizadas por ventana afectada (§6.5) | Cuando la latencia medida (§6.4) supere el refresco de 60 s, hacia decenas de millones de filas |
+| Los originales live se repiten mucho entre respuestas (§2.3) | Ya se evita guardar respuestas idénticas; además, guardar solo las features nuevas o cambiadas | Si se ampliara la retención de originales más allá de 14 días |
+| Un solo consumidor y una partición por topic | Más particiones con clave `event_id` y varios consumidores del mismo grupo | Si el volumen superase lo que procesa un consumidor (hoy, unos pocos mensajes por minuto) |
 
 ---
 
@@ -446,21 +466,36 @@ Todos los importes son **supuestos ilustrativos** (marcados), no facturas. Una c
 
 Una prueba por fila, ejecutadas contra PostgreSQL real y la API real (`tests/acceptance`), más ejecuciones en la pila Docker real y en el panel publicado. Detalle en `docs/evidencias/`.
 
-| Prueba | Estado | Evidencia |
-|---|---|---|
-| Evento nuevo | Pasa | `aceptacion-s11.md` P1 |
-| Misma versión | Pasa | P2 |
-| Versión posterior | Pasa | P3 |
-| Versión antigua | Pasa | P4 |
-| Magnitud nula | Pasa | P5 |
-| Coordenadas inválidas | Pasa | P6 |
-| Evento marítimo | Pasa | P7 |
-| Reiniciar consumidor | Pasa (simulado y en la pila real: reset de offsets, `restart consumer`, caída de PostgreSQL) | P8, `pila-real.md` |
-| Cerrar el túnel | Pasa (panel publicado + ngrok real) | P9, `panel-publicado-watch.json` |
-| Volver a abrir el túnel | Pasa (se recuperó solo en 183 s) | P10 |
-| Reproducción histórica | Pasa (por Kafka real; aislada del live) | P11, `pila-real.md` |
+Todas se han **ejecutado**: ninguna se da por superada solo porque el comportamiento esté programado.
 
-Pruebas automáticas: 216 unitarias, 73 de contrato, 104 de integración con PostgreSQL, 10 de migraciones, 13 de aceptación, 10 contra la pila real y 17 + 12 de navegador (Edge) contra el panel.
+| Prueba | Resultado esperado | Resultado observado | Evidencia |
+|---|---|---|---|
+| Evento nuevo | Una fila actual, visible en API, mapa y análisis | Decisión NEW; 1 fila en `event_current`; la API y las estadísticas cuentan 1 evento | `aceptacion-s11.md` P1 |
+| Reenviar la misma versión | No aumenta el número de terremotos | 3 reenvíos → 3 DUPLICATE; total 1 antes y después; 1 sola fila en `event_message` | P2 |
+| Versión posterior | Cambian los datos actuales y las agregaciones afectadas | REVISION; la API pasa de M4,1 a M6,3 con total 1; el histograma pasa de [4,0-4,5) a [6,0-6,5) | P3 |
+| Versión antigua después | No sustituye a la más reciente | STALE; la API sigue en M6,3 y en la versión más reciente | P4 |
+| Magnitud nula | Se conserva y se visualiza como ND | Se guarda NULL (no 0), la API devuelve `null`, sale de `min_mag` y se cuenta en `null_mag_excluded` | P5 |
+| Coordenadas inválidas | Cuarentena y motivo; sin puntos inventados | Latitud 95 y longitud 200 → 2 filas en cuarentena con `invalid_coordinates`, payload original y referencia Kafka; la API devuelve 0 | P6 |
+| Evento marítimo | Sin país asignado; permanece en el análisis | `country_id: null`; las estadísticas lo cuentan en «Sin país asignado»; `country_id=none` lo devuelve | P7 |
+| Reiniciar consumidor | Reanuda sin duplicar | Relectura desde el offset 0 → solo STALE y DUPLICATE, con tablas idénticas; en la pila real, igual tras reset de offsets, `restart consumer` y caída de PostgreSQL | P8, `pila-real.md` |
+| Cerrar el túnel | El panel muestra el fallo y conserva la última lectura | Con ngrok cerrado, el panel publicado mostró «No se pudo actualizar» en ~60 s, la hora de la última lectura y estado «Sin respuesta», y conservó sus 185 eventos | P9, `panel.md`, `panel-publicado-watch.json` |
+| Volver a abrir el túnel | Se recuperan las consultas automáticamente | Se recuperó solo, sin recargar la página, 183 s después del primer aviso y sin tocar `config.json` | P10, `panel-publicado-watch.json` |
+| Reproducción histórica | Va por Kafka sin mezclarse con live | Prueba: NEW ×3, DUPLICATE, REVISION y STALE por `sismos.replay`; cada modo devuelve solo sus eventos, y un mensaje replay que llega al consumidor live va a cuarentena (`mode_mismatch`). Pila real: 10 eventos reproducidos y `live` sin cambios (227) | P11, §9.1, `pila-real.md` |
+
+**Cómo repetirlas:** las filas 1-8 y 11, con el comando de aceptación del README (una base PostgreSQL temporal, el consumidor y la API reales; reescribe `aceptacion-s11.md`). Las de la pila real están en `specs/001-vertical-event-demo/quickstart.md` §4. Las filas 9-10, cerrando y abriendo ngrok con el panel abierto, o con `node tests/e2e/panel_published.mjs watch <url-del-panel> <ruta>`.
+
+Pruebas automáticas: 216 unitarias, 75 de contrato, 105 de integración con PostgreSQL, 10 de migraciones, 13 de aceptación, 10 contra la pila real y 17 + 12 + 21 de navegador (Edge) contra el panel (la última, `tests/e2e/panel_secciones.mjs`: pestañas, fichas, gráficos interactivos e histórico paginado; capturas en `docs/evidencias/secciones/`).
+
+### 9.1 Reproducción histórica
+
+| Aspecto | Cómo se hace |
+|---|---|
+| **Selección** | Del histórico 2025 ya descargado (`data/raw/historico/`, catálogo FDSN, §2): los `REPLAY_COUNT` = 10 primeros eventos con M ≥ `REPLAY_MIN_MAG` = 5,0 desde `REPLAY_START` = 2025-01-01, ordenados por tiempo de ocurrencia. Se añaden tres casos controlados (`REPLAY_INJECT_CASES`): un duplicado exacto, una revisión posterior y una versión antigua |
+| **Inicio y velocidad** | `docker compose run --rm --no-deps -e PRODUCER_MODE=replay -e REPLAY_INTERVAL_SECONDS=0.2 producer`: un evento cada 0,2 s (por defecto, 2 s), sin parar el productor live |
+| **Separación** | Topic propio (`sismos.replay`) y esquema propio (`replay.*`). El consumidor elige el esquema por el topic, y una restricción `CHECK` impide guardar un mensaje de otro modo aunque se intente con SQL directo. La API solo los devuelve con `?mode=replay` |
+| **Tiempos** | Se conserva la fecha original (`time`, `updated`) y el momento de la reproducción se guarda aparte (`replay_at`). La revisión inyectada lleva `synthetic_flag=true` y `source="replay-injected"` |
+| **En el panel** | `?mode=replay&range=custom&from=2025-01-01&to=2025-01-03`: aviso «REPRODUCCIÓN» y los 10 eventos (`docs/evidencias/panel-replay.png`). Con el filtro «últimas 24 h» no aparecen, porque son de 2025 |
+| **Esperado y observado** | Esperado: 10 NEW, 1 DUPLICATE, 1 REVISION y 1 STALE. Observado en la pila real: `replay.event_current` = 10 y `replay.event_message` = 11 (el duplicado y la versión antigua no se guardan), el evento revisado quedó en M5,2 sin que la versión antigua lo sustituyera, cuarentena 0, `replay_at` en 11 de 11 y `live.event_current` sin cambios (`pila-real.md`). Repetirlo no cambia nada; para empezar de cero: `TRUNCATE replay.event_current, replay.event_message, replay.quarantine_record;` |
 
 ---
 
@@ -478,6 +513,8 @@ docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/do
     -e EVIDENCE_DIR=/app/docs/evidencias -e PYTHONPATH=/app api python scripts/medir_complejidad.py   # complejidad
 docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/data/raw:/app/data/raw" \
     -v "${PWD}/docs/evidencias:/app/docs/evidencias" -e PYTHONPATH=/app api python scripts/comparacion_reciente.py  # conclusión 4
+docker compose run --rm --no-deps -v "${PWD}/scripts:/app/scripts" -v "${PWD}/docs:/app/docs" api sh -c \
+    "pip install -q --target /tmp/mpl matplotlib==3.10.9 && PYTHONPATH=/tmp/mpl MPLCONFIGDIR=/tmp/mplcfg python scripts/graficos_calidad.py"  # gráficos de calidad
 python scripts/medir_api.py && python scripts/procedencia.py                                # latencias y procedencia
 ```
 

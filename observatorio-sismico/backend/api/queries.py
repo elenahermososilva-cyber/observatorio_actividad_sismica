@@ -21,7 +21,7 @@ from backend.api.params import NO_COUNTRY, EventFilters
 from backend.api.stats import (
     COMPARISON_MIN_MAG, DAY_MS, DEPTH_BIN_KM, HOUR_MS, MAG_BIN_WIDTH, BaselineData, GroupRow, StatsData, year_bounds_ms,
 )
-from backend.db.modes import EVENT_MODES, schema_for_mode
+from backend.db.modes import READ_MODES, schema_for_read_mode
 
 log = logging.getLogger("api")
 HISTORICAL_SCHEMA = "historico"
@@ -60,9 +60,9 @@ def _ms(value) -> int | None:
 
 
 def _checked_schema(mode: str) -> str:
-    if mode not in EVENT_MODES:
-        raise ValueError(f"mode must be one of {EVENT_MODES}")
-    return schema_for_mode(mode)
+    if mode not in READ_MODES:
+        raise ValueError(f"mode must be one of {READ_MODES}")
+    return schema_for_read_mode(mode)
 
 
 def _conditions(
@@ -141,7 +141,7 @@ class PostgresQueries:
         else:
             # ORDER BY ... LIMIT 1 usa ix_event_message_ingested_at (búsqueda por índice, no recorrido completo).
             query = sql.SQL("SELECT ingested_at FROM {} ORDER BY ingested_at DESC LIMIT 1").format(
-                sql.Identifier(schema_for_mode(mode), "event_message")
+                sql.Identifier(_checked_schema(mode), "event_message")
             )
         row = await (await conn.execute(query)).fetchone()
         return _ms(row[0]) if row else None

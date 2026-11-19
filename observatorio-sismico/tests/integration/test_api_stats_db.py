@@ -132,6 +132,21 @@ class ApiRealSqlTests(unittest.IsolatedAsyncioTestCase):
     def ids(body):
         return [f["id"] for f in body["features"]]
 
+    # ============================================================== modo historico (solo lectura)
+
+    async def test_historico_mode_reads_the_2025_load_and_stays_isolated_from_live(self) -> None:
+        await self.seed()
+        year = dict(start="2025-01-01T00:00:00Z", end="2026-01-01T00:00:00Z")
+        hist = await self.eventos(mode="historico", **year)
+        self.assertEqual(hist["metadata"]["mode"], "historico")
+        self.assertEqual(sorted(self.ids(hist)), sorted(f"H{i}" for i in range(1, 9)))  # H9 (2024) y H10 (2026) fuera
+        page = await self.eventos(mode="historico", limit="3", offset="3", **year)
+        self.assertEqual((page["metadata"]["count"], page["metadata"]["total"]), (3, 8))
+        live = await self.eventos(mode="live", **year)
+        self.assertEqual(live["features"], [])  # el histórico nunca aparece en live
+        stats = await self.stats(mode="historico", min_mag="4", **year)
+        self.assertEqual(stats["totals"]["events"], 6)
+
     # ============================================================== /api/eventos: min_mag
     async def test_min_mag_excludes_null_and_counts_them_separately(self) -> None:
         await self.seed()

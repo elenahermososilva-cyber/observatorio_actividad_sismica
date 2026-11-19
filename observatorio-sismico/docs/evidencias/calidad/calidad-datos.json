@@ -1,0 +1,88 @@
+{
+  "generado_en": "2026-11-19 20:31:22",
+  "conjuntos": {
+    "live": {
+      "eventos": 630,
+      "con_mag": 630,
+      "con_prof": 630,
+      "con_tipo_mag": 630,
+      "con_lugar": 630,
+      "completos": 630,
+      "versiones": 1051,
+      "versiones_distintas": 1051,
+      "cuarentena": 9,
+      "ids_distintos": 630,
+      "vigente_es_la_ultima": 630,
+      "pais_coherente": 630,
+      "sin_pais": 98,
+      "motivos_cuarentena": [
+        {
+          "motivo": "non_earthquake_type",
+          "detalle": "explosion",
+          "n": 7
+        },
+        {
+          "motivo": "non_earthquake_type",
+          "detalle": "quarry blast",
+          "n": 2
+        }
+      ],
+      "avisos": {
+        "anomaly_depth_negative": 9,
+        "anomaly_mag_negative": 9
+      },
+      "sin_aviso": 613
+    },
+    "historico": {
+      "eventos": 18302,
+      "con_mag": 18302,
+      "con_prof": 18302,
+      "con_tipo_mag": 18302,
+      "con_lugar": 18302,
+      "completos": 18302,
+      "versiones": 18302,
+      "versiones_distintas": 18302,
+      "cuarentena": 0,
+      "ids_distintos": 18302,
+      "vigente_es_la_ultima": 18302,
+      "pais_coherente": 18302,
+      "sin_pais": 14350,
+      "motivos_cuarentena": [],
+      "avisos": {
+        "fixed_place_trimmed": 3
+      },
+      "sin_aviso": 18299
+    },
+    "replay": {
+      "eventos": 10,
+      "con_mag": 10,
+      "con_prof": 10,
+      "con_tipo_mag": 10,
+      "con_lugar": 10,
+      "completos": 10,
+      "versiones": 11,
+      "versiones_distintas": 11,
+      "cuarentena": 0,
+      "ids_distintos": 10,
+      "vigente_es_la_ultima": 10,
+      "pais_coherente": 10,
+      "sin_pais": 9,
+      "motivos_cuarentena": [],
+      "avisos": {},
+      "sin_aviso": 10
+    }
+  },
+  "actualidad_live": {
+    "versiones": 671,
+    "mediana_s": 58.1,
+    "p95_s": 100.9,
+    "en_2_min": 670,
+    "mas_de_1_h": 0,
+    "recuperadas_tras_parada": 380
+  },
+  "revisiones_live": {
+    "eventos": 630,
+    "con_revision": 149,
+    "max_versiones": 45
+  }
+}

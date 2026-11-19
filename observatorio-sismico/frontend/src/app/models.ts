@@ -1,4 +1,4 @@
-import type { FeatureCollection, Point } from 'geojson';
+import type { Feature, FeatureCollection, Point } from 'geojson';
 
 /** Contenido de public/config.json. Es público: nunca debe contener secretos. */
 export type Config = {
@@ -39,6 +39,13 @@ export type EventsMetadata = {
 };
 
 export type EventCollection = FeatureCollection<Point, EventProperties> & { metadata?: EventsMetadata };
+export type EventFeature = Feature<Point, EventProperties>;
+
+/** Pestañas del panel. Los filtros comunes se aplican a resumen, análisis y eventos. */
+export type Tab = 'resumen' | 'analisis' | 'eventos' | 'historico' | 'estado';
+
+/** Filtros propios de la pestaña del histórico 2025 (consulta paginada en el servidor, modo `historico`). */
+export type HistFilters = { startDate: string; endDate: string; minMag: string; country: string; pageSize: number };
 
 export type Period = { start: number | null; end: number | null };
 export type Missing = Record<string, number>;

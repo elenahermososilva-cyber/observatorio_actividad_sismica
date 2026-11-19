@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 
 export type Bar = { label: string; value: number; title: string };
 
@@ -15,26 +15,33 @@ type Tick = { y: number; label: string };
       @if (bars().length === 0) {
         <p class="empty">{{ emptyText() }}</p>
       } @else if (orientation() === 'vertical') {
-        <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" role="img" [attr.aria-label]="ariaLabel()" preserveAspectRatio="xMidYMid meet">
+        <div class="wrap">
+        <svg [attr.viewBox]="'0 0 ' + W + ' ' + H" role="img" [attr.aria-label]="ariaLabel()" preserveAspectRatio="xMidYMid meet" (mouseleave)="hover.set(null)">
           @for (t of ticks(); track t.y) {
             <line [attr.x1]="L" [attr.x2]="W - R" [attr.y1]="t.y" [attr.y2]="t.y" class="grid" />
             <text [attr.x]="L - 6" [attr.y]="t.y + 4" text-anchor="end" class="tick">{{ t.label }}</text>
           }
           <line [attr.x1]="L" [attr.x2]="W - R" [attr.y1]="H - B" [attr.y2]="H - B" class="axis" />
           @for (b of vbars(); track $index) {
-            <rect [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h" [attr.fill]="color()"><title>{{ b.title }}</title></rect>
+            <rect [attr.x]="b.x - (slotPad())" [attr.y]="T" [attr.width]="b.w + 2 * slotPad()" [attr.height]="H - B - T" fill="transparent" (mouseenter)="hover.set($index)" />
+            <rect [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h" [attr.fill]="color()" rx="2"
+                  [attr.fill-opacity]="hover() === null || hover() === $index ? 1 : 0.45" (mouseenter)="hover.set($index)" class="bar"><title>{{ b.title }}</title></rect>
             @if (b.showLabel) {
               <text [attr.x]="b.x + b.w / 2" [attr.y]="H - B + 14" text-anchor="middle" class="tick">{{ b.label }}</text>
             }
           }
         </svg>
+          @if (vtip(); as t) { <div class="tooltip" [style.left.%]="t.left" [style.top.%]="t.top">{{ t.text }}</div> }
+        </div>
         <p class="axis-name">{{ xLabel() }}</p>
       } @else {
-        <svg [attr.viewBox]="'0 0 ' + W + ' ' + hHeight()" role="img" [attr.aria-label]="ariaLabel()" preserveAspectRatio="xMidYMid meet">
+        <svg [attr.viewBox]="'0 0 ' + W + ' ' + hHeight()" role="img" [attr.aria-label]="ariaLabel()" preserveAspectRatio="xMidYMid meet" (mouseleave)="hover.set(null)">
           @for (b of hbars(); track $index) {
             <text [attr.x]="HL - 8" [attr.y]="b.y + 16" text-anchor="end" class="tick">{{ b.label }}</text>
-            <rect [attr.x]="HL" [attr.y]="b.y + 3" [attr.width]="b.w" height="18" [attr.fill]="b.accent ? '#64748b' : color()"><title>{{ b.title }}</title></rect>
-            <text [attr.x]="HL + b.w + 6" [attr.y]="b.y + 16" class="tick">{{ b.value }}</text>
+            <rect x="0" [attr.y]="b.y" [attr.width]="W" height="24" fill="transparent" (mouseenter)="hover.set($index)" />
+            <rect [attr.x]="HL" [attr.y]="b.y + 3" [attr.width]="b.w" height="18" rx="2" [attr.fill]="b.accent ? '#64748b' : color()"
+                  [attr.fill-opacity]="hover() === null || hover() === $index ? 1 : 0.45" (mouseenter)="hover.set($index)" class="bar"><title>{{ b.title }}</title></rect>
+            <text [attr.x]="HL + b.w + 6" [attr.y]="b.y + 16" class="tick" [class.strong]="hover() === $index">{{ b.value }}</text>
           }
         </svg>
       }
@@ -56,7 +63,10 @@ type Tick = { y: number; label: string };
   `,
   styles: [`
     figure { margin: 0; } figcaption { font-weight: 600; margin-bottom: 6px; }
-    svg { width: 100%; height: auto; display: block; }
+    svg { width: 100%; height: auto; display: block; } .wrap { position: relative; } .bar { transition: fill-opacity .12s; }
+    .tooltip { position: absolute; transform: translate(-50%, -115%); background: #132b40; color: white; padding: 5px 9px; border-radius: 6px;
+               font-size: .8rem; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25); z-index: 2; }
+    .strong { font-weight: 700; fill: #132b40; }
     .grid { stroke: #dbe4ea; stroke-width: 1; } .axis { stroke: #64748b; stroke-width: 1; }
     .tick { font-size: 12px; fill: #42596b; } .axis-name { margin: 2px 0 0; text-align: center; font-size: .8rem; color: #42596b; }
     .empty { color: #42596b; font-style: italic; margin: 8px 0; }
@@ -80,6 +90,7 @@ export class BarChartComponent {
   protected readonly W = 520; protected readonly H = 230;
   protected readonly L = 44; protected readonly R = 8; protected readonly T = 10; protected readonly B = 34;
   protected readonly HL = 150;
+  protected readonly hover = signal<number | null>(null);
 
   private readonly yMax = computed(() => niceMax(Math.max(1, ...this.bars().map((b) => b.value))));
 
@@ -99,6 +110,20 @@ export class BarChartComponent {
       const h = (b.value / this.yMax()) * plotH;
       return { x: this.L + i * slot + (slot - w) / 2, y: this.H - this.B - h, w, h, label: b.label, title: b.title, showLabel: i % every === 0 };
     });
+  });
+
+  /** Margen de la zona sensible alrededor de cada barra (para que las barras finas sean fáciles de señalar). */
+  protected readonly slotPad = computed(() => {
+    const n = this.bars().length;
+    const slot = (this.W - this.L - this.R) / Math.max(1, n);
+    return slot * 0.1;
+  });
+
+  protected readonly vtip = computed(() => {
+    const i = this.hover();
+    const b = i === null ? undefined : this.vbars()[i];
+    if (!b) return null;
+    return { left: ((b.x + b.w / 2) / this.W) * 100, top: (Math.min(b.y, this.H - this.B - 4) / this.H) * 100, text: b.title };
   });
 
   protected readonly hHeight = computed(() => this.bars().length * 24 + 8);

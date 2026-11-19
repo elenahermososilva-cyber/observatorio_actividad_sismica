@@ -30,12 +30,17 @@ Kafka y PostgreSQL **no** se publican: Compose solo mapea la API en `127.0.0.1:8
 
 1. `docker compose up -d` desde `observatorio-sismico/` y `docker compose ps` con los 5 servicios `healthy`.
 2. `PRODUCER_MODE=live` en `.env` (si se cambió, `docker compose up -d --force-recreate producer api`). El productor consulta USGS cada 60 s.
+   **Comprobar los datos y la ingesta:** `docker compose logs --tail 3 producer` muestra `cycle ok` cada minuto. El histórico debe estar cargado (18.302 eventos):
+   `docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT (SELECT count(*) FROM historico.event_current) AS historico, (SELECT count(*) FROM live.event_current) AS live"'`.
+   Si `historico` es 0, cargarlo (README, «Histórico 2025»).
 3. Arrancar el túnel **con el dominio fijo**: `ngrok http --url=onset-deepen-situation.ngrok-free.dev 8000`. Con el dominio fijo la URL no cambia al reiniciar ngrok y no hay que recompilar ni volver a publicar.
 4. Comprobar `curl -H "ngrok-skip-browser-warning: 1" https://onset-deepen-situation.ngrok-free.dev/api/salud?mode=live` → `"status":"ok"` y `"stale":false`.
 5. Abrir el panel publicado y comprobar que el estado de la API es «Accesible», la última ingesta es reciente y hay eventos en mapa, tabla y gráficos.
 6. Opcional: `node tests/e2e/panel_published.mjs check https://observatorio-sismico-elena.netlify.app "<ruta de observatorio-sismico>"`.
 
-Si la demostración necesita actividad garantizada, se puede lanzar la reproducción acelerada (`PRODUCER_MODE=replay`) y abrir el panel con `?mode=replay&range=custom&from=2025-01-01&to=2025-01-03`: se muestra el banner «REPRODUCCIÓN» y los datos no se mezclan con los live.
+7. **Tener preparada la reproducción histórica** por si se pide. Se lanza sin parar el productor live:
+   `docker compose run --rm --no-deps -e PRODUCER_MODE=replay -e REPLAY_INTERVAL_SECONDS=0.2 producer`
+   y se abre el panel con `?mode=replay&range=custom&from=2025-01-01&to=2025-01-03`, que muestra el aviso «REPRODUCCIÓN» sin mezclar datos con los live. Si ya se reprodujo antes, todo sale DUPLICATE o STALE y no cambia nada. Para verla entrar de nuevo, vaciar antes el esquema `replay` (memoria §9.1).
 
 ## Volver a publicar el panel
 

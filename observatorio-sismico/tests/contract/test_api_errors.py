@@ -68,10 +68,17 @@ class ApiErrorContractTests(unittest.TestCase):
     def test_invalid_mode_is_400_and_does_not_query_the_database(self) -> None:
         queries = FakeQueries()
         with TestClient(create_app(queries, default_mode="demo")) as client:
-            for bad in ("historico", "public", "DEMO", "demo;drop"):
+            for bad in ("historical", "public", "DEMO", "demo;drop"):
                 response = client.get("/api/eventos", params={"mode": bad, "start": "2020-01-01"})
                 assert_error_body(self, response, 400, "invalid_parameter")
         self.assertEqual(queries.calls, [])
+
+    def test_historico_is_a_read_only_mode_accepted_by_the_api(self) -> None:
+        queries = FakeQueries()
+        with TestClient(create_app(queries, default_mode="live")) as client:
+            response = client.get("/api/eventos", params={"mode": "historico", "start": "2025-01-01", "end": "2026-01-01"})
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(queries.calls[-1][3], "historico")
 
     def test_invalid_default_mode_in_configuration_fails_at_startup(self) -> None:
         with self.assertRaises(ValueError):

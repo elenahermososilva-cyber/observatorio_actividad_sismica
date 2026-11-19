@@ -131,7 +131,7 @@ class ApiDatabaseTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(as_live["metadata"]["count"], 0)
 
     async def test_invalid_mode_is_400_and_never_reaches_sql(self) -> None:
-        for bad in ("historico", "public", 'demo"; DROP TABLE event_current;--'):
+        for bad in ("historical", "public", 'demo"; DROP TABLE event_current;--'):
             response = await self.get("/api/eventos", start=START, mode=bad)
             self.assertEqual(response.status_code, 400, bad)
             self.assertEqual(response.json()["error"]["code"], "invalid_parameter")
