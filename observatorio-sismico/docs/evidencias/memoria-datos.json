@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-11-18T20:53:24+00:00",
+  "generado_en": "2026-11-19T23:08:51+00:00",
   "analisis_historico_2025": {
     "eventos": 18302,
     "rango_tiempo": [
@@ -321,18 +321,18 @@
     }
   },
   "live": {
-    "eventos_actuales": 402,
-    "mensajes_aceptados": 466,
-    "eventos_con_revision": 31,
-    "revisiones": 64,
+    "eventos_actuales": 656,
+    "mensajes_aceptados": 1106,
+    "eventos_con_revision": 163,
+    "revisiones": 450,
     "rango_tiempo_eventos": [
       "2026-11-16T22:54:13.038000+00:00",
-      "2026-11-18T20:48:09.191000+00:00"
+      "2026-11-19T23:05:30.857000+00:00"
     ],
     "cuarentena": [
       {
         "motivo": "non_earthquake_type (explosion)",
-        "n": 3
+        "n": 7
       },
       {
         "motivo": "non_earthquake_type (quarry blast)",
@@ -340,24 +340,28 @@
       }
     ],
     "mag_nula": 0,
-    "mag_negativa": 5,
-    "sin_pais": 64,
+    "mag_negativa": 9,
+    "sin_pais": 100,
     "tipos_magnitud": [
       {
         "tipo": "ml",
-        "n": 240
+        "n": 401
       },
       {
         "tipo": "md",
-        "n": 118
+        "n": 190
       },
       {
         "tipo": "mb",
-        "n": 35
+        "n": 49
       },
       {
         "tipo": "mww",
-        "n": 8
+        "n": 14
+      },
+      {
+        "tipo": "mb_lg",
+        "n": 1
       },
       {
         "tipo": "mw",
@@ -366,65 +370,65 @@
     ],
     "consultas": {
       "ok": {
-        "n": 189,
-        "features_suma": 35621,
-        "latencia_media_ms": 123.7,
-        "latencia_p95_ms": 154.6,
-        "latencia_max_ms": 564,
+        "n": 1764,
+        "features_suma": 324823,
+        "latencia_media_ms": 177.0,
+        "latencia_p95_ms": 481.7,
+        "latencia_max_ms": 1466,
         "primera": "2026-11-17T22:15:14.468589+00:00",
-        "ultima": "2026-11-18T20:52:56.613443+00:00"
+        "ultima": "2026-11-19T23:07:58.668375+00:00"
       }
     },
     "deduplicacion_del_feed": {
-      "apariciones_de_features_en_respuestas": 35621,
-      "versiones_publicadas": 471,
-      "porcentaje_suprimido": 98.68
+      "apariciones_de_features_en_respuestas": 324823,
+      "versiones_publicadas": 1115,
+      "porcentaje_suprimido": 99.66
     },
     "originales_guardados": {
-      "archivos_distintos": 90,
-      "respuestas_sin_copia_por_ser_identicas": 99
+      "archivos_distintos": 749,
+      "respuestas_sin_copia_por_ser_identicas": 1015
     },
     "actualidad": {
       "nota": "minutos entre la ocurrencia y la primera versión publicada (updated de la primera versión vista)",
       "publicacion_usgs_min_todos_incluye_arranque": {
-        "n": 402,
-        "mediana": 34.6,
-        "p95": 848.7,
-        "max": 1163.4
+        "n": 656,
+        "mediana": 4.4,
+        "p95": 914.8,
+        "max": 1388.0
       },
       "publicacion_usgs_min_fuera_de_arranque_todos": {
-        "n": 28,
-        "mediana": 3.1,
-        "p95": 535.9,
-        "max": 785.7
+        "n": 282,
+        "mediana": 2.4,
+        "p95": 956.1,
+        "max": 1388.0
       },
       "publicacion_usgs_min_fuera_de_arranque_M4": {
-        "n": 5,
-        "mediana": 25.5,
-        "p95": 285.9,
-        "max": 346.8
+        "n": 26,
+        "mediana": 23.6,
+        "p95": 1078.0,
+        "max": 1388.0
       },
       "publicacion_usgs_min_fuera_de_arranque_menor_M4": {
-        "n": 23,
-        "mediana": 1.6,
-        "p95": 594.7,
-        "max": 785.7
+        "n": 256,
+        "mediana": 2.1,
+        "p95": 937.7,
+        "max": 1201.7
       },
       "ingesta_tras_actualizacion_usgs_s": {
-        "n": 86,
-        "mediana": 56.1,
-        "p95": 90.4,
-        "max": 119.6,
+        "n": 726,
+        "mediana": 57.6,
+        "p95": 101.1,
+        "max": 144.0,
         "ciclos_de_arranque_excluidos": 2
       }
     },
     "revisiones_detalle": {
-      "versiones_con_anterior": 64,
-      "cambia_magnitud": 17,
-      "cambia_ubicacion": 15,
-      "cambia_tiempo": 15,
+      "versiones_con_anterior": 450,
+      "cambia_magnitud": 107,
+      "cambia_ubicacion": 112,
+      "cambia_tiempo": 107,
       "max_cambio_magnitud": 2.6,
-      "mediana_minutos_entre_versiones": 17.9
+      "mediana_minutos_entre_versiones": 12.0
     },
     "secuencia_revisiones_no_monotona": 0
   },
@@ -433,19 +437,27 @@
     "dias": [
       {
         "dia": "2026-11-17",
-        "eventos_M4": 23,
+        "eventos_M4": 24,
         "sin_pais": 14,
-        "menos_70_km": 13,
+        "menos_70_km": 14,
         "mas_300_km": 2,
         "mag_max": 5.2
+      },
+      {
+        "dia": "2026-11-18",
+        "eventos_M4": 27,
+        "sin_pais": 17,
+        "menos_70_km": 24,
+        "mas_300_km": 0,
+        "mag_max": 6.0
       }
     ],
-    "dias_n": 1,
-    "eventos_M4_total": 23,
-    "media_por_dia_live": 23.0,
-    "porcentaje_sin_pais_live": 60.87,
-    "porcentaje_menos_70_km_live": 56.52,
-    "porcentaje_mas_300_km_live": 8.7,
+    "dias_n": 2,
+    "eventos_M4_total": 51,
+    "media_por_dia_live": 25.5,
+    "porcentaje_sin_pais_live": 60.78,
+    "porcentaje_menos_70_km_live": 74.51,
+    "porcentaje_mas_300_km_live": 3.92,
     "historico_2025": {
       "eventos": 18302,
       "porcentaje_sin_pais": 78.41,

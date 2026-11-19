@@ -1,20 +1,20 @@
 {
-  "generado_en": "2026-11-19 20:31:22",
+  "generado_en": "2026-11-19 23:09:17",
   "conjuntos": {
     "live": {
-      "eventos": 630,
-      "con_mag": 630,
-      "con_prof": 630,
-      "con_tipo_mag": 630,
-      "con_lugar": 630,
-      "completos": 630,
-      "versiones": 1051,
-      "versiones_distintas": 1051,
+      "eventos": 656,
+      "con_mag": 656,
+      "con_prof": 656,
+      "con_tipo_mag": 656,
+      "con_lugar": 656,
+      "completos": 656,
+      "versiones": 1106,
+      "versiones_distintas": 1106,
       "cuarentena": 9,
-      "ids_distintos": 630,
-      "vigente_es_la_ultima": 630,
-      "pais_coherente": 630,
-      "sin_pais": 98,
+      "ids_distintos": 656,
+      "vigente_es_la_ultima": 656,
+      "pais_coherente": 656,
+      "sin_pais": 100,
       "motivos_cuarentena": [
         {
           "motivo": "non_earthquake_type",
@@ -31,7 +31,7 @@
         "anomaly_depth_negative": 9,
         "anomaly_mag_negative": 9
       },
-      "sin_aviso": 613
+      "sin_aviso": 639
     },
     "historico": {
       "eventos": 18302,
@@ -73,16 +73,16 @@
     }
   },
   "actualidad_live": {
-    "versiones": 671,
-    "mediana_s": 58.1,
+    "versiones": 726,
+    "mediana_s": 57.6,
     "p95_s": 100.9,
-    "en_2_min": 670,
+    "en_2_min": 724,
     "mas_de_1_h": 0,
     "recuperadas_tras_parada": 380
   },
   "revisiones_live": {
-    "eventos": 630,
-    "con_revision": 149,
+    "eventos": 656,
+    "con_revision": 163,
     "max_versiones": 45
   }
 }

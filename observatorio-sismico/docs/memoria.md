@@ -2,7 +2,7 @@
 
 Proyecto de aula de Big Data. Canalización de cinco servicios (productor → Kafka → consumidor → PostgreSQL → API) y panel Angular/Leaflet publicado en Netlify a través de un túnel ngrok.
 
-**Cómo leer este documento.** Cada apartado responde a un criterio de la rúbrica (ENUNCIADO §13). Todas las cifras proceden de scripts reproducibles (§10); ninguna se escribió a mano. Las cifras del feed en vivo son una **instantánea del 2026-11-18 20:53 UTC** y se regeneran con [`scripts/memoria_datos.py`](../scripts/memoria_datos.py).
+**Cómo leer este documento.** Cada apartado responde a un criterio de la rúbrica (ENUNCIADO §13). Todas las cifras proceden de scripts reproducibles (§10); ninguna se escribió a mano. Las cifras del feed en vivo son una **instantánea del 2026-11-19 23:09 UTC** y se regeneran con [`scripts/memoria_datos.py`](../scripts/memoria_datos.py).
 
 | Criterio de la rúbrica | Apartado | Evidencia principal |
 |---|---|---|
@@ -83,17 +83,17 @@ Tipos y unidades de los campos de USGS (identificador, `time` y `updated` en **m
 
 ### 2.3 Resultados medidos
 
-**Feed en vivo** (189 consultas correctas, 0 fallidas, entre 2026-11-17 22:15 y 2026-11-18 20:52 UTC):
+**Feed en vivo** (1.764 consultas correctas, 0 fallidas, entre 2026-11-17 22:15 y 2026-11-19 23:07 UTC, unas 29 h de funcionamiento efectivo):
 
 | Medida | Valor |
 |---|---|
-| Latencia de la consulta | media 123,7 ms · p95 154,6 ms · máx 564 ms |
-| Apariciones de features en las respuestas | 35.621 |
-| Versiones publicadas a Kafka (incluidas las rechazadas) | 471 |
-| **Publicaciones evitadas** por la marca de «ya publicado» | **98,7 %** |
-| Respuestas sin copia por ser idénticas | 99 de 189 (90 archivos distintos) |
+| Latencia de la consulta | media 177,0 ms · p95 481,7 ms · máx 1.466 ms |
+| Apariciones de features en las respuestas | 324.823 |
+| Versiones publicadas a Kafka (incluidas las rechazadas) | 1.115 |
+| **Publicaciones evitadas** por la marca de «ya publicado» | **99,7 %** |
+| Respuestas sin copia por ser idénticas | 1.015 de 1.764 (749 archivos distintos) |
 
-Sin la deduplicación del productor, cada versión se republicaría unas 76 veces de media (35.621 apariciones para 471 versiones: una por minuto mientras el evento permanece en la ventana de 24 h).
+Sin la deduplicación del productor, cada versión se republicaría unas 291 veces de media (324.823 apariciones para 1.115 versiones: una por minuto mientras el evento permanece en la ventana de 24 h).
 
 **Histórico 2025:** 12 consultas, 18.302 eventos recibidos y reportados (coinciden), ninguna se acerca al límite de 20.000 (la mayor, julio, trae 2.684), 0 duplicados entre intervalos. Tabla completa con URL, fecha de extracción, tamaño y SHA-256 en [`docs/consultas-y-procedencia.md`](consultas-y-procedencia.md).
 
@@ -126,22 +126,22 @@ El consumidor aplica reglas explícitas ([`backend/consumer/processing.py`](../b
 | Dimensión | Comprobación | Antes (original) | Después (base de datos) | Decisión |
 |---|---|---|---|---|
 | **Completitud** | Magnitud nula / magType ausente / profundidad nula / `place` vacío (histórico, 18.302) | 0 / 0 / 0 / 0 | 0 / 0 / 0 (y **0 magnitudes convertidas en 0**) | NULL se conserva; no se imputa |
-| | Magnitud nula en el feed live (402 eventos) | — | 0 | Los NULL se contarían aparte (`null_mag_excluded`) si aparecieran |
+| | Magnitud nula en el feed live (656 eventos) | — | 0 | Los NULL se contarían aparte (`null_mag_excluded`) si aparecieran |
 | **Unicidad** | Duplicados entre intervalos del histórico | 0 de 18.302 leídos | 18.302 `event_id` únicos | Deduplicar por `event_id` al unir intervalos |
-| | Repetición del feed (35.621 apariciones) | 35.621 | **471** versiones publicadas (−98,7 %) | Marca «ya publicado» tras el ack |
+| | Repetición del feed (324.823 apariciones) | 324.823 | **1.115** versiones publicadas (−99,7 %) | Marca «ya publicado» tras el ack |
 | | Reenvío de versiones y reproceso de offsets | — | `UNIQUE (event_id, updated_ms)`: 0 duplicados en las pruebas P2, P4 y P8 | Upsert idempotente |
-| **Validez** | Tipo distinto de `earthquake` (feed live) | 5 (3 `explosion`, 2 `quarry blast`) | **5 en cuarentena**, 0 en `event_current` | Cuarentena con motivo |
+| **Validez** | Tipo distinto de `earthquake` (feed live) | 9 (7 `explosion`, 2 `quarry blast`) | **9 en cuarentena**, 0 en `event_current` | Cuarentena con motivo |
 | | Coordenadas no finitas o fuera de rango, no Point (histórico) | 0 | 0 | `CHECK` en base de datos además de la validación |
 | | Fechas y estructura | 0 `updated` anterior a `time` | 0 avisos `anomaly_updated_before_time` | — |
 | **Consistencia** | Países inexistentes en el catálogo | — | 0 (clave foránea a `ref.dim_country`) | Clave foránea + `CHECK assigned ⇔ country_id` |
 | | `event_current` sin mensaje de origen | — | 0 (clave foránea compuesta) | Integridad referencial |
-| | Secuencia de revisiones (versión vigente = la mayor) | — | 0 eventos con la vigente distinta de la última (64 revisiones en live) | Guardia `WHERE current_version_ms < EXCLUDED…` |
+| | Secuencia de revisiones (versión vigente = la mayor) | — | 0 eventos con la vigente distinta de la última (450 revisiones en live) | Guardia `WHERE current_version_ms < EXCLUDED…` |
 | | `ADM0_A3` único | — | 177 de 177 | Se comprueba antes de cargar |
-| **Actualidad** | Retraso de nuestra ingesta tras la actualización de USGS (fuera de arranque, n=86) | — | mediana 56 s · p95 90 s · máx 120 s | Coherente con el sondeo de 60 s |
-| | Retraso de publicación de USGS (ocurrencia → primera versión; fuera de arranque, n=28) | — | mediana 3,1 min · p95 536 min · máx 786 min | **Cola larga**: algunos eventos se publican horas después (ver §3.5) |
+| **Actualidad** | Retraso de nuestra ingesta tras la actualización de USGS (fuera de arranque, n=726) | — | mediana 58 s · p95 101 s · máx 144 s | Coherente con el sondeo de 60 s |
+| | Retraso de publicación de USGS (ocurrencia → primera versión; fuera de arranque, n=282) | — | mediana 2,4 min · p95 956 min · máx 1.388 min | **Cola larga**: algunos eventos se publican horas después (ver §3.5) |
 | **Exactitud** | Qué se puede contrastar | Atribución de país vs `place` (§3.6) | Epicentros marítimos y fronteras explicados | Se documenta lo que **no** se puede verificar (§3.7) |
 
-Avisos de calidad del histórico: **18.299 de 18.302 sin aviso**; solo `fixed_place_trimmed` en 3 (0,02 %). Un catálogo oficial ya curado deja poco que limpiar: es un resultado, no una ausencia de análisis. En el feed live aparecieron 5 magnitudes negativas válidas (con `anomaly_mag_negative`) y 5 no-terremotos, que la regla aísla.
+Avisos de calidad del histórico: **18.299 de 18.302 sin aviso**; solo `fixed_place_trimmed` en 3 (0,02 %). Un catálogo oficial ya curado deja poco que limpiar: es un resultado, no una ausencia de análisis. En el feed live aparecieron 9 magnitudes negativas válidas (con `anomaly_mag_negative`) y 9 no-terremotos, que la regla aísla.
 
 ### 3.3 Consultas para reproducir las cifras
 
@@ -177,11 +177,11 @@ SELECT left(reason, strpos(reason, ':') - 1) AS motivo, count(*) FROM live.quara
 
 ### 3.5 Revisiones y actualidad (feed live, instantánea)
 
-De 402 eventos, **31 tuvieron revisiones** (64 versiones posteriores a la primera). Entre versiones consecutivas: la magnitud cambia en 17, la ubicación en 15 y el tiempo de ocurrencia en 15; el mayor cambio de magnitud fue de 2,6; la mediana entre versiones es de 17,9 min. Una revisión puede por tanto mover un evento de país, de magnitud o de ventana horaria.
+De 656 eventos, **163 tuvieron revisiones** (450 versiones posteriores a la primera). Entre versiones consecutivas: la magnitud cambia en 107, la ubicación en 112 y el tiempo de ocurrencia en 107; el mayor cambio de magnitud fue de 2,6; la mediana entre versiones es de 12,0 min. Una revisión puede por tanto mover un evento de país, de magnitud o de ventana horaria.
 
 **Qué mide cada retraso.** Hay dos, y no se mezclan: el *retraso de publicación* (ocurrencia → primera versión que vemos) y el *retraso de nuestra ingesta* (actualización de USGS → recepción). Se mide siempre desde la **primera versión** de cada evento: una **revisión antigua haría crecer artificialmente** la diferencia entre recepción y tiempo del evento (el `updated` de la revisión puede ser horas posterior a la ocurrencia), y eso no es lentitud del sistema ni de la publicación inicial.
 
-Retraso de publicación de USGS (minutos entre la ocurrencia y la primera versión vista, **solo ciclos de funcionamiento normal**; se excluye el ciclo de arranque, que publica de golpe las 24 h anteriores y falsearía el dato): n = 28, mediana 3,1 min, p95 536 min; con M ≥ 4, n = 5 y mediana 25,5 min (frente a 1,6 min por debajo de M 4). Con **muestra todavía pequeña (n = 28; solo 5 de M ≥ 4)** no se estima un retraso medio fiable; sí se observa que **la distribución tiene cola larga**: algunos eventos aparecen horas después de ocurrir. Por eso la comparación de «últimas 24 horas» puede infravalorar el recuento reciente, como exige advertir el enunciado.
+Retraso de publicación de USGS (minutos entre la ocurrencia y la primera versión vista, **solo ciclos de funcionamiento normal**; se excluye el ciclo de arranque, que publica de golpe las 24 h anteriores y falsearía el dato): n = 282, mediana 2,4 min, p95 956 min; con M ≥ 4, n = 26 y mediana 23,6 min (frente a 2,1 min por debajo de M 4). **La muestra de M ≥ 4 sigue siendo pequeña (n = 26)** y muy dispersa (p95 de 1.078 min), así que no se estima un retraso medio fiable; sí se observa que **la distribución tiene cola larga**: algunos eventos aparecen horas después de ocurrir (máximo, 1.388 min, casi 23 h), y los de M ≥ 4 tardan en mediana unas diez veces más que los pequeños. Por eso la comparación de «últimas 24 horas» puede infravalorar el recuento reciente, como exige advertir el enunciado.
 
 **Madurez del catálogo (medida con el catálogo FDSN reciente, §5 conclusión 4).** El retraso no afecta solo a las primeras horas: descargado el 18-nov, el catálogo tiene entre el 29-oct y el 17-nov una media de **26,4 eventos M ≥ 4 por día**, frente a 53,5 entre el 1 y el 28-oct, y ese total queda **por debajo del mínimo de cualquier ventana de 20 días de 2025**. La caída es brusca, empieza unas tres semanas antes de la descarga y es más fuerte en M 4,0–4,4 (de 23,5 a 10,4 por día) que en M ≥ 4,5 (de 30,0 a 16,1). Se contrastó con una **segunda descarga del mismo periodo, 23 h después** (19-nov, `RECIENTE_SNAPSHOT=reciente-2`, §10): el total pasó de 2.027 a 2.070 eventos (+43, +2,1 %), pero **el tramo del 29-oct al 17-nov solo ganó 5 (529 → 534, +0,9 %)** y seguía por debajo del mínimo de 2025 (689). Los eventos añadidos se concentran en el 23–28 de octubre (+38; solo el 24-oct, +14), días de réplicas de grandes terremotos: USGS añade réplicas tras revisarlas. **Una publicación tardía que se completa en horas queda descartada como explicación del déficit**; lo que no se puede distinguir con estos datos es si el catálogo se completa durante semanas (revisión de los eventos pequeños) o si la actividad mundial fue de verdad menor en esas tres semanas. Se deja como pregunta abierta.
 
@@ -308,14 +308,14 @@ Todas las cifras proceden de [`docs/evidencias/memoria-datos.json`](evidencias/m
 
 **Datos:** 365 días con los días sin eventos incluidos. Media **50,14**, mediana **43**, mínimo 20, máximo **645** (2025-07-30), cuartiles 36 y 53. Con la valla de Tukey (Q3 + 1,5·RIC = 78,5) hay **27 días atípicos que concentran 3.782 eventos (20,7 % del año)**; la media sin ellos es **42,96**, prácticamente la mediana. Julio (2.684 eventos) y agosto (2.222) tuvieron 2,0 y 1,7 veces la media del resto de meses (1.340).
 **Lectura:** una sola jornada desplaza la media. El terremoto de **M8,8 de la península de Kamchatka** (`us6000qw60`, 2025-07-29 23:24 UTC) y sus réplicas dan 121 eventos el 29-jul, **645 el 30-jul**, 315 el 31-jul y 234 el 1-ago; los eventos de una secuencia no son independientes. **Consecuencia para el panel:** la comparación histórica devuelve media, mediana, mínimo y máximo, y la memoria compara con la mediana (43) además de con la media (50,1).
-**Comparación con el feed** (M ≥ 4; día UTC completo 2026-11-17): **23 terremotos** en la instantánea de [`memoria-datos.json`](evidencias/memoria-datos.json) (24 dos horas después, al publicarse otro), es decir 0,46 veces la media y 0,53 veces la mediana de 2025; solo 4 de 365 días de 2025 tuvieron 23 o menos. **No demuestra menos actividad ni retraso de USGS**: el catálogo FDSN da para ese mismo día 25 eventos, de los que el feed vio 24, y 23 horas después el catálogo seguía en 25 para ese día. Lo que sí se mide es que **el pipeline no pierde eventos**; el valor bajo del día es coherente con el tramo final del periodo reciente (conclusión 4), cuya causa —actividad real o catálogo aún incompleto— **no está resuelta**. Comparar un día reciente con un año ya consolidado no es una comparación equivalente, y la tarjeta del panel lo advierte.
-**Capturas:** [`analisis/02-live-17nov-M4.png`](evidencias/analisis/02-live-17nov-M4.png) (pestaña Análisis; filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica. Hoy muestra 24 eventos: el 25.º del catálogo aún no ha llegado al feed y el 23 de la instantánea de [`memoria-datos.json`](evidencias/memoria-datos.json) subió a 24 al publicarse otro.
+**Comparación con el feed** (M ≥ 4; días UTC completos 2026-11-17 y 2026-11-18): **24 y 27 terremotos**, 25,5 por día de media (n = 2 días; [`memoria-datos.json`](evidencias/memoria-datos.json)), es decir 0,51 veces la media y 0,59 veces la mediana de 2025; solo 5 de 365 días de 2025 tuvieron 24 o menos y 20 tuvieron 27 o menos. **No demuestra menos actividad ni retraso de USGS**: el catálogo FDSN da para el 17-nov 25 eventos, de los que el feed vio 24, y 23 horas después el catálogo seguía en 25 para ese día. Lo que sí se mide es que **el pipeline no pierde eventos**; el valor bajo del día es coherente con el tramo final del periodo reciente (conclusión 4), cuya causa —actividad real o catálogo aún incompleto— **no está resuelta**. Comparar un día reciente con un año ya consolidado no es una comparación equivalente, y la tarjeta del panel lo advierte.
+**Capturas:** [`analisis/02-live-17nov-M4.png`](evidencias/analisis/02-live-17nov-M4.png) (pestaña Análisis; filtros: fechas 17-nov-2026, M ≥ 4) incluye la tarjeta de comparación histórica. Muestra 24 eventos: el catálogo tiene 25 para ese día y el feed vio 24.
 
 ### Conclusión 3: el 78 % de los epicentros M ≥ 4 queda fuera de todo país, y casi todos los profundos
 
 **Datos (2025, M ≥ 4):** 14.350 de 18.302 eventos (**78,4 %**) sin país asignado; entre los **1.102 eventos de 300 km o más, 1.077 (97,7 %)** están sin país. Profundidad: **74,8 %** (13.689) a menos de 70 km, 19,2 % entre 70 y 300 km y 6,0 % a 300 km o más (máxima 669,6 km; ninguna negativa). Países con más eventos asignados: China 354, Chile 348, Indonesia 306, Etiopía 265, Argentina 236. Por subregión: Sudamérica 973, Sudeste Asiático 580, Asia Oriental 548, Sur de Asia 443, África Oriental 290.
 **Lectura:** la sismicidad se concentra en zonas de subducción y dorsales, en gran parte bajo el mar; por eso «Sin país asignado» es **el grupo más grande** y debe estar siempre en el análisis (no se descarta ni se reasigna). El contraste con `place` (§3.6) confirma que son epicentros marítimos y no un fallo del cruce.
-**Muestra equivalente del feed** (M ≥ 4, día UTC 17-nov, n = 23): 60,9 % sin país (14 de 23), 56,5 % a menos de 70 km y 8,7 % a 300 km o más. Con n = 23 el error de una proporción ronda ±10 puntos, así que **no se puede afirmar que difiera del histórico**: es compatible con él en dirección (la mayoría sin país) pero no concluyente. Con una muestra mayor, el catálogo reciente (1-oct → 17-nov-2026, 2.027 eventos) da **70,4 %** sin país; el descenso se debe a la secuencia de Panamá, en tierra firme (conclusión 4): **excluyendo los 167 eventos a menos de 300 km del M7,7, la proporción es del 74,3 %**, cercana al 78,4 % de 2025. Profundidad: 73,2 % a menos de 70 km (74,8 % en 2025).
+**Muestra equivalente del feed** (M ≥ 4, días UTC 17 y 18-nov, n = 51): 60,8 % sin país (31 de 51), 74,5 % a menos de 70 km y 3,9 % a 300 km o más. Con n = 51 el error de una proporción ronda ±14 puntos, así que **no se puede afirmar que difiera del histórico** (78,4 %, 74,8 % y 6,0 %): es compatible con él en dirección (la mayoría sin país) pero no concluyente. Con una muestra mayor, el catálogo reciente (1-oct → 17-nov-2026, 2.027 eventos) da **70,4 %** sin país; el descenso se debe a la secuencia de Panamá, en tierra firme (conclusión 4): **excluyendo los 167 eventos a menos de 300 km del M7,7, la proporción es del 74,3 %**, cercana al 78,4 % de 2025. Profundidad: 73,2 % a menos de 70 km (74,8 % en 2025).
 **Capturas** (pestaña Resumen, con los filtros visibles): [`analisis/03-live-17nov-M4-sin-pais.png`](evidencias/analisis/03-live-17nov-M4-sin-pais.png) (17-nov-2026, M ≥ 4, país «Sin país asignado»: 14 eventos) y [`analisis/04-live-17y18nov-pais-USA.png`](evidencias/analisis/04-live-17y18nov-pais-USA.png) (17 y 18-nov, país USA). El total del mapa coincide con el de los gráficos en cada captura ([`capturas-memoria.json`](evidencias/capturas-memoria.json)) y en cada combinación de filtros (prueba E2E).
 
 ### Conclusión 4: en octubre de 2026 la actividad mundial M ≥ 4 fue normal salvo una secuencia en Panamá; los últimos 20 días quedan por debajo de todo 2025 y la causa no está resuelta
@@ -394,18 +394,18 @@ Ambos métodos dan el mismo país en 2.000 puntos aleatorios (0 discrepancias). 
 
 ### 6.4 Latencia real de la API (datos reales, mismo equipo, sin túnel)
 
-30 repeticiones por petición ([`scripts/medir_api.py`](../scripts/medir_api.py); histórico de 18.302 eventos y 402 eventos live):
+30 repeticiones por petición ([`scripts/medir_api.py`](../scripts/medir_api.py); histórico de 18.302 eventos y 656 eventos live):
 
 | Petición | Mediana | p95 | Tamaño |
 |---|---:|---:|---:|
-| `/api/salud` | 4,3 ms | 5,5 ms | 207 B |
-| `/api/eventos` (24 h, live) | 7,3 ms | 10,8 ms | 51 KB |
-| `/api/eventos` (M ≥ 4) | 5,1 ms | 6,3 ms | 12,2 KB |
-| `/api/eventos` (país USA, desde 1-nov) | 14,0 ms | 35,4 ms | 90 KB |
-| `/api/estadisticas` (24 h) | 23,2 ms | 30,1 ms | 8,3 KB |
-| `/api/estadisticas` (M ≥ 4) | 24,1 ms | 32,3 ms | 7,8 KB |
+| `/api/salud` | 6,4 ms | 14,8 ms | 207 B |
+| `/api/eventos` (24 h, live) | 8,1 ms | 26,2 ms | 62 KB |
+| `/api/eventos` (M ≥ 4) | 7,0 ms | 11,6 ms | 17,8 KB |
+| `/api/eventos` (país USA, desde 1-nov) | 11,5 ms | 14,2 ms | 149 KB |
+| `/api/estadisticas` (24 h) | 27,5 ms | 38,8 ms | 7,8 KB |
+| `/api/estadisticas` (M ≥ 4) | 25,2 ms | 29,2 ms | 10,2 KB |
 
-Con el panel, un refresco (≈60 KB) cada 60 s son unos 90 MB/día por pestaña abierta.
+Con el panel, un refresco (≈72 KB) cada 60 s son unos 100 MB/día por pestaña abierta.
 
 ### 6.5 Qué ocurriría con 100 millones de registros
 
@@ -435,8 +435,8 @@ Una cuota gratuita no equivale a coste cero. **Medido**: el almacenamiento (tama
 |---|---|---|
 | **Hardware** | Portátil existente; amortización de 450 € a 4 años si se dedicase 24/7 | ≈ 112 €/año (≈ 2 €/semana de proyecto) |
 | **Electricidad** | 25 W medios × 24 h × 365 d; 0,20 €/kWh | 219 kWh/año ≈ **44 €/año**; los ≈ 3 días de la demostración consumirían ≈ 1,8 kWh ≈ 0,36 € |
-| **Almacenamiento** | Hoy: base de datos 37 MB (27 MB histórico con índices, ≈ 1 MB live), originales 12,4 MiB (histórico) y 1,8 MiB (live tras 189 consultas, ≈ 3 h de funcionamiento efectivo). Extrapolando con cuidado a partir de esa muestra corta (90 archivos de ≈ 20 KB en 189 consultas, es decir, ≈ 48 % de las respuestas traen contenido nuevo): ≈ 690 originales/día | Originales en vivo ≈ 14 MB/día, topados por la retención de 14 días (≈ 195 MB); base de datos live ≈ 1 MB/día |
-| **Transferencia** | ≈ 60 KB por refresco y pestaña ≈ 90 MB/día por panel abierto; USGS: ≈ 20–25 KB comprimidos por consulta | Despreciable para un panel; las cuotas de ngrok y Netlify gratuitos son **condiciones externas que no se verificaron aquí y deben comprobarse antes de la defensa** |
+| **Almacenamiento** | Hoy: base de datos 39 MB (27 MB histórico con índices, ≈ 1,8 MB live), originales 12,4 MiB (histórico) y 12,5 MiB (live: 750 archivos de ≈ 17 KiB tras 1.764 consultas, ≈ 29 h de funcionamiento efectivo). Extrapolando con cuidado a partir de esa muestra corta: 749 de 1.764 respuestas (≈ 42 %) traen contenido nuevo, es decir, ≈ 610 originales/día | Originales en vivo ≈ 10 MB/día, topados por la retención de 14 días (≈ 145 MB); base de datos live ≈ 1 MB/día |
+| **Transferencia** | ≈ 72 KB por refresco y pestaña ≈ 100 MB/día por panel abierto; USGS: ≈ 17–25 KB comprimidos por consulta | Despreciable para un panel; las cuotas de ngrok y Netlify gratuitos son **condiciones externas que no se verificaron aquí y deben comprobarse antes de la defensa** |
 | **Mantenimiento** | Reiniciar el túnel, vigilar la pila, rotar originales (automático), actualizar dependencias fijadas | ≈ 1–2 h/mes en operación real |
 | **Tiempo de desarrollo** | Por fases: infraestructura y productor ≈ 5 h; consumidor, versionado y calidad ≈ 8 h; API y panel ≈ 9 h; pruebas y despliegue ≈ 5 h; memoria y análisis ≈ 5 h | **≈ 32 h** en total (proyecto de clase: no se le asigna un precio por hora) |
 | **Servicios externos** | ngrok, Netlify, Google Fonts y el mapa base de Esri (teselas) en plan gratuito | 0 € directos, con límites y sin garantías de disponibilidad |

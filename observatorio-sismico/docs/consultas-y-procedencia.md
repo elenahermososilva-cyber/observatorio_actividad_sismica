@@ -1,6 +1,6 @@
 # Registro de consultas y procedencia
 
-Generado por [`scripts/procedencia.py`](../scripts/procedencia.py) a partir de `data/raw/historico/manifest.json` y [`docs/evidencias/memoria-datos.json`](evidencias/memoria-datos.json) (instantánea 2026-11-18T20:53:24+00:00). Complementa al diccionario de datos ([`docs/diccionario-de-datos.md`](diccionario-de-datos.md)).
+Generado por [`scripts/procedencia.py`](../scripts/procedencia.py) a partir de `data/raw/historico/manifest.json` y [`docs/evidencias/memoria-datos.json`](evidencias/memoria-datos.json) (instantánea 2026-11-19T23:08:51+00:00). Complementa al diccionario de datos ([`docs/diccionario-de-datos.md`](diccionario-de-datos.md)).
 
 ## 1. Fuentes
 
@@ -52,13 +52,13 @@ Mismos parámetros que el histórico, para la conclusión 4 de la memoria. Se gu
 
 | Concepto | Valor |
 |---|---|
-| Consultas correctas | 189 (primera 2026-11-17 22:15:14 UTC, última 2026-11-18 20:52:56 UTC) |
+| Consultas correctas | 1764 (primera 2026-11-17 22:15:14 UTC, última 2026-11-19 23:07:58 UTC) |
 | Consultas fallidas | 0 |
-| Latencia (ms) | media 123.7, p95 154.6, máx 564 |
-| Apariciones de features en las respuestas | 35,621 (cada respuesta repite toda la ventana de 24 h) |
-| Versiones publicadas a Kafka (incluye rechazadas) | 471 |
-| Publicaciones evitadas por la marca de «ya publicado» | **98.68 %** |
-| Originales guardados | 90 archivos distintos; 99 respuestas idénticas no se guardaron de nuevo |
+| Latencia (ms) | media 177.0, p95 481.7, máx 1466 |
+| Apariciones de features en las respuestas | 324,823 (cada respuesta repite toda la ventana de 24 h) |
+| Versiones publicadas a Kafka (incluye rechazadas) | 1,115 |
+| Publicaciones evitadas por la marca de «ya publicado» | **99.66 %** |
+| Originales guardados | 749 archivos distintos; 1015 respuestas idénticas no se guardaron de nuevo |
 
 Huecos de ingesta live (más de 5 min entre consultas correctas):
 
