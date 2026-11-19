@@ -28,7 +28,7 @@ type Dot = { x: number; y: number; color: string; feature: EventFeature; tip: st
             }
             @for (d of plot().dots; track $index) {
               <circle [attr.cx]="d.x" [attr.cy]="d.y" [attr.r]="hover() === $index ? 7 : 4" [attr.fill]="d.color"
-                      [attr.fill-opacity]="hover() === null || hover() === $index ? 0.8 : 0.35" [attr.stroke]="hover() === $index ? '#132b40' : 'none'"
+                      [attr.fill-opacity]="hover() === null || hover() === $index ? 0.92 : 0.4" [attr.stroke]="hover() === $index ? '#e6edf7' : '#0a0f1c'" stroke-width="1"
                       class="dot" (mouseenter)="hover.set($index)" (click)="picked.emit(d.feature)"><title>{{ d.tip }}</title></circle>
             }
           </svg>
@@ -44,12 +44,12 @@ type Dot = { x: number; y: number; color: string; feature: EventFeature; tip: st
   styles: [`
     figure { margin: 0; } figcaption { font-weight: 600; margin-bottom: 6px; }
     .wrap { position: relative; } svg { width: 100%; height: auto; display: block; }
-    .grid { stroke: #e2e8f0; stroke-width: 1; } .tick { font-size: 12px; fill: #42596b; } .dot { cursor: pointer; transition: r .1s; }
-    .tooltip { position: absolute; transform: translate(-50%, -120%); background: #132b40; color: white; padding: 6px 10px; border-radius: 6px;
-               font-size: .8rem; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25); z-index: 2; }
-    .tooltip em { opacity: .75; font-size: .75rem; }
-    .axis-name { margin: 2px 0 0; text-align: center; font-size: .8rem; color: #42596b; }
-    .empty { color: #42596b; font-style: italic; margin: 8px 0; } .help { font-size: .8rem; color: #42596b; margin: 6px 0 0; }
+    .grid { stroke: #1e2a44; stroke-width: 1; } .tick { font-size: 12px; fill: #94a3bf; font-family: var(--font-num); } .dot { cursor: pointer; transition: r .1s; }
+    .tooltip { position: absolute; transform: translate(-50%, -120%); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); padding: 6px 10px; border-radius: 6px;
+               font-size: .8rem; pointer-events: none; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.5); z-index: 2; }
+    .tooltip em { color: var(--muted); font-size: .75rem; }
+    .axis-name { margin: 2px 0 0; text-align: center; font-size: .8rem; color: var(--muted); }
+    .empty { color: var(--muted); font-style: italic; margin: 8px 0; } .help { font-size: .8rem; color: var(--muted); margin: 6px 0 0; }
   `],
 })
 export class ScatterChartComponent {

@@ -6,9 +6,15 @@ import type { EventCollection, EventFeature } from './models';
 
 export const NO_DATA_COLOR = '#64748b';
 
+/** Mapa base oscuro «Canvas Dark Gray» de Esri (ArcGIS Online). Se consulta sin clave de API; los mapas de CARTO ya la exigen. */
+export const DARK_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+/** Solo se piden teselas dentro del mundo: fuera de él Esri devolvería losas grises. */
+export const WORLD = L.latLngBounds([-85.06, -180], [85.06, 180]);
+export const DARK_ATTRIBUTION = 'Mapa base &copy; <a href="https://www.esri.com">Esri</a>, HERE, Garmin, &copy; OpenStreetMap contributors';
+
 export function depthColor(depth: number | null): string {
   if (depth === null) return NO_DATA_COLOR;
-  return depth < 70 ? '#e8a317' : depth < 300 ? '#e35b37' : '#7b3fb6';
+  return depth < 70 ? '#fde047' : depth < 300 ? '#fb923c' : '#c084fc';
 }
 
 export function radiusFor(magnitude: number | null): number {
@@ -32,25 +38,26 @@ export function formatDate(value: unknown): string {
          aria-label="Mapa interactivo de terremotos. La tabla de eventos ofrece los mismos datos en formato de texto."></div>
     <div class="legend" aria-label="Leyenda del mapa">
       <strong>Profundidad (color)</strong>
-      <span><i class="dot" style="background:#e8a317"></i>Menos de 70 km</span>
-      <span><i class="dot" style="background:#e35b37"></i>70–299,99 km</span>
-      <span><i class="dot" style="background:#7b3fb6"></i>300 km o más</span>
+      <span><i class="dot" style="background:#fde047"></i>Menos de 70 km</span>
+      <span><i class="dot" style="background:#fb923c"></i>70–299,99 km</span>
+      <span><i class="dot" style="background:#c084fc"></i>300 km o más</span>
       <span><i class="dot" style="background:#64748b"></i>Profundidad ND</span>
       <strong>Magnitud (tamaño)</strong>
-      <span><i class="dot" style="width:8px;height:8px;background:#94a3b8"></i>M 3</span>
-      <span><i class="dot" style="width:14px;height:14px;background:#94a3b8"></i>M 5</span>
-      <span><i class="dot" style="width:22px;height:22px;background:#94a3b8"></i>M 7</span>
+      <span><i class="dot" style="width:8px;height:8px;background:#94a3bf"></i>M 3</span>
+      <span><i class="dot" style="width:14px;height:14px;background:#94a3bf"></i>M 5</span>
+      <span><i class="dot" style="width:22px;height:22px;background:#94a3bf"></i>M 7</span>
       <span><i class="dot nd"></i><b>ND</b>: magnitud no disponible (círculo hueco de radio mínimo)</span>
     </div>
     <p class="note">El tamaño crece con la magnitud, pero no representa energía ni área afectada. El mapa base y las fronteras se pueden desactivar en el selector de capas.</p>
   `,
   styles: [`
-    .map { height: 56vh; min-height: 340px; background: #dceaf1; border-radius: 10px; }
-    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 10px 0 0; font-size: .88rem; }
+    .map { height: 56vh; min-height: 340px; background: var(--ocean); border: 1px solid var(--border); border-radius: 12px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 10px 0 0; font-size: .88rem; color: var(--muted); }
+    .legend strong { color: var(--text); }
     .legend span { display: inline-flex; align-items: center; gap: 6px; }
-    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; opacity: .85; }
+    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #0a0f1c; }
     .dot.nd { width: 10px; height: 10px; background: transparent; border: 2px solid #64748b; }
-    .note { font-size: .82rem; color: #42596b; margin: 6px 0 0; }
+    .note { font-size: .82rem; color: var(--muted); margin: 6px 0 0; }
   `],
 })
 export class EventMapComponent {
@@ -70,7 +77,7 @@ export class EventMapComponent {
   private readonly map = signal<L.Map | null>(null);
   private readonly eventLayer = L.layerGroup();
   private readonly borders = L.geoJSON(undefined, {
-    style: { color: '#334155', weight: 1, fill: false },
+    style: { color: '#7c8db0', weight: 0.8, opacity: 0.55, fill: false },
     onEachFeature: (feature, layer) => {
       const name = document.createElement('span');
       name.textContent = feature.properties?.NAME_ES ?? feature.properties?.ADMIN ?? 'Sin nombre';
@@ -97,12 +104,10 @@ export class EventMapComponent {
   }
 
   onMapReady(map: L.Map): void {
-    const base = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, noWrap: true, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+    const base = L.tileLayer(DARK_TILES, { maxZoom: 8, maxNativeZoom: 16, noWrap: true, bounds: WORLD, attribution: DARK_ATTRIBUTION }).addTo(map);
     this.borders.addTo(map);
     this.eventLayer.addTo(map);
-    L.control.layers({ 'OpenStreetMap': base }, { 'Países (Natural Earth)': this.borders, 'Terremotos': this.eventLayer }).addTo(map);
+    L.control.layers({ 'Esri Canvas Dark Gray': base }, { 'Países (Natural Earth)': this.borders, 'Terremotos': this.eventLayer }).addTo(map);
     map.attributionControl.addAttribution('Fronteras: Natural Earth · Datos: USGS');
     this.map.set(map);
   }
@@ -126,7 +131,7 @@ export class EventMapComponent {
       const more = document.createElement('button');
       more.type = 'button';
       more.textContent = 'Ver ficha completa →';
-      more.style.cssText = 'margin-top:8px;padding:4px 10px;border:1px solid #176b70;border-radius:6px;background:#176b70;color:white;cursor:pointer;font:inherit';
+      more.style.cssText = 'margin-top:8px;padding:5px 12px;border:1px solid #22d3ee;border-radius:8px;background:#22d3ee;color:#062a33;cursor:pointer;font:inherit;font-weight:700';
       more.addEventListener('click', () => this.zone.run(() => this.picked.emit(feature as EventFeature)));
       popup.appendChild(more);
       text.textContent =
@@ -134,8 +139,9 @@ export class EventMapComponent {
         `Profundidad: ${depth === null ? 'ND' : depth + ' km'}\nFecha UTC: ${formatDate(p.time)}\n` +
         `Última actualización UTC: ${formatDate(p.updated)}\nPaís: ${p.country_name ?? 'Sin país asignado'}\nID: ${feature.id ?? 'ND'}`;
       L.circleMarker([lat, lon], {
-        radius: radiusFor(magnitude), color, fillColor: color, weight: magnitude === null ? 2 : 1,
-        fillOpacity: magnitude === null ? 0 : 0.75, dashArray: magnitude === null ? '3 2' : undefined,
+        // Borde oscuro de 1 px y relleno casi opaco: cada epicentro se ve nítido y separado de los vecinos (sin halo difuso).
+        radius: radiusFor(magnitude), color: magnitude === null ? color : '#0a0f1c', fillColor: color, weight: magnitude === null ? 2 : 1,
+        fillOpacity: magnitude === null ? 0 : 0.92, opacity: 1, dashArray: magnitude === null ? '3 2' : undefined,
       }).bindPopup(popup).addTo(next);
       count++;
     }

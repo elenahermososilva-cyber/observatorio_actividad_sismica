@@ -1,1 +1,44 @@
-body { margin: 0; background: #eef3f6; color: #132b40; font-family: system-ui, sans-serif; } * { box-sizing: border-box; } .leaflet-popup-content { white-space: pre-line; }
+/* Estilo «Sala de control»: tema oscuro azul noche con acento cian. Los componentes usan estas variables. */
+:root {
+  --bg: #0a0f1c;
+  --surface: #111a2e;
+  --surface-2: #0d1526;
+  --border: #1e2a44;
+  --border-strong: #2b3a5c;
+  --text: #e6edf7;
+  --muted: #94a3bf;
+  --accent: #22d3ee;
+  --accent-text: #062a33;
+  --topbar: #070b15;
+  --ocean: #0b1426;
+  --depth-shallow: #fde047;
+  --depth-mid: #fb923c;
+  --depth-deep: #c084fc;
+  --depth-nd: #64748b;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  color-scheme: dark;
+}
+
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+a { color: var(--accent); }
+::selection { background: rgba(34, 211, 238, 0.3); }
+
+/* ---- Leaflet sobre el mapa base oscuro */
+.leaflet-popup-content { white-space: pre-line; }
+.leaflet-container { background: var(--ocean); font-family: var(--font-body); }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+.leaflet-popup-content { margin: 12px 14px; font-size: 13px; line-height: 1.5; }
+.leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+.leaflet-container a.leaflet-popup-close-button:hover { color: var(--text); }
+.leaflet-bar a, .leaflet-bar a:hover { background: var(--surface); color: var(--text); border-bottom: 1px solid var(--border); }
+.leaflet-bar a:hover { background: var(--border); }
+.leaflet-bar a.leaflet-disabled { background: var(--surface-2); color: var(--muted); }
+.leaflet-touch .leaflet-bar { border: 1px solid var(--border-strong); }
+.leaflet-control-layers { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); }
+.leaflet-control-layers-toggle { filter: invert(1) hue-rotate(180deg) brightness(1.1); }
+.leaflet-control-attribution { background: rgba(10, 15, 28, 0.82) !important; color: var(--muted); }
+.leaflet-control-attribution a { color: var(--accent); }
+.leaflet-tooltip { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); box-shadow: none; }
+.leaflet-tooltip-top:before { border-top-color: var(--border-strong); }

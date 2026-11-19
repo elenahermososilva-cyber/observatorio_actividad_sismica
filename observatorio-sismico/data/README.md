@@ -6,7 +6,7 @@ Esta carpeta es la **ubicación documentada de los datos originales** (enunciado
 |---|---|---|
 | Respuestas originales del feed `all_day.geojson` | `data/raw/live/AAAA/MM/DD/HHMMSS.geojson.gz` (gzip, bytes íntegros) | las conserva el productor en modo `live` |
 | Histórico 2025 (M ≥ 4, mundo, `earthquake`) | `data/raw/historico/AAAA-MM.geojson` + `manifest.json` | `docker compose run --rm --no-deps producer python -m backend.producer.history_download` |
-| Catálogo reciente 2026 para la comparación equivalente (1-oct → 18-nov exclusivo, M ≥ 4, mundo, `earthquake`) | `data/raw/reciente/*.geojson` + `manifest.json` (una segunda instantánea opcional en `data/raw/reciente-2/`) | `scripts/comparacion_reciente.py` (comando en `docs/memoria.md` §10); no se carga en la base de datos |
+| Catálogo reciente 2026 para la comparación equivalente (1-oct → 18-nov exclusivo, M ≥ 4, mundo, `earthquake`) | `data/raw/reciente/*.geojson` + `manifest.json` (segunda instantánea 23 h después en `data/raw/reciente-2/`, resultado en `docs/evidencias/comparacion-reciente-2.json`) | `scripts/comparacion_reciente.py` (comando en `docs/memoria.md` §10); no se carga en la base de datos |
 | Catálogo de países | `frontend/public/datos/paises.geojson` (entregado, sin modificar) | no se regenera: usar la copia entregada |
 | Registro de consultas al feed | tabla `ingest.extraction_log` | lo escribe el productor live en cada consulta |
 | Registro de consultas del histórico | `data/raw/historico/manifest.json` | lo escribe la descarga del histórico |

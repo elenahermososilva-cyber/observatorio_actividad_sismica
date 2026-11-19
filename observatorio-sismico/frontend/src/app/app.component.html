@@ -18,10 +18,15 @@
 </nav>
 
 <main>
-  <header>
-    <p class="eyebrow">BIG DATA · PROYECTO DE AULA</p>
-    <h1>Observatorio de actividad sísmica</h1>
-    <p>Mapa, análisis y tabla sobre los mismos filtros. Los datos proceden de la API del proyecto, nunca directamente de USGS.</p>
+  <header class="page-head">
+    <div class="intro">
+      <p class="eyebrow">BIG DATA · PROYECTO DE AULA</p>
+      <h1>Observatorio de actividad sísmica</h1>
+      <p>Mapa, análisis y tabla sobre los mismos filtros. Los datos proceden de la API del proyecto, nunca directamente de USGS.</p>
+    </div>
+    @if (tab() !== 'historico') {
+      <app-activity-trace [events]="events()" (picked)="openDetail($event, liveSource())" />
+    }
   </header>
 
   @if (configError(); as problem) {
@@ -213,7 +218,7 @@
         <article class="card">
           <h3>Distribución de la profundidad</h3>
           <app-bar-chart [bars]="depthBars()" caption="Intervalos de 10 km (desde el valor indicado, hasta el siguiente)"
-            ariaLabel="Distribución de profundidades" xLabel="Profundidad (km)" firstColumn="Desde (km)" color="#7b3fb6" />
+            ariaLabel="Distribución de profundidades" xLabel="Profundidad (km)" firstColumn="Desde (km)" color="#c084fc" />
           <p class="help">{{ s.distributions.depth_km.with_value }} con profundidad · <strong>{{ s.distributions.depth_km.missing['depth'] }} sin profundidad (ND)</strong>, fuera del histograma.</p>
         </article>
 
@@ -332,7 +337,7 @@
             <article class="card">
               <h3>Países con más terremotos en la selección</h3>
               <app-bar-chart [bars]="histCountryBars()" orientation="horizontal" caption="Recuento por país (incluye «Sin país asignado»), calculado en la base de datos"
-                ariaLabel="Terremotos del histórico por país" firstColumn="País" color="#7b3fb6" />
+                ariaLabel="Terremotos del histórico por país" firstColumn="País" color="#c084fc" />
             </article>
           }
         } @else if (histLoading()) {
@@ -373,7 +378,7 @@
 
   <footer>
     <p>Los recuentos describen eventos publicados por USGS; la cobertura de detección y los tipos de magnitud varían entre regiones y épocas. No son una predicción de terremotos ni una evaluación de riesgo.</p>
-    <p>Fuentes: USGS Earthquake Catalog (dominio público) · Natural Earth (dominio público) · mapa base © OpenStreetMap contributors.</p>
+    <p>Fuentes: USGS Earthquake Catalog (dominio público) · Natural Earth (dominio público) · mapa base Esri (Canvas Dark Gray; © Esri, HERE, Garmin, OpenStreetMap contributors).</p>
   </footer>
   }
 </main>

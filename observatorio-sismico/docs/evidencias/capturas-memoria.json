@@ -1,12 +1,12 @@
 {
-  "at": "2026-11-19T20:57:23.227Z",
+  "at": "2026-11-19T22:29:47.938Z",
   "capturas": [
     {
       "file": "panel-live.png",
       "note": "modo en vivo, filtros por defecto (últimas 24 h)",
       "url": "http://localhost:4200/#resumen",
-      "mapa_total": 214,
-      "graficos_total": 214,
+      "mapa_total": 218,
+      "graficos_total": 218,
       "coinciden": true,
       "avisos": "",
       "filtros": "Últimas 24 horas Últimos 7 días Últimos 30 días Fechas concretas (UTC) |  | Todos Sin país asignado Afganistán Albania Alemania Angola Antártida Arabia Saudita Argelia Argentina Armenia Australia Austria Azerbaiyán Bahamas Bangladés Bélgica Belice Benín Bielorrusia Birmania Bolivia Bosnia y Herzegovina Botsuana Brasil Brunéi Bulgaria Burkina Faso Burundi Bután Camboya Camerún Canadá Catar Chad Chile China Chipre Colombia Corea del Norte Corea del Sur Costa de Marfil Costa Rica Croacia Cuba Dinamarca Ecuador Egipto El Salvador Emiratos Árabes Unidos Eritrea Eslovaquia Eslovenia España Estados Unidos Estonia Etiopía Filipinas Finlandia Fiyi Francia Gabón Gambia Georgia Ghana Grecia Groenlandia Guatemala Guinea Guinea Ecuatorial Guinea-Bisáu Guyana Haití Honduras Hungría India Indonesia Irak Irán Irlanda Islandia Islas Malvinas Islas Salomón Israel Italia Jamaica Japón Jordania Kazajistán Kenia Kirguistán Kosovo Kuwait Laos Lesoto Letonia Líbano Liberia Libia Lituania Luxemburgo Macedonia del Norte Madagascar Malasia Malaui Malí Marruecos Mauritania México Moldavia Mongolia Montenegro Mozambique Namibia Nepal Nicaragua Níger Nigeria Noruega Nueva Caledonia Nueva Zelanda Omán Países Bajos Pakistán Palestina Panamá Papúa Nueva Guinea Paraguay Perú Polonia Portugal Puerto Rico Reino Unido República Centroafricana República Checa República de China República del Congo República Democrática del Congo República Dominicana República Turca del Norte de Chipre Ruanda Rumania Rusia Sahara Occidental Senegal Serbia Sierra Leona Siria Somalia Somalilandia Sri Lanka Suazilandia Sudáfrica Sudán Sudán del Sur Suecia Suiza Surinam Tailandia Tanzania Tayikistán Tierras Australes y Antárticas Francesas Timor Oriental Togo Trinidad y Tobago Túnez Turkmenistán Turquía Ucrania Uganda Uruguay Uzbekistán Vanuatu Venezuela Vietnam Yemen Yibuti Zambia Zimbabue"
@@ -25,8 +25,8 @@
       "file": "analisis/01-live-24h-sin-filtros.png",
       "note": "últimas 24 h, sin filtros",
       "url": "http://localhost:4200/#analisis",
-      "mapa_total": 214,
-      "graficos_total": 214,
+      "mapa_total": 218,
+      "graficos_total": 218,
       "coinciden": true,
       "avisos": "",
       "filtros": "Últimas 24 horas Últimos 7 días Últimos 30 días Fechas concretas (UTC) |  | Todos Sin país asignado Afganistán Albania Alemania Angola Antártida Arabia Saudita Argelia Argentina Armenia Australia Austria Azerbaiyán Bahamas Bangladés Bélgica Belice Benín Bielorrusia Birmania Bolivia Bosnia y Herzegovina Botsuana Brasil Brunéi Bulgaria Burkina Faso Burundi Bután Camboya Camerún Canadá Catar Chad Chile China Chipre Colombia Corea del Norte Corea del Sur Costa de Marfil Costa Rica Croacia Cuba Dinamarca Ecuador Egipto El Salvador Emiratos Árabes Unidos Eritrea Eslovaquia Eslovenia España Estados Unidos Estonia Etiopía Filipinas Finlandia Fiyi Francia Gabón Gambia Georgia Ghana Grecia Groenlandia Guatemala Guinea Guinea Ecuatorial Guinea-Bisáu Guyana Haití Honduras Hungría India Indonesia Irak Irán Irlanda Islandia Islas Malvinas Islas Salomón Israel Italia Jamaica Japón Jordania Kazajistán Kenia Kirguistán Kosovo Kuwait Laos Lesoto Letonia Líbano Liberia Libia Lituania Luxemburgo Macedonia del Norte Madagascar Malasia Malaui Malí Marruecos Mauritania México Moldavia Mongolia Montenegro Mozambique Namibia Nepal Nicaragua Níger Nigeria Noruega Nueva Caledonia Nueva Zelanda Omán Países Bajos Pakistán Palestina Panamá Papúa Nueva Guinea Paraguay Perú Polonia Portugal Puerto Rico Reino Unido República Centroafricana República Checa República de China República del Congo República Democrática del Congo República Dominicana República Turca del Norte de Chipre Ruanda Rumania Rusia Sahara Occidental Senegal Serbia Sierra Leona Siria Somalia Somalilandia Sri Lanka Suazilandia Sudáfrica Sudán Sudán del Sur Suecia Suiza Surinam Tailandia Tanzania Tayikistán Tierras Australes y Antárticas Francesas Timor Oriental Togo Trinidad y Tobago Túnez Turkmenistán Turquía Ucrania Uganda Uruguay Uzbekistán Vanuatu Venezuela Vietnam Yemen Yibuti Zambia Zimbabue"

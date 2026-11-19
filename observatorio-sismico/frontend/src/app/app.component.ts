@@ -8,6 +8,7 @@ import { EventMapComponent, formatDate } from './event-map.component';
 import { EventTableComponent } from './event-table.component';
 import { EventDetailComponent } from './event-detail.component';
 import { ScatterChartComponent } from './scatter-chart.component';
+import { ActivityTraceComponent } from './activity-trace.component';
 import type {
   Config, CountryOption, DataMode, EventCollection, EventFeature, Filters, Health, HistFilters, Statistics, Tab,
 } from './models';
@@ -24,7 +25,7 @@ const signed = (value: number, digits = 1) => (value > 0 ? '+' : '') + fmt(value
 
 @Component({
   selector: 'app-root', standalone: true,
-  imports: [EventMapComponent, EventTableComponent, BarChartComponent, ScatterChartComponent, EventDetailComponent],
+  imports: [EventMapComponent, EventTableComponent, BarChartComponent, ScatterChartComponent, EventDetailComponent, ActivityTraceComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.component.html', styleUrl: './app.component.css',
 })

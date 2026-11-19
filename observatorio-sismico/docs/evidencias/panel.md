@@ -11,7 +11,7 @@ Todas las capturas de página completa se regeneran con la interfaz actual (pest
 Los filtros también se pueden fijar por URL (`range`, `from`, `to`, `min_mag`, `country`), lo que permite reproducir exactamente cada captura que se use en las conclusiones de la memoria.
 
 ## Prueba en navegador real (`tests/e2e/panel_e2e.mjs`, resultado en `panel-e2e.json`)
-Edge headless controlado por el protocolo DevTools, contra la pila real. 17 comprobaciones, todas correctas:
+Edge headless controlado por el protocolo DevTools, contra la pila real. **Repetida el 2026-11-19 sobre la interfaz por pestañas** (copia del panel compilado con `refreshMs: 30000` y `apiUrl` local, sin tocar `config.json`): 17/17. 17 comprobaciones, todas correctas:
 - carga inicial: eventos dibujados, estadísticas, 4 gráficos, tabla con filas, leyenda con ND;
 - coherencia mapa↔gráficos: con `min_mag=4`, con «Sin país asignado» y con el rango completo del 17-nov el total del mapa coincide con el de las estadísticas (6/6, 4/4, 219/219);
 - el histograma de profundidad es continuo (intervalos de 10 km sin huecos);
@@ -29,6 +29,10 @@ Panel: `https://observatorio-sismico-elena.netlify.app`. API: `https://onset-dee
 Historial honesto: el primer intento de `watch` (`panel-publicado-watch-intento1.json`) dio 4/5. La comprobación que falló era un defecto del script, que comparaba con el recuento del arranque de la prueba y no con el último recuento antes del fallo (entre medias el panel había incorporado eventos nuevos de forma normal). Se corrigió el script y se repitió la prueba física, que dio 5/5.
 
 Las filas 9 y 10 de la tabla de aceptación (ENUNCIADO §11) quedan así comprobadas con el panel publicado y el túnel real. Quedan sin probar con ngrok real, por su naturaleza, los reinicios de URL con un dominio no reservado (no aplica mientras se use el dominio fijo).
+
+## Estilo visual (tema oscuro)
+
+Tema «sala de control»: variables CSS en `frontend/src/styles.css` (fondo `#0A0F1C`, superficie `#111A2E`, acento cian `#22D3EE`), tipografías Inter y JetBrains Mono, mapa base Esri «Canvas Dark Gray» (sin clave) limitado al mundo para no pedir teselas fuera de él, y epicentros con relleno casi opaco y borde oscuro de 1 px. La cabecera añade `activity-trace.component.ts`: un trazo con los eventos del periodo consultado (cada terremoto es una oscilación en su instante; altura según la magnitud; los eventos sin magnitud no se dibujan y se cuentan aparte; se oculta en la pestaña del histórico, que no depende del periodo en vivo). Contrastes: texto `#E6EDF7` sobre `#0A0F1C`/`#111A2E` y texto atenuado `#94A3BF` sobre las mismas superficies superan 4,5:1; los colores de profundidad se distinguen también por claridad. Las pruebas de navegador (`panel_secciones.mjs`, 21/21; `panel_published.mjs check`, 7/7) y las capturas de esta carpeta se regeneraron con este estilo.
 
 ## Panel por secciones (pestañas, fichas e histórico)
 

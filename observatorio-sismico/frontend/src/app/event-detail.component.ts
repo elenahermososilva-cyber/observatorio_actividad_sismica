@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { LeafletDirective } from '@bluehalo/ngx-leaflet';
 import * as L from 'leaflet';
 import type { EventFeature } from './models';
-import { depthColor, formatDate, radiusFor } from './event-map.component';
+import { DARK_ATTRIBUTION, DARK_TILES, depthColor, formatDate, radiusFor } from './event-map.component';
 
 /** Ficha de un evento: todos sus campos tal como los devuelve la API y un mapa centrado en el epicentro. */
 @Component({
@@ -36,17 +36,19 @@ import { depthColor, formatDate, radiusFor } from './event-map.component';
     }
   `,
   styles: [`
-    .back { margin-bottom: 12px; }
+    .back { margin-bottom: 12px; font: inherit; padding: 7px 14px; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; cursor: pointer; }
+    .back:hover { background: var(--border); }
+    .back:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     .detail { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.4fr); gap: 20px; align-items: start; }
-    .facts { background: white; border-radius: 10px; padding: 16px 18px; }
-    .eyebrow { letter-spacing: .12em; font-size: .72rem; font-weight: 700; color: #176b70; margin: 0; text-transform: uppercase; }
+    .facts { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+    .eyebrow { letter-spacing: .12em; font-size: .72rem; font-weight: 700; color: var(--accent); margin: 0; text-transform: uppercase; }
     h2 { margin: 4px 0 14px; font-size: 1.35rem; }
     dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin: 0 0 12px; }
-    dt { font-size: .75rem; color: #42596b; text-transform: uppercase; letter-spacing: .04em; } dd { margin: 2px 0 0; overflow-wrap: anywhere; }
-    .big { font-size: 1.6rem; font-weight: 700; color: #132b40; } dd.nd, dd.nd .big { color: #64748b; font-style: italic; }
-    .id { font-family: ui-monospace, monospace; font-size: .9rem; }
-    .help { font-size: .82rem; color: #42596b; } a { color: #176b70; font-weight: 600; }
-    .map { height: 420px; border-radius: 10px; background: #dceaf1; }
+    dt { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; } dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+    .big { font-family: var(--font-num); font-size: 1.6rem; font-weight: 700; color: var(--text); } dd.nd, dd.nd .big { color: #7b8aa8; font-style: italic; }
+    .id { font-family: var(--font-num); font-size: .9rem; }
+    .help { font-size: .82rem; color: var(--muted); } a { color: var(--accent); font-weight: 600; }
+    .map { height: 420px; border-radius: 12px; border: 1px solid var(--border); background: var(--ocean); }
     @media (max-width: 760px) { .detail { grid-template-columns: 1fr; } .map { height: 300px; } }
   `],
 })
@@ -69,7 +71,7 @@ export class EventDetailComponent {
     const depth = typeof rawDepth === 'number' && Number.isFinite(rawDepth) ? rawDepth : null;
     const color = depthColor(depth);
     const marker = L.circleMarker([lat, lon], {
-      radius: Math.max(8, radiusFor(mag)), color, fillColor: color, weight: 2, fillOpacity: mag === null ? 0 : 0.7,
+      radius: Math.max(8, radiusFor(mag)), color: mag === null ? color : '#0a0f1c', fillColor: color, weight: mag === null ? 2 : 1.5, fillOpacity: mag === null ? 0 : 0.92,
     });
     const id = String(f.id ?? 'ND');
     return {
@@ -82,9 +84,7 @@ export class EventDetailComponent {
       usgs: `https://earthquake.usgs.gov/earthquakes/eventpage/${encodeURIComponent(id)}`,
       options: { center: L.latLng(lat, lon), zoom: 6, minZoom: 2, maxZoom: 12 } as L.MapOptions,
       layers: [
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        }),
+        L.tileLayer(DARK_TILES, { maxZoom: 12, maxNativeZoom: 16, attribution: DARK_ATTRIBUTION }),
         marker,
       ] as L.Layer[],
     };

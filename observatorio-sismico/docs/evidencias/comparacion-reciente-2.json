@@ -1,0 +1,674 @@
+{
+  "generado_en": "2026-11-19T21:54:46+00:00",
+  "filtros": {
+    "fuente": "USGS FDSN event (misma API que el histórico)",
+    "ambito": "mundo",
+    "min_mag": 4.0,
+    "tipo": "earthquake",
+    "pais": "punto en polígono (CountryIndex, Natural Earth 1:110M)"
+  },
+  "periodo_reciente": {
+    "inicio": "2026-10-01T00:00:00+00:00",
+    "fin_exclusivo": "2026-11-18T00:00:00+00:00",
+    "dias": 48
+  },
+  "procedencia": {
+    "directorio": "data/raw/reciente-2",
+    "consultas": [
+      {
+        "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-10-01T00%3A00%3A00&endtime=2026-11-01T00%3A00%3A00&minmagnitude=4&eventtype=earthquake&orderby=time-asc",
+        "start": "2026-10-01T00:00:00+00:00",
+        "end": "2026-11-01T00:00:00+00:00",
+        "retrieved_at": "2026-11-19T21:54:42.016719+00:00",
+        "count_reported": 1630,
+        "features_received": 1630,
+        "bytes": 1147888,
+        "sha256": "5ed2b17595c3ef35c55337e77f8a0c617a32bb6a59f4903f597af5fe642513a5",
+        "file": "2026-10-01_2026-11-01.geojson",
+        "latency_ms": 928
+      },
+      {
+        "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-11-01T00%3A00%3A00&endtime=2026-11-18T00%3A00%3A00&minmagnitude=4&eventtype=earthquake&orderby=time-asc",
+        "start": "2026-11-01T00:00:00+00:00",
+        "end": "2026-11-18T00:00:00+00:00",
+        "retrieved_at": "2026-11-19T21:54:45.160413+00:00",
+        "count_reported": 440,
+        "features_received": 440,
+        "bytes": 310862,
+        "sha256": "317e39a156db7554deb67f80a438fce29dc3d3ba5caeac3b1937c8a7186e1e6f",
+        "file": "2026-11-01_2026-11-18.geojson",
+        "latency_ms": 703
+      }
+    ]
+  },
+  "reciente": {
+    "dias": 48,
+    "eventos": 2070,
+    "media": 43.12,
+    "mediana": 39.5,
+    "q1": 29.0,
+    "q3": 53.5,
+    "min": 16,
+    "max": 139,
+    "serie_diaria": [
+      40,
+      55,
+      40,
+      43,
+      34,
+      37,
+      50,
+      39,
+      106,
+      79,
+      52,
+      49,
+      57,
+      35,
+      34,
+      42,
+      40,
+      39,
+      63,
+      54,
+      46,
+      70,
+      55,
+      139,
+      70,
+      54,
+      49,
+      65,
+      33,
+      29,
+      32,
+      44,
+      42,
+      30,
+      16,
+      22,
+      18,
+      26,
+      18,
+      35,
+      22,
+      29,
+      17,
+      34,
+      20,
+      25,
+      17,
+      25
+    ],
+    "puntos_ambiguos_en_frontera": 0,
+    "profundidad": {
+      "<70": 1517,
+      "70-300": 396,
+      ">=300": 157
+    },
+    "top_paises": [
+      [
+        "Sin país asignado",
+        1468
+      ],
+      [
+        "Panamá",
+        120
+      ],
+      [
+        "China",
+        83
+      ],
+      [
+        "Chile",
+        38
+      ],
+      [
+        "Afganistán",
+        29
+      ],
+      [
+        "Papúa Nueva Guinea",
+        29
+      ],
+      [
+        "Argentina",
+        29
+      ],
+      [
+        "Indonesia",
+        27
+      ],
+      [
+        "Japón",
+        19
+      ],
+      [
+        "Rusia",
+        18
+      ]
+    ]
+  },
+  "historico_2025": {
+    "dias": 365,
+    "eventos": 18302,
+    "media": 50.14,
+    "mediana": 43,
+    "q1": 36.0,
+    "q3": 53.0,
+    "min": 20,
+    "max": 645,
+    "profundidad": {
+      "70-300": 3511,
+      ">=300": 1102,
+      "<70": 13689
+    }
+  },
+  "mismo_periodo_2025": {
+    "dias": 48,
+    "eventos": 2325,
+    "media": 48.44,
+    "mediana": 45.5,
+    "q1": 38.25,
+    "q3": 49.75,
+    "min": 23,
+    "max": 124
+  },
+  "ventanas_2025_misma_duracion": {
+    "n_ventanas": 318,
+    "min": 1735,
+    "mediana": 2136.0,
+    "max": 4330,
+    "percentil_del_total_reciente": 37.1,
+    "nota": "Distribución de los totales de todas las ventanas de 2025 con la misma duración que el periodo reciente (paso de un día). Tiene en cuenta que las réplicas agrupan eventos: compara el total reciente con lo que 2025 produjo realmente en periodos iguales."
+  },
+  "efecto_cola_final": {
+    "media_ultimos_7_dias": 23.86,
+    "media_resto": 46.41,
+    "nota": "Si los últimos días tienen menos eventos, puede deberse a publicación tardía: el catálogo de los días recientes aún puede completarse."
+  },
+  "subperiodos_y_bandas": {
+    "2026-10-01 a 2026-10-28": {
+      "dias": 28,
+      "todas": {
+        "total": 1536,
+        "media_dia": 54.9,
+        "media_dia_2025": 50.1,
+        "ventanas_2025": {
+          "min": 974,
+          "mediana": 1258.5,
+          "max": 3355
+        },
+        "percentil_en_2025": 83.6
+      },
+      "M4.0-4.4": {
+        "total": 682,
+        "media_dia": 24.4,
+        "media_dia_2025": 26.7,
+        "ventanas_2025": {
+          "min": 521,
+          "mediana": 665.5,
+          "max": 1789
+        },
+        "percentil_en_2025": 59.0
+      },
+      "M>=4.5": {
+        "total": 854,
+        "media_dia": 30.5,
+        "media_dia_2025": 23.4,
+        "ventanas_2025": {
+          "min": 433,
+          "mediana": 579.0,
+          "max": 1566
+        },
+        "percentil_en_2025": 90.5
+      }
+    },
+    "2026-10-29 a 2026-11-17": {
+      "dias": 20,
+      "todas": {
+        "total": 534,
+        "media_dia": 26.7,
+        "media_dia_2025": 50.1,
+        "ventanas_2025": {
+          "min": 689,
+          "mediana": 890.0,
+          "max": 2804
+        },
+        "percentil_en_2025": 0.0
+      },
+      "M4.0-4.4": {
+        "total": 211,
+        "media_dia": 10.6,
+        "media_dia_2025": 26.7,
+        "ventanas_2025": {
+          "min": 364,
+          "mediana": 477.5,
+          "max": 1477
+        },
+        "percentil_en_2025": 0.0
+      },
+      "M>=4.5": {
+        "total": 323,
+        "media_dia": 16.1,
+        "media_dia_2025": 23.4,
+        "ventanas_2025": {
+          "min": 311,
+          "mediana": 418.0,
+          "max": 1327
+        },
+        "percentil_en_2025": 4.2
+      }
+    },
+    "periodo completo": {
+      "dias": 48,
+      "todas": {
+        "total": 2070,
+        "media_dia": 43.1,
+        "media_dia_2025": 50.1,
+        "ventanas_2025": {
+          "min": 1735,
+          "mediana": 2136.0,
+          "max": 4330
+        },
+        "percentil_en_2025": 37.1
+      },
+      "M4.0-4.4": {
+        "total": 893,
+        "media_dia": 18.6,
+        "media_dia_2025": 26.7,
+        "ventanas_2025": {
+          "min": 911,
+          "mediana": 1148.5,
+          "max": 2312
+        },
+        "percentil_en_2025": 0.0
+      },
+      "M>=4.5": {
+        "total": 1177,
+        "media_dia": 24.5,
+        "media_dia_2025": 23.4,
+        "ventanas_2025": {
+          "min": 821,
+          "mediana": 976.5,
+          "max": 2027
+        },
+        "percentil_en_2025": 65.7
+      }
+    }
+  },
+  "secuencia_principal": {
+    "mayores_eventos": [
+      {
+        "id": "us6000u18k",
+        "time": "2026-10-09T17:56:05+00:00",
+        "mag": 7.7,
+        "magType": "mww",
+        "place": "10 km WSW of Pitaloza Arriba, Panama"
+      },
+      {
+        "id": "us6000u43g",
+        "time": "2026-10-22T14:33:40+00:00",
+        "mag": 7,
+        "magType": "mww",
+        "place": "189 km ENE of Nagqu, China"
+      },
+      {
+        "id": "us6000u2mq",
+        "time": "2026-10-16T03:35:32+00:00",
+        "mag": 6.9,
+        "magType": "mww",
+        "place": "72 km NE of Ozernovskiy, Russia"
+      },
+      {
+        "id": "us6000u214",
+        "time": "2026-10-13T12:23:07+00:00",
+        "mag": 6.8,
+        "magType": "mww",
+        "place": "central Mid-Atlantic Ridge"
+      },
+      {
+        "id": "us6000u4j2",
+        "time": "2026-10-24T02:31:28+00:00",
+        "mag": 6.8,
+        "magType": "mww",
+        "place": "203 km NW of Port-Olry, Vanuatu"
+      }
+    ],
+    "eventos_a_menos_de_300_km_del_mayor": 167,
+    "sin_pais_excluyendo_esa_zona": {
+      "sin_pais": 1422,
+      "eventos": 1903,
+      "pct": 74.7
+    }
+  },
+  "subregiones": [
+    {
+      "subregion": "Sin país asignado",
+      "reciente": 1468,
+      "pct_reciente": 70.9,
+      "pct_2025": 78.4,
+      "esperado_con_la_tasa_media_2025": 1887.1,
+      "ventanas_2025_misma_duracion": {
+        "min": 1290,
+        "mediana": 1639.0,
+        "max": 3840
+      },
+      "percentil_en_2025": 19.5
+    },
+    {
+      "subregion": "Central America",
+      "reciente": 140,
+      "pct_reciente": 6.8,
+      "pct_2025": 0.8,
+      "esperado_con_la_tasa_media_2025": 18.8,
+      "ventanas_2025_misma_duracion": {
+        "min": 5,
+        "mediana": 18.0,
+        "max": 39
+      },
+      "percentil_en_2025": 100.0
+    },
+    {
+      "subregion": "South America",
+      "reciente": 115,
+      "pct_reciente": 5.6,
+      "pct_2025": 5.3,
+      "esperado_con_la_tasa_media_2025": 128.0,
+      "ventanas_2025_misma_duracion": {
+        "min": 106,
+        "mediana": 130.0,
+        "max": 151
+      },
+      "percentil_en_2025": 11.3
+    },
+    {
+      "subregion": "Eastern Asia",
+      "reciente": 103,
+      "pct_reciente": 5.0,
+      "pct_2025": 3.0,
+      "esperado_con_la_tasa_media_2025": 72.1,
+      "ventanas_2025_misma_duracion": {
+        "min": 44,
+        "mediana": 56.0,
+        "max": 177
+      },
+      "percentil_en_2025": 96.1
+    },
+    {
+      "subregion": "Southern Asia",
+      "reciente": 61,
+      "pct_reciente": 2.9,
+      "pct_2025": 2.4,
+      "esperado_con_la_tasa_media_2025": 58.3,
+      "ventanas_2025_misma_duracion": {
+        "min": 37,
+        "mediana": 53.5,
+        "max": 79
+      },
+      "percentil_en_2025": 74.4
+    },
+    {
+      "subregion": "South-Eastern Asia",
+      "reciente": 53,
+      "pct_reciente": 2.6,
+      "pct_2025": 3.2,
+      "esperado_con_la_tasa_media_2025": 76.3,
+      "ventanas_2025_misma_duracion": {
+        "min": 54,
+        "mediana": 74.0,
+        "max": 117
+      },
+      "percentil_en_2025": 0.0
+    },
+    {
+      "subregion": "Melanesia",
+      "reciente": 30,
+      "pct_reciente": 1.4,
+      "pct_2025": 1.2,
+      "esperado_con_la_tasa_media_2025": 28.4,
+      "ventanas_2025_misma_duracion": {
+        "min": 19,
+        "mediana": 28.0,
+        "max": 40
+      },
+      "percentil_en_2025": 65.4
+    },
+    {
+      "subregion": "Eastern Europe",
+      "reciente": 20,
+      "pct_reciente": 1.0,
+      "pct_2025": 0.9,
+      "esperado_con_la_tasa_media_2025": 22.1,
+      "ventanas_2025_misma_duracion": {
+        "min": 2,
+        "mediana": 18.0,
+        "max": 55
+      },
+      "percentil_en_2025": 56.1
+    },
+    {
+      "subregion": "Central Asia",
+      "reciente": 19,
+      "pct_reciente": 0.9,
+      "pct_2025": 0.7,
+      "esperado_con_la_tasa_media_2025": 15.8,
+      "ventanas_2025_misma_duracion": {
+        "min": 6,
+        "mediana": 16.0,
+        "max": 32
+      },
+      "percentil_en_2025": 72.3
+    },
+    {
+      "subregion": "Eastern Africa",
+      "reciente": 16,
+      "pct_reciente": 0.8,
+      "pct_2025": 1.6,
+      "esperado_con_la_tasa_media_2025": 38.1,
+      "ventanas_2025_misma_duracion": {
+        "min": 1,
+        "mediana": 8.0,
+        "max": 224
+      },
+      "percentil_en_2025": 68.9
+    },
+    {
+      "subregion": "Northern America",
+      "reciente": 11,
+      "pct_reciente": 0.5,
+      "pct_2025": 0.8,
+      "esperado_con_la_tasa_media_2025": 20.3,
+      "ventanas_2025_misma_duracion": {
+        "min": 6,
+        "mediana": 12.0,
+        "max": 80
+      },
+      "percentil_en_2025": 42.6
+    },
+    {
+      "subregion": "Western Asia",
+      "reciente": 10,
+      "pct_reciente": 0.5,
+      "pct_2025": 0.8,
+      "esperado_con_la_tasa_media_2025": 18.7,
+      "ventanas_2025_misma_duracion": {
+        "min": 4,
+        "mediana": 17.0,
+        "max": 53
+      },
+      "percentil_en_2025": 23.9
+    },
+    {
+      "subregion": "Australia and New Zealand",
+      "reciente": 9,
+      "pct_reciente": 0.4,
+      "pct_2025": 0.3,
+      "esperado_con_la_tasa_media_2025": 8.2,
+      "ventanas_2025_misma_duracion": {
+        "min": 4,
+        "mediana": 7.0,
+        "max": 14
+      },
+      "percentil_en_2025": 76.4
+    },
+    {
+      "subregion": "Southern Europe",
+      "reciente": 6,
+      "pct_reciente": 0.3,
+      "pct_2025": 0.3,
+      "esperado_con_la_tasa_media_2025": 7.4,
+      "ventanas_2025_misma_duracion": {
+        "min": 2,
+        "mediana": 8.0,
+        "max": 13
+      },
+      "percentil_en_2025": 27.4
+    },
+    {
+      "subregion": "Northern Europe",
+      "reciente": 4,
+      "pct_reciente": 0.2,
+      "pct_2025": 0.1,
+      "esperado_con_la_tasa_media_2025": 1.8,
+      "ventanas_2025_misma_duracion": {
+        "min": 0,
+        "mediana": 1.0,
+        "max": 6
+      },
+      "percentil_en_2025": 93.9
+    },
+    {
+      "subregion": "Southern Africa",
+      "reciente": 2,
+      "pct_reciente": 0.1,
+      "pct_2025": 0.0,
+      "esperado_con_la_tasa_media_2025": 0.4,
+      "ventanas_2025_misma_duracion": {
+        "min": 0,
+        "mediana": 0.0,
+        "max": 1
+      },
+      "percentil_en_2025": 100.0
+    },
+    {
+      "subregion": "Northern Africa",
+      "reciente": 1,
+      "pct_reciente": 0.0,
+      "pct_2025": 0.1,
+      "esperado_con_la_tasa_media_2025": 1.4,
+      "ventanas_2025_misma_duracion": {
+        "min": 0,
+        "mediana": 1.0,
+        "max": 5
+      },
+      "percentil_en_2025": 42.6
+    },
+    {
+      "subregion": "Middle Africa",
+      "reciente": 1,
+      "pct_reciente": 0.0,
+      "pct_2025": 0.1,
+      "esperado_con_la_tasa_media_2025": 1.6,
+      "ventanas_2025_misma_duracion": {
+        "min": 0,
+        "mediana": 1.0,
+        "max": 5
+      },
+      "percentil_en_2025": 41.8
+    },
+    {
+      "subregion": "Caribbean",
+      "reciente": 1,
+      "pct_reciente": 0.0,
+      "pct_2025": 0.1,
+      "esperado_con_la_tasa_media_2025": 2.1,
+      "ventanas_2025_misma_duracion": {
+        "min": 0,
+        "mediana": 2.0,
+        "max": 5
+      },
+      "percentil_en_2025": 19.3
+    },
+    {
+      "subregion": "Western Europe",
+      "reciente": 0,
+      "pct_reciente": 0.0,
+      "pct_2025": 0.0,
+      "esperado_con_la_tasa_media_2025": 0.1,
+      "ventanas_2025_misma_duracion": {
+        "min": 0,
+        "mediana": 0.0,
+        "max": 1
+      },
+      "percentil_en_2025": 42.5
+    }
+  ],
+  "feed_live_vs_catalogo": [
+    {
+      "dia": "2026-11-17",
+      "feed_live_M4": 24,
+      "catalogo_M4": 25,
+      "catalogo_M4_vistos_en_el_feed": 24,
+      "catalogo_M4_vistos_en_el_feed_con_M_menor_de_4": 0,
+      "catalogo_M4_nunca_vistos_en_el_feed": 1,
+      "feed_M4_que_el_catalogo_no_tiene_como_M4": 0
+    }
+  ],
+  "cambio_entre_instantaneas": {
+    "instantanea_anterior": "2026-11-18T22:29:26.433022+00:00",
+    "instantanea_actual": "2026-11-19T21:54:42.016719+00:00",
+    "eventos_anterior": 2027,
+    "eventos_actual": 2070,
+    "por_dia": [
+      {
+        "dia": "2026-10-23",
+        "antes": 50,
+        "ahora": 55,
+        "diferencia": 5
+      },
+      {
+        "dia": "2026-10-24",
+        "antes": 125,
+        "ahora": 139,
+        "diferencia": 14
+      },
+      {
+        "dia": "2026-10-26",
+        "antes": 51,
+        "ahora": 54,
+        "diferencia": 3
+      },
+      {
+        "dia": "2026-10-27",
+        "antes": 39,
+        "ahora": 49,
+        "diferencia": 10
+      },
+      {
+        "dia": "2026-10-28",
+        "antes": 59,
+        "ahora": 65,
+        "diferencia": 6
+      },
+      {
+        "dia": "2026-11-05",
+        "antes": 21,
+        "ahora": 22,
+        "diferencia": 1
+      },
+      {
+        "dia": "2026-11-09",
+        "antes": 32,
+        "ahora": 35,
+        "diferencia": 3
+      },
+      {
+        "dia": "2026-11-14",
+        "antes": 19,
+        "ahora": 20,
+        "diferencia": 1
+      }
+    ]
+  }
+}

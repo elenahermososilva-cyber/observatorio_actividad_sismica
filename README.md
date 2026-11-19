@@ -84,6 +84,8 @@ npm start                 # desarrollo: http://localhost:4200
 npm run build             # producción: dist/observatorio/browser
 ```
 
+El panel usa un tema oscuro («sala de control»: azul noche, acento cian, cifras en JetBrains Mono y texto en Inter, cargadas desde Google Fonts con tipografía de respaldo del sistema). La cabecera incluye un **trazo de actividad** con los eventos reales del periodo consultado: cada terremoto es un pico y su altura depende de la magnitud (es una escala visual, no una señal sísmica medida).
+
 El panel se organiza en pestañas: **Resumen** (indicadores y mapa), **Análisis** (gráficos interactivos y comparación histórica), **Eventos** (tabla), **Histórico 2025** (consulta paginada del catálogo cargado) y **Estado del sistema**. Pulsar un evento en la tabla, el mapa o la dispersión abre su ficha con un mapa del epicentro. La pestaña va en la URL (`#analisis`, `#historico`…).
 
 `public/config.json` decide de dónde lee el panel: `mode: "api"`, `apiUrl` (la URL HTTPS de ngrok, **sin** `/api` al final; para desarrollo, `http://localhost:8000`), `dataMode` (`live`, `demo` o `replay`) y `refreshMs` (60000). Es un archivo público: nunca lleva secretos. Para publicar en Netlify: «Volver a publicar el panel» en [`docs/despliegue.md`](observatorio-sismico/docs/despliegue.md).
@@ -136,4 +138,4 @@ En PowerShell, sustituye `$(pwd)` por `${PWD}` y la barra invertida final por un
 
 ## Fuentes y licencias
 
-USGS Earthquake Catalog (dominio público), Natural Earth (dominio público), mapa base © OpenStreetMap contributors. Detalle en [`observatorio-sismico/docs/curso/FUENTES-Y-LICENCIAS.md`](observatorio-sismico/docs/curso/FUENTES-Y-LICENCIAS.md).
+USGS Earthquake Catalog (dominio público), Natural Earth (dominio público), mapa base Esri «Canvas Dark Gray» (© Esri, HERE, Garmin, OpenStreetMap contributors; se consulta sin clave de API). Detalle de las fuentes del curso en [`observatorio-sismico/docs/curso/FUENTES-Y-LICENCIAS.md`](observatorio-sismico/docs/curso/FUENTES-Y-LICENCIAS.md).

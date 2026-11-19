@@ -64,15 +64,15 @@ type Tick = { y: number; label: string };
   styles: [`
     figure { margin: 0; } figcaption { font-weight: 600; margin-bottom: 6px; }
     svg { width: 100%; height: auto; display: block; } .wrap { position: relative; } .bar { transition: fill-opacity .12s; }
-    .tooltip { position: absolute; transform: translate(-50%, -115%); background: #132b40; color: white; padding: 5px 9px; border-radius: 6px;
-               font-size: .8rem; pointer-events: none; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25); z-index: 2; }
-    .strong { font-weight: 700; fill: #132b40; }
-    .grid { stroke: #dbe4ea; stroke-width: 1; } .axis { stroke: #64748b; stroke-width: 1; }
-    .tick { font-size: 12px; fill: #42596b; } .axis-name { margin: 2px 0 0; text-align: center; font-size: .8rem; color: #42596b; }
-    .empty { color: #42596b; font-style: italic; margin: 8px 0; }
-    details { margin-top: 6px; font-size: .85rem; } summary { cursor: pointer; color: #176b70; }
+    .tooltip { position: absolute; transform: translate(-50%, -115%); background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); padding: 5px 9px; border-radius: 6px;
+               font-size: .8rem; pointer-events: none; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.5); z-index: 2; }
+    .strong { font-weight: 700; fill: #e6edf7; }
+    .grid { stroke: #1e2a44; stroke-width: 1; } .axis { stroke: #3b4a6b; stroke-width: 1; }
+    .tick { font-size: 12px; fill: #94a3bf; font-family: var(--font-num); } .axis-name { margin: 2px 0 0; text-align: center; font-size: .8rem; color: var(--muted); }
+    .empty { color: var(--muted); font-style: italic; margin: 8px 0; }
+    details { margin-top: 6px; font-size: .85rem; } summary { cursor: pointer; color: var(--accent); }
     table { border-collapse: collapse; margin-top: 6px; max-height: 220px; display: block; overflow: auto; }
-    th, td { border: 1px solid #cbd5e1; padding: 2px 8px; text-align: right; } th[scope=row], thead th { text-align: left; background: #f1f5f9; }
+    th, td { border: 1px solid var(--border-strong); padding: 2px 8px; text-align: right; } th[scope=row], thead th { text-align: left; background: var(--surface-2); }
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   `],
 })
@@ -85,7 +85,7 @@ export class BarChartComponent {
   readonly valueLabel = input<string>('Terremotos');
   readonly firstColumn = input<string>('Intervalo');
   readonly emptyText = input<string>('Sin datos para los filtros seleccionados.');
-  readonly color = input<string>('#176b70');
+  readonly color = input<string>('#22d3ee');
 
   protected readonly W = 520; protected readonly H = 230;
   protected readonly L = 44; protected readonly R = 8; protected readonly T = 10; protected readonly B = 34;
