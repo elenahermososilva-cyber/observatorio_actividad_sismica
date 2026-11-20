@@ -1,5 +1,8 @@
 # Observatorio de actividad sísmica
 
+> ### ▶️ [Ver el vídeo de presentación del proyecto](https://youtu.be/lI0VKAT9Bbg)
+>
+
 ![Panel del observatorio: pestaña Resumen con indicadores, trazo de actividad y mapa de epicentros de las últimas 24 horas](observatorio-sismico/docs/evidencias/panel-live.png)
 
 *Pestaña «Resumen», lo primero que se ve al abrir el panel: filtros, indicadores, trazo de actividad con los terremotos reales de las últimas 24 h y mapa de epicentros coloreados por profundidad.*
