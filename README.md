@@ -139,8 +139,6 @@ En PowerShell, sustituye `$(pwd)` por `${PWD}` y la barra invertida final por un
 | Informe de complejidad (mediciones) | [`complejidad.md`](observatorio-sismico/docs/evidencias/complejidad.md) y [`api-latencia.json`](observatorio-sismico/docs/evidencias/api-latencia.json) |
 | Evidencias de aceptación y reproducción histórica | [`aceptacion-s11.md`](observatorio-sismico/docs/evidencias/aceptacion-s11.md), [`pila-real.md`](observatorio-sismico/docs/evidencias/pila-real.md), [`panel.md`](observatorio-sismico/docs/evidencias/panel.md) (incluye las capturas de cada sección del panel en [`secciones/`](observatorio-sismico/docs/evidencias/secciones/)) |
 | Capturas de los filtros del análisis | [`docs/evidencias/analisis/`](observatorio-sismico/docs/evidencias/analisis/) |
-| Guion del vídeo y esquema de la explicación individual | [`docs/guion-video.md`](observatorio-sismico/docs/guion-video.md) |
-| Material del curso (requisitos, no se edita) | [`docs/curso/`](observatorio-sismico/docs/curso/): [`ENUNCIADO.md`](observatorio-sismico/docs/curso/ENUNCIADO.md), [`FAQ-ALUMNADO.md`](observatorio-sismico/docs/curso/FAQ-ALUMNADO.md), [`CONTRATO-API.md`](observatorio-sismico/docs/curso/CONTRATO-API.md), [`FUENTES-Y-LICENCIAS.md`](observatorio-sismico/docs/curso/FUENTES-Y-LICENCIAS.md), [`VALIDACION.md`](observatorio-sismico/docs/curso/VALIDACION.md) y el README del paquete ([`README-curso.md`](observatorio-sismico/docs/curso/README-curso.md)) |
 
 ## Fuentes y licencias
 
